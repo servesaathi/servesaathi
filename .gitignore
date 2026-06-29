@@ -1,0 +1,35 @@
+# --- OS Generated Files ---
+.DS_Store
+Thumbs.db
+
+# --- Dependency Folders ---
+node_modules/
+/jspm_packages/
+
+# --- Build & Cache Folders ---
+.expo/
+dist/
+build/
+*.log
+*.tmp
+
+# --- IDE & Editor Settings ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime*
+
+# --- Environment Variables ---
+# Keep your secrets private!
+.env
+.env.*
+!.env.example
+
+# --- Testing & Coverage ---
+coverage/
+.nyc_output/
+
+# --- Temporary/Debug Files ---
+*.bak
+*.orig
