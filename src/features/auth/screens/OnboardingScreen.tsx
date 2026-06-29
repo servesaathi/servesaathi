@@ -67,7 +67,7 @@ export const OnboardingScreen: React.FC = () => {
   };
 
   const handleSkip = () => {
-    navigation.navigate('Showcase');
+    navigation.replace('Home');
   };
 
   const handleCreateAccount = () => {

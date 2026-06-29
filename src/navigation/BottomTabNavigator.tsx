@@ -2,21 +2,24 @@ import React from 'react';
 import { View, StyleSheet, Pressable, Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Home, ClipboardList, User, Settings, Phone } from 'lucide-react-native';
-import HomeScreen from '@/features/home/screens/HomeScreen';
 import { theme } from '@/theme';
 import { responsiveFontSize } from '@/utils/responsive';
+import { Screen, Header } from '@/components/layouts';
+import { ProfileScreen } from '@/features/profile/screens/ProfileScreen';
 
-// Placeholder screens for other tabs
-const PlaceholderScreen = ({ name }: { name: string }) => (
-  <View style={styles.placeholderContainer}>
-    <Text>{name} Screen (Coming Soon)</Text>
-  </View>
+const TabScreenLayout = ({ name, showLogo = false }: { name: string; showLogo?: boolean }) => (
+  <Screen safeAreaBottom={false} style={styles.screenContent}>
+    <Header title={showLogo ? undefined : name} showLogo={showLogo} leftIcon="none" />
+    <View style={styles.placeholderContainer}>
+      <Text style={styles.placeholderText}>{name} Screen (Coming Soon)</Text>
+    </View>
+  </Screen>
 );
 
-const ServiceScreen = () => <PlaceholderScreen name="Service" />;
-const HelplineScreen = () => <PlaceholderScreen name="Helpline" />;
-const ProfileScreen = () => <PlaceholderScreen name="Profile" />;
-const SettingScreen = () => <PlaceholderScreen name="Setting" />;
+const HomeScreen = () => <TabScreenLayout name="Home" showLogo={true} />;
+const ServiceScreen = () => <TabScreenLayout name="Service" />;
+const HelplineScreen = () => <TabScreenLayout name="Helpline" />;
+const SettingScreen = () => <TabScreenLayout name="Setting" />;
 
 export type BottomTabParamList = {
   HomeTab: undefined;
@@ -142,11 +145,20 @@ export const BottomTabNavigator = () => {
 };
 
 const styles = StyleSheet.create({
+  screenContent: {
+    flex: 1,
+  },
   placeholderContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.background.layout,
+    paddingBottom: 96, // Account for absolute bottom tab bar height + safe area padding
+  },
+  placeholderText: {
+    fontFamily: theme.typography.bodyLarge.fontFamily,
+    fontSize: responsiveFontSize(16),
+    color: theme.colors.neutral[500],
   },
   tabBarContainer: {
     backgroundColor: '#FFFFFF',
