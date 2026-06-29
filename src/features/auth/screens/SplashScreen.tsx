@@ -2,54 +2,15 @@ import React, { useEffect } from 'react';
 import { StyleSheet, Text, View, Pressable, Dimensions, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFonts } from 'expo-font';
-import Svg, { Path } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '@/theme';
-import { Logo } from '@/components/Logo';
-import { responsiveFontSize, verticalScale } from '@/utils/responsive';
+import { LogoSvg } from '@/components/LogoSvg';
+import { responsiveFontSize } from '@/utils/responsive';
 import { RootNavigationProp } from '@/navigation/types';
 import { useAppStore } from '@/store/app.store';
 import { useTranslation } from '@/utils/localization';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-// Custom Vector Leaf Watermark
-const LeafWatermark = ({ style }: { style: any }) => (
-  <Svg width="300" height="300" viewBox="0 0 100 100" fill="none" style={style}>
-    {/* Outline leaf shape */}
-    <Path
-      d="M10 90 C 25 65, 65 65, 90 10 C 65 35, 65 75, 10 90 Z"
-      fill="#FFFFFF"
-      opacity={0.06}
-    />
-    {/* Center leaf vein */}
-    <Path
-      d="M10 90 C 35 65, 65 35, 90 10"
-      stroke="#FFFFFF"
-      strokeWidth="1.2"
-      opacity={0.08}
-    />
-    {/* Small side veins */}
-    <Path
-      d="M35 65 C 45 70, 52 75, 58 82"
-      stroke="#FFFFFF"
-      strokeWidth="0.6"
-      opacity={0.06}
-    />
-    <Path
-      d="M55 45 C 65 50, 72 55, 78 62"
-      stroke="#FFFFFF"
-      strokeWidth="0.6"
-      opacity={0.06}
-    />
-    <Path
-      d="M72 28 C 80 32, 85 36, 89 42"
-      stroke="#FFFFFF"
-      strokeWidth="0.6"
-      opacity={0.06}
-    />
-  </Svg>
-);
 
 export const SplashScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'Splash'>>();
@@ -74,7 +35,6 @@ export const SplashScreen: React.FC = () => {
 
   const handleSkip = () => {
     setSplashVisible(false);
-    // Navigate to the Showcase Screen first so the user can see all components and navigate to the flow
     navigation.replace('LanguageSelect');
   };
 
@@ -87,26 +47,22 @@ export const SplashScreen: React.FC = () => {
       {/* Background textured foliage image */}
       <Image
         source={require('../../../../assets/leaf_background.png')}
-        style={StyleSheet.absoluteFill}
+        style={styles.backgroundImage}
         resizeMode="cover"
       />
       {/* Dark Green Gradient Overlay for readability and premium look */}
       <LinearGradient
-        colors={['rgba(28, 75, 30, 0.82)', 'rgba(9, 25, 10, 0.94)']}
-        style={StyleSheet.absoluteFill}
+        colors={['rgba(28, 75, 30, 0.40)', 'rgba(9, 25, 10, 0.60)']}
+        style={styles.backgroundImage}
       />
 
-      {/* Decorative leaf watermarks floating in background */}
-      <LeafWatermark style={[styles.watermark, styles.watermarkTop]} />
-      <LeafWatermark style={[styles.watermark, styles.watermarkBottom]} />
-
       <View style={styles.centerContent}>
-        {/* Brand Wordmark (White) with Regional Rotation Animation */}
-        <Logo colorVariant="white" size="large" animatedPrefix={true} />
+        {/* Brand Wordmark (SVG) */}
+        <LogoSvg color="#FFFFFF" width={264} height={71} />
 
         {/* Slogan */}
         <Text style={styles.subtitle}>
-          {t('splashSubtitle')}
+          {t('splashSubtitle').replace(', ', ',\n')}
         </Text>
       </View>
 
@@ -121,34 +77,31 @@ export const SplashScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#09190A', // Dark green fallback matching the leaf background
   },
-  watermark: {
+  backgroundImage: {
     position: 'absolute',
-    transform: [{ rotate: '45deg' }],
-  },
-  watermarkTop: {
-    top: '-5%',
-    right: '-10%',
-  },
-  watermarkBottom: {
-    bottom: '-10%',
-    left: '-15%',
-    transform: [{ rotate: '-135deg' }],
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
   },
   centerContent: {
     alignItems: 'center',
     width: SCREEN_WIDTH * 0.85,
   },
   subtitle: {
-    fontFamily: 'AtkinsonHyperlegible-Regular',
-    fontSize: responsiveFontSize(18),
-    color: '#FFFFFF',
+    fontFamily: theme.typography.h2.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.h2.fontSize),
+    fontWeight: '600',
+    color: '#FFFFFF', // Pure white slogan text
     textAlign: 'center',
     marginTop: theme.spacing.lg,
-    opacity: 0.9,
-    lineHeight: 24,
+    lineHeight: theme.typography.h2.lineHeight,
   },
   footer: {
     position: 'absolute',
