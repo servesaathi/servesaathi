@@ -11,8 +11,6 @@ import { RootNavigationProp } from '@/navigation/types';
 import { useAppStore } from '@/store/app.store';
 import { useTranslation } from '@/utils/localization';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 export const LanguageSelectScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'LanguageSelect'>>();
   const { language, setLanguage } = useAppStore();
@@ -30,7 +28,7 @@ export const LanguageSelectScreen: React.FC = () => {
           {/* Top Illustration Graphic */}
           <View style={styles.graphicContainer}>
             <Image
-              source={theme.images.cloudBlob}
+              source={theme.images.languageSelectIllustrator}
               style={styles.cloudBlob}
               resizeMode="contain"
             />
@@ -59,17 +57,18 @@ export const LanguageSelectScreen: React.FC = () => {
             >
               <Text style={styles.cardText}>English</Text>
               {language === 'en' ? (
-                // Active orange checkbox
-                <Svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                  <Circle cx="12" cy="12" r="10" fill={theme.colors.tertiary} />
-                  <Path
-                    d="M8 12L11 15L16 9"
-                    stroke="#FFFFFF"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </Svg>
+                // Active orange checkbox (rounded square)
+                <View style={styles.checkboxActive}>
+                  <Svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <Path
+                      d="M4 12L9 17L20 6"
+                      stroke="#FFFFFF"
+                      strokeWidth="3.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </Svg>
+                </View>
               ) : (
                 // Inactive checkbox
                 <View style={styles.checkboxOutline} />
@@ -88,17 +87,18 @@ export const LanguageSelectScreen: React.FC = () => {
             >
               <Text style={styles.cardText}>हिंदी</Text>
               {language === 'hi' ? (
-                // Active orange checkbox
-                <Svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                  <Circle cx="12" cy="12" r="10" fill={theme.colors.tertiary} />
-                  <Path
-                    d="M8 12L11 15L16 9"
-                    stroke="#FFFFFF"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </Svg>
+                // Active orange checkbox (rounded square)
+                <View style={styles.checkboxActive}>
+                  <Svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <Path
+                      d="M4 12L9 17L20 6"
+                      stroke="#FFFFFF"
+                      strokeWidth="3.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </Svg>
+                </View>
               ) : (
                 // Inactive checkbox
                 <View style={styles.checkboxOutline} />
@@ -134,8 +134,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cloudBlob: {
-    width: scale(240),
-    height: scale(142),
+    width: scale(293),
+    height: scale(191),
   },
   title: {
     ...theme.typography.screenTitle,
@@ -177,12 +177,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   checkboxOutline: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
+    width: 20,
+    height: 20,
+    borderRadius: 4,
     borderWidth: 1.5,
     borderColor: theme.colors.neutral[200],
     backgroundColor: '#FFFFFF',
+  },
+  checkboxActive: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    backgroundColor: theme.colors.tertiary, // Orange 500 (#FF751F)
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   footer: {
     marginTop: 'auto',
