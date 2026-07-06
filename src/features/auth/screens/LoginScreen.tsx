@@ -76,8 +76,8 @@ export const LoginScreen: React.FC = () => {
         <View style={styles.branding}>
           <Text style={styles.welcomeText}>Welcome to</Text>
           <BrandLogoSVG
-            width={200}
-            height={200 * (64 / 240)}
+            width={240}
+            height={64}
             style={styles.logoSvg}
           />
           <Spacer size="md" />
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     fontFamily: theme.typography.h2.fontFamily,
-    fontSize: responsiveFontSize(20),
+    fontSize: responsiveFontSize(theme.typography.h2.fontSize),
     color: theme.colors.primary,
     fontWeight: 'bold',
   },
@@ -166,11 +166,11 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.sm,
   },
   subtitle: {
-    fontFamily: theme.typography.bodyMedium.fontFamily,
-    fontSize: responsiveFontSize(14),
+    fontFamily: theme.typography.bodyLarge.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.bodyLarge.fontSize),
     color: theme.colors.neutral[700],
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
     paddingHorizontal: theme.spacing.sm,
   },
   countryCodeContainer: {
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   countryCodeDivider: {
     width: 1.5,
     height: 24,
-    backgroundColor: theme.colors.border.default,
+    backgroundColor: theme.colors.forestGreen[100],
     position: 'absolute',
     right: 0,
   },
@@ -207,21 +207,19 @@ const styles = StyleSheet.create({
   },
   dividerText: {
     marginHorizontal: theme.spacing.md,
-    fontFamily: theme.typography.caption.fontFamily,
-    fontSize: responsiveFontSize(14),
+    fontFamily: theme.typography.label.fontFamily,
+    fontSize: responsiveFontSize(16),
     color: theme.colors.neutral[700],
-    fontWeight: '600',
   },
   socialButton: {
     backgroundColor: '#FFFFFF',
-    borderColor: '#D2D1D1', // Matching design spec outlined border
+    borderColor: theme.colors.forestGreen[100], // G Line
     borderWidth: 1.5,
   },
   socialButtonText: {
-    fontFamily: theme.typography.bodyLarge.fontFamily,
-    fontWeight: '400',
+    fontFamily: theme.typography.label.fontFamily,
     fontSize: responsiveFontSize(16),
-    lineHeight: 24,
+    lineHeight: 22,
     color: theme.colors.neutral[900],
   },
   footer: {

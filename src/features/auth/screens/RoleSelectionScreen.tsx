@@ -1,21 +1,19 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, Image, Pressable, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, Image, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import Svg, { Path, Rect } from 'react-native-svg';
 import { RootNavigationProp } from '@/navigation/types';
 import { theme } from '@/theme';
 import { Screen, Spacer, Header } from '@/components/layouts';
 import { PrimaryButton } from '@/components/buttons';
+import { Checkbox } from '@/components/inputs';
 import { responsiveFontSize, scale } from '@/utils/responsive';
-import { useTranslation } from '@/utils/localization';
 
 export const RoleSelectionScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'RoleSelection'>>();
-  const { t } = useTranslation();
   const [selectedRole, setSelectedRole] = useState<string>('senior');
 
   const handleCreateAccount = () => {
-    navigation.replace('Home');
+    navigation.navigate('CreateAccount');
   };
 
   const roles = [
@@ -61,21 +59,12 @@ export const RoleSelectionScreen: React.FC = () => {
                 ]}
               >
                 <Text style={styles.cardText}>{role.label}</Text>
-                
-                {isActive ? (
-                  <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <Rect width="24" height="24" rx="6" fill={theme.colors.tertiary} />
-                    <Path
-                      d="M8 12L11 15L16 9"
-                      stroke="#FFFFFF"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </Svg>
-                ) : (
-                  <View style={styles.checkboxOutline} />
-                )}
+
+                <Checkbox
+                  checked={isActive}
+                  onPress={() => setSelectedRole(role.id)}
+                  color="orange"
+                />
               </Pressable>
             );
           })}
@@ -111,13 +100,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: theme.typography.h2.fontFamily,
-    fontSize: responsiveFontSize(24),
+    fontSize: responsiveFontSize(theme.typography.h2.fontSize),
     color: theme.colors.neutral[900],
     fontWeight: 'bold',
   },
   subtitle: {
-    fontFamily: theme.typography.bodyMedium.fontFamily,
-    fontSize: responsiveFontSize(16),
+    fontFamily: theme.typography.bodyLarge.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.bodyLarge.fontSize),
     color: theme.colors.neutral[700],
     textAlign: 'center',
     lineHeight: 24,
@@ -128,12 +117,12 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   card: {
-    height: 56,
+    height: 48,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.lg,
-    borderRadius: theme.radius.md,
+    paddingHorizontal: theme.spacing.xxl,
+    borderRadius: 6, // per design spec (theme.radius.sm is 8, doesn't match)
     borderWidth: 1.5,
   },
   activeCard: {
@@ -141,22 +130,13 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background.orange, // Orange 50
   },
   inactiveCard: {
-    borderColor: theme.colors.neutral[200],
+    borderColor: theme.colors.forestGreen[100], // G Line
     backgroundColor: '#FFFFFF',
   },
   cardText: {
     fontFamily: theme.typography.bodyLarge.fontFamily,
     fontSize: responsiveFontSize(16),
-    color: theme.colors.neutral[900],
-    fontWeight: '500',
-  },
-  checkboxOutline: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 1.5,
-    borderColor: theme.colors.tertiary,
-    backgroundColor: '#FFFFFF',
+    color: theme.colors.neutral[700],
   },
   actionBtn: {
     width: '100%',

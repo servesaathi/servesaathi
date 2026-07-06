@@ -12,14 +12,16 @@
       "backgroundColor": "#09190A"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.ServeSaathi"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#09190A",
         "foregroundImage": "./assets/icon.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.ServeSaathi"
     },
     "web": {
       "favicon": "./assets/icon.png"

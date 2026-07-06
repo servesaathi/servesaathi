@@ -7,6 +7,8 @@ import OnboardingScreen from '@/features/auth/screens/OnboardingScreen';
 import { LoginScreen } from '@/features/auth/screens/LoginScreen';
 import { OTPScreen } from '@/features/auth/screens/OTPScreen';
 import { RoleSelectionScreen } from '@/features/auth/screens/RoleSelectionScreen';
+import { CreateAccountScreen } from '@/features/auth/screens/CreateAccountScreen';
+import { PermissionScreen } from '@/features/auth/screens/PermissionScreen';
 import { BottomTabNavigator } from '@/navigation/BottomTabNavigator';
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -26,6 +28,8 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="OTP" component={OTPScreen} />
       <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
+      <Stack.Screen name="CreateAccount" component={CreateAccountScreen} />
+      <Stack.Screen name="Permission" component={PermissionScreen} />
       <Stack.Screen name="Home" component={BottomTabNavigator} />
     </Stack.Navigator>
   );

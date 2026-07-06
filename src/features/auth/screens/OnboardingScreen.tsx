@@ -280,20 +280,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 4,
   },
   dot: {
     height: 8,
     borderRadius: 4,
   },
   activeDot: {
-    width: 24,
+    width: 28,
     backgroundColor: theme.colors.tertiary, // Orange capsule
   },
   inactiveDot: {
     width: 8,
-    backgroundColor: '#FFCAA3', // Orange 200 tint
-    opacity: 0.7,
+    backgroundColor: theme.colors.vividOrange[200], // Orange 200 tint
   },
   actionSection: {
     width: '100%',

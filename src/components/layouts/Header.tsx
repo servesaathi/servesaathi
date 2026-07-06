@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Text, Image } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { IconButton } from '@/components/buttons';
 import { theme } from '@/theme';
@@ -50,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
       style={[
         styles.container,
         transparent && styles.transparent,
-        { paddingTop: insets.top, height: 56 + insets.top },
+        { paddingTop: insets.top + theme.spacing.lg, paddingBottom: theme.spacing.sm },
       ]}
     >
       {/* LEFT SECTION */}
@@ -60,8 +60,26 @@ export const Header: React.FC<HeaderProps> = ({
             type={leftIcon}
             accessibilityLabel={leftIcon === 'back' ? 'Go back' : 'Close'}
             onPress={handleLeftPress}
-            size={36}
+            size={40}
           />
+        )}
+        {stepper && (
+          <View style={styles.stepperContainer}>
+            <View style={styles.dashesContainer}>
+              {Array.from({ length: stepper.total }).map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.dash,
+                    i < stepper.current ? styles.dashActive : styles.dashInactive,
+                  ]}
+                />
+              ))}
+            </View>
+            <Text style={styles.stepperText}>
+              {stepper.current} of {stepper.total}
+            </Text>
+          </View>
         )}
       </View>
 
@@ -81,31 +99,14 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* RIGHT SECTION */}
       <View style={styles.sideRight}>
-        {stepper ? (
-          <View style={styles.stepperContainer}>
-            <View style={styles.dashesContainer}>
-              {Array.from({ length: stepper.total }).map((_, i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.dash,
-                    i < stepper.current ? styles.dashActive : styles.dashInactive,
-                  ]}
-                />
-              ))}
-            </View>
-            <Text style={styles.stepperText}>
-              {stepper.current} of {stepper.total}
-            </Text>
-          </View>
-        ) : rightIcon !== 'none' ? (
+        {rightIcon !== 'none' && (
           <IconButton
             type={rightIcon}
             accessibilityLabel="Menu"
             onPress={handleRightPress}
-            size={36}
+            size={40}
           />
-        ) : null}
+        )}
       </View>
     </View>
   );
@@ -113,11 +114,10 @@ export const Header: React.FC<HeaderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xxl,
     backgroundColor: theme.colors.background.layout,
   },
   transparent: {
@@ -125,7 +125,9 @@ const styles = StyleSheet.create({
   },
   side: {
     flex: 1,
-    alignItems: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
   },
   center: {
     flex: 3,
@@ -140,8 +142,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: theme.typography.h2.fontFamily,
-    fontSize: responsiveFontSize(18),
-    fontWeight: 'bold',
+    fontSize: responsiveFontSize(theme.typography.h2.fontSize),
+    lineHeight: theme.typography.h2.lineHeight,
     color: theme.colors.neutral[900],
   },
   logo: {
@@ -151,27 +153,27 @@ const styles = StyleSheet.create({
   stepperContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: theme.spacing.sm,
   },
   dashesContainer: {
     flexDirection: 'row',
-    gap: 4,
+    gap: theme.spacing.xs,
   },
   dash: {
-    width: 12,
-    height: 3,
-    borderRadius: 1.5,
+    width: 24,
+    height: 4,
+    borderRadius: 2,
   },
   dashActive: {
     backgroundColor: theme.colors.tertiary,
   },
   dashInactive: {
-    backgroundColor: theme.colors.neutral[200],
+    backgroundColor: theme.colors.vividOrange[200],
   },
   stepperText: {
-    fontFamily: theme.typography.caption.fontFamily,
-    fontSize: responsiveFontSize(12),
+    fontFamily: theme.typography.bodySmall.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.bodySmall.fontSize),
+    lineHeight: theme.typography.bodySmall.lineHeight,
     color: theme.colors.primary,
-    fontWeight: '600',
   },
 });

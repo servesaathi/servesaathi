@@ -50,7 +50,7 @@ export const OTPInput: React.FC<OTPInputProps> = ({
                 ? theme.colors.status.error
                 : digit
                 ? theme.colors.primary
-                : theme.colors.border.default,
+                : theme.colors.forestGreen[100],
               backgroundColor: error ? theme.colors.status.errorBg : theme.colors.neutral[50],
             },
           ]}
@@ -84,15 +84,16 @@ const styles = StyleSheet.create({
     marginVertical: theme.spacing.md,
   },
   otpBox: {
-    width: scale(50),
-    height: scale(50),
-    borderWidth: 2,
-    borderRadius: theme.radius.sm, // 6px consistent with design system
+    width: scale(64),
+    height: scale(64),
+    borderWidth: 1.5,
+    borderRadius: theme.radius.sm, // 8px per design spec
     justifyContent: 'center',
     alignItems: 'center',
   },
   otpText: {
-    fontSize: responsiveFontSize(20),
+    fontFamily: theme.typography.h1.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.h1.fontSize),
     fontWeight: 'bold',
     color: theme.colors.neutral[900],
     width: '100%',

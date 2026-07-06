@@ -53,7 +53,13 @@ export const TextInput: React.FC<TextInputProps> = ({
         <Text
           style={[
             styles.label,
-            { color: hasError ? theme.colors.status.error : theme.colors.neutral[900] },
+            {
+              color: hasError
+                ? theme.colors.status.error
+                : props.editable === false
+                ? theme.colors.neutral[500]
+                : theme.colors.neutral[900],
+            },
           ]}
         >
           {label}
@@ -68,8 +74,10 @@ export const TextInput: React.FC<TextInputProps> = ({
               ? theme.colors.status.error
               : isFocused
               ? theme.colors.primary
-              : theme.colors.border.default,
-            backgroundColor: hasError ? theme.colors.status.errorBg : theme.colors.neutral[50],
+              : props.editable === false
+              ? theme.colors.neutral[200]
+              : theme.colors.forestGreen[100],
+            borderWidth: isFocused ? 1.35 : 1.5,
           },
         ]}
       >
@@ -94,18 +102,18 @@ export const TextInput: React.FC<TextInputProps> = ({
 const styles = StyleSheet.create({
   container: { marginBottom: theme.spacing.md, width: '100%' },
   label: {
-    fontFamily: theme.typography.smallCaption.fontFamily,
-    fontSize: responsiveFontSize(theme.typography.smallCaption.fontSize),
-    fontWeight: '600',
+    fontFamily: theme.typography.h5.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.h5.fontSize),
+    lineHeight: theme.typography.h5.lineHeight,
     marginBottom: theme.spacing.xs,
   },
   inputContainer: {
     height: 48,
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderRadius: theme.radius.sm, // 6px consistent with buttons
+    borderRadius: 10, // per design spec (Figma "Input - Text" uses 10px, not the 6px used by buttons)
     paddingHorizontal: theme.spacing.md,
+    backgroundColor: theme.colors.background.base,
   },
   input: {
     flex: 1,
@@ -118,14 +126,16 @@ const styles = StyleSheet.create({
   prefixIcon: { marginRight: theme.spacing.sm, justifyContent: 'center', alignItems: 'center' },
   suffixIcon: { marginLeft: theme.spacing.sm, justifyContent: 'center', alignItems: 'center' },
   errorText: {
-    fontFamily: theme.typography.bodySmall.fontFamily,
-    fontSize: responsiveFontSize(theme.typography.bodySmall.fontSize),
+    fontFamily: theme.typography.caption.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.caption.fontSize),
+    lineHeight: theme.typography.caption.lineHeight,
     color: theme.colors.status.error,
     marginTop: theme.spacing.xs,
   },
   helperText: {
-    fontFamily: theme.typography.bodySmall.fontFamily,
-    fontSize: responsiveFontSize(theme.typography.bodySmall.fontSize),
+    fontFamily: theme.typography.caption.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.caption.fontSize),
+    lineHeight: theme.typography.caption.lineHeight,
     color: theme.colors.neutral[500],
     marginTop: theme.spacing.xs,
   },

@@ -1,11 +1,13 @@
 import React from 'react';
 import { View, StyleSheet, Pressable, Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Home, ClipboardList, User, Settings, Phone } from 'lucide-react-native';
+import { Home, BookOpen, User, Settings, Phone } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/theme';
 import { responsiveFontSize } from '@/utils/responsive';
 import { Screen, Header } from '@/components/layouts';
 import { ProfileScreen } from '@/features/profile/screens/ProfileScreen';
+import { SettingsScreen } from '@/features/settings/screens/SettingsScreen';
 
 const TabScreenLayout = ({ name, showLogo = false }: { name: string; showLogo?: boolean }) => (
   <Screen safeAreaBottom={false} style={styles.screenContent}>
@@ -19,7 +21,7 @@ const TabScreenLayout = ({ name, showLogo = false }: { name: string; showLogo?: 
 const HomeScreen = () => <TabScreenLayout name="Home" showLogo={true} />;
 const ServiceScreen = () => <TabScreenLayout name="Service" />;
 const HelplineScreen = () => <TabScreenLayout name="Helpline" />;
-const SettingScreen = () => <TabScreenLayout name="Setting" />;
+const SettingScreen = () => <SettingsScreen />;
 
 export type BottomTabParamList = {
   HomeTab: undefined;
@@ -33,8 +35,10 @@ const Tab = createBottomTabNavigator<BottomTabParamList>();
 
 // Custom Tab Bar component to support floating action button style
 const CustomTabBar = ({ state, descriptors, navigation }: any) => {
+  const insets = useSafeAreaInsets();
+
   return (
-    <View style={styles.tabBarContainer}>
+    <View style={[styles.tabBarContainer, { paddingBottom: insets.bottom }]}>
       <View style={styles.tabBarContent}>
         {state.routes.map((route: any, index: number) => {
           const { options } = descriptors[route.key];
@@ -68,11 +72,11 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
           };
 
           const getIcon = () => {
-            const color = isFocused && !isHelpline ? theme.colors.neutral[900] : theme.colors.neutral[500];
+            const color = isFocused && !isHelpline ? theme.colors.neutral[700] : theme.colors.neutral[500];
             const size = 24;
 
             if (route.name === 'HomeTab') return <Home color={color} size={size} />;
-            if (route.name === 'ServiceTab') return <ClipboardList color={color} size={size} />;
+            if (route.name === 'ServiceTab') return <BookOpen color={color} size={size} />;
             if (route.name === 'ProfileTab') return <User color={color} size={size} />;
             if (route.name === 'SettingTab') return <Settings color={color} size={size} />;
             return null;
@@ -113,12 +117,11 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
               <Text
                 style={[
                   styles.tabLabel,
-                  { color: isFocused ? theme.colors.neutral[900] : theme.colors.neutral[500] },
+                  { color: isFocused ? theme.colors.neutral[700] : theme.colors.neutral[500] },
                 ]}
               >
                 {label}
               </Text>
-              {isFocused && <View style={styles.activeIndicator} />}
             </Pressable>
           );
         })}
@@ -162,8 +165,8 @@ const styles = StyleSheet.create({
   },
   tabBarContainer: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: theme.radius.lg,
-    borderTopRightRadius: theme.radius.lg,
+    borderTopWidth: 1.5,
+    borderTopColor: theme.colors.forestGreen[100],
     position: 'absolute',
     bottom: 0,
     left: 0,
@@ -173,14 +176,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    paddingBottom: 24, // Assuming safe area bottom
   },
   tabBarContent: {
     flexDirection: 'row',
-    height: 72,
+    height: 64,
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingHorizontal: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
   },
   tabButton: {
     flex: 1,
@@ -190,18 +192,10 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   tabLabel: {
-    fontFamily: theme.typography.caption.fontFamily,
-    fontSize: responsiveFontSize(11),
+    fontFamily: theme.typography.bodySmall.fontFamily,
+    fontSize: responsiveFontSize(14),
+    lineHeight: 20,
     marginTop: 4,
-    fontWeight: '500',
-  },
-  activeIndicator: {
-    position: 'absolute',
-    bottom: 4,
-    width: 20,
-    height: 2,
-    backgroundColor: theme.colors.neutral[900],
-    borderRadius: 1,
   },
   floatingButtonContainer: {
     flex: 1,
