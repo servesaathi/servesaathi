@@ -12,9 +12,9 @@ import { BaseButtonProps } from './types';
 
 /**
  * TertiaryButton — grey outlined style
- * Default:  bg #E8E8E8 (Neutral 100) + border 1.35px #D2D1D1 (Neutral 200)
- * Pressed:  bg #A5A4A3 (Neutral 300)
- * Disabled: bg #E8E8E8 (Neutral 100) + border 1.35px #E8E8E8 (Neutral 100, invisible)
+ * Default:  bg #E8E8E8 (Neutral 100) + border 1.35px #D2D1D1 (Neutral 200), text #4B4946 (Neutral 700)
+ * Pressed:  bg #A5A4A3 (Neutral 300), text white (matches Primary/Secondary pressed style)
+ * Disabled: bg #E8E8E8 (Neutral 100) + border 1.35px #E8E8E8 (Neutral 100, invisible), text #A5A4A3 (Neutral 300)
  */
 export const TertiaryButton: React.FC<BaseButtonProps> = ({
   onPress,
@@ -30,8 +30,9 @@ export const TertiaryButton: React.FC<BaseButtonProps> = ({
   const normalBg = theme.colors.neutral[100];
   const pressedBg = theme.colors.neutral[300];
   const disabledBg = theme.colors.neutral[100];
-  const textColor = theme.colors.neutral[900];
-  const disabledTextColor = theme.colors.neutral[400];
+  const textColor = theme.colors.neutral[700];
+  const pressedTextColor = '#FFFFFF';
+  const disabledTextColor = theme.colors.neutral[300];
 
   return (
     <Pressable
@@ -53,23 +54,31 @@ export const TertiaryButton: React.FC<BaseButtonProps> = ({
         style,
       ]}
     >
-      {loading ? (
-        <ActivityIndicator size="small" color={theme.colors.neutral[700]} />
-      ) : (
-        <>
-          {prefixIcon && prefixIcon}
-          <Text
-            style={[
-              styles.label,
-              size === 'small' ? styles.smallLabel : styles.mediumLabel,
-              { color: disabled ? disabledTextColor : textColor, marginLeft: prefixIcon ? theme.spacing.sm : 0 },
-              labelStyle,
-            ]}
-          >
-            {label}
-          </Text>
-        </>
-      )}
+      {({ pressed }) =>
+        loading ? (
+          <ActivityIndicator
+            size="small"
+            color={disabled ? disabledTextColor : pressed ? pressedTextColor : textColor}
+          />
+        ) : (
+          <>
+            {prefixIcon && prefixIcon}
+            <Text
+              style={[
+                styles.label,
+                size === 'small' ? styles.smallLabel : styles.mediumLabel,
+                {
+                  color: disabled ? disabledTextColor : pressed ? pressedTextColor : textColor,
+                  marginLeft: prefixIcon ? theme.spacing.sm : 0,
+                },
+                labelStyle,
+              ]}
+            >
+              {label}
+            </Text>
+          </>
+        )
+      }
     </Pressable>
   );
 };
@@ -79,7 +88,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
-    borderRadius: theme.radius.sm, // 6px per design spec
+    borderRadius: 6, // per design spec (theme.radius.sm is 8, doesn't match)
     borderWidth: 1.35,
   },
   medium: {

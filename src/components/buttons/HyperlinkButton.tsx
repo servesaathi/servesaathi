@@ -24,7 +24,7 @@ export const HyperlinkButton: React.FC<HyperlinkButtonProps> = ({
   onPress,
   label,
   disabled = false,
-  underline = true,
+  underline = false,
   textColor,
   style,
   labelStyle,
@@ -67,8 +67,8 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.xs,
   },
   label: {
-    fontFamily: theme.typography.bodyMedium.fontFamily,
-    fontSize: responsiveFontSize(theme.typography.bodyMedium.fontSize),
+    fontFamily: theme.typography.bodyLarge.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.bodyLarge.fontSize),
     fontWeight: '500',
   },
 });

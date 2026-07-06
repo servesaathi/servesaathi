@@ -12,9 +12,9 @@ import { BaseButtonProps } from './types';
 
 /**
  * DestructiveButton — red outlined / filled style
- * Default:  bg #FEF2F2 (red-input) + border 1px #FEE2E2 (red-bg)
- * Pressed:  bg #DC2626 (red) — becomes solid red fill
- * Disabled: bg #FEF2F2 (red-input) + border 1.35px #FEE2E2 (red-bg)
+ * Default:  bg #FEF2F2 (red-input) + border 1px #FEE2E2 (red-bg), text/icon #991B1B (red-text*icon)
+ * Pressed:  bg #DC2626 (red) — becomes solid red fill, text white
+ * Disabled: bg #FEF2F2 (red-input) + border 1.35px #FEE2E2 (red-bg), text/icon #F87171 (red-flagged)
  */
 export const DestructiveButton: React.FC<BaseButtonProps> = ({
   onPress,
@@ -29,9 +29,9 @@ export const DestructiveButton: React.FC<BaseButtonProps> = ({
   const defaultBg = theme.colors.status.errorBg;
   const pressedBg = theme.colors.status.error;
   const disabledBg = theme.colors.status.errorBg;
-  const defaultTextColor = theme.colors.status.error;
+  const defaultTextColor = theme.colors.status.errorTextDefault;
   const pressedTextColor = '#FFFFFF';
-  const disabledTextColor = theme.colors.forestGreen[200];
+  const disabledTextColor = theme.colors.status.errorTextDisabled;
 
   return (
     <Pressable
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
-    borderRadius: theme.radius.sm, // 6px per design spec
+    borderRadius: 6, // per design spec (theme.radius.sm is 8, doesn't match)
     borderWidth: 1,
   },
   medium: {

@@ -8,6 +8,7 @@ export const images = {
   splashIcon: require('../../assets/splash-icon.png'),
   logo: require('../../assets/splash-icon.png'),
   languageSelectIllustrator: require('../../assets/language_selector_illustrator.png'),
+  securityIllustration: require('../../assets/illustrations/security.png'),
 };
 
 export type Images = typeof images;

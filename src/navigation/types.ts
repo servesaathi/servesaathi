@@ -8,6 +8,8 @@ export type RootStackParamList = {
   Login: undefined;
   OTP: undefined;
   RoleSelection: undefined;
+  CreateAccount: undefined;
+  Permission: undefined;
   Home: undefined;
 };
 
