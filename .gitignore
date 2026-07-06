@@ -33,3 +33,6 @@ coverage/
 # --- Temporary/Debug Files ---
 *.bak
 *.orig
+
+android
+ios
