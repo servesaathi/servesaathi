@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "cover",
-      "backgroundColor": "#09190A"
+      "backgroundColor": "#2E7D32"
     },
     "ios": {
       "supportsTablet": true,
@@ -17,8 +17,9 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#09190A",
-        "foregroundImage": "./assets/icon.png"
+        "backgroundColor": "#123214",
+        "backgroundImage": "./assets/adaptive-icon-bg.png",
+        "foregroundImage": "./assets/adaptive-icon.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.anonymous.ServeSaathi"
@@ -27,7 +28,15 @@
       "favicon": "./assets/icon.png"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#2E7D32",
+          "image": "./assets/adaptive-icon.png",
+          "imageWidth": 150
+        }
+      ]
     ]
   }
 }

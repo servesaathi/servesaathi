@@ -3,8 +3,6 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import storageClient from '../services/storage';
 
 interface AppState {
-  isSplashVisible: boolean;
-  setSplashVisible: (visible: boolean) => void;
   networkConnected: boolean;
   setNetworkConnected: (connected: boolean) => void;
   language: 'en' | 'hi';
@@ -20,8 +18,6 @@ const customPersistStorage = {
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
-      isSplashVisible: true,
-      setSplashVisible: (visible) => set({ isSplashVisible: visible }),
       networkConnected: true,
       setNetworkConnected: (connected) => set({ networkConnected: connected }),
       language: 'en',
