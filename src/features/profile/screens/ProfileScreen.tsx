@@ -240,7 +240,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: theme.typography.h2.fontFamily,
     fontSize: responsiveFontSize(22),
-    fontWeight: 'bold',
     color: theme.colors.neutral[900],
   },
   tabsContainer: {
@@ -264,7 +263,6 @@ const styles = StyleSheet.create({
   tabText: {
     fontFamily: theme.typography.bodyMedium.fontFamily,
     fontSize: responsiveFontSize(14),
-    fontWeight: '600',
     color: '#FFFFFF',
   },
   activeTabText: {
@@ -295,7 +293,6 @@ const styles = StyleSheet.create({
   patientName: {
     fontFamily: theme.typography.h3.fontFamily,
     fontSize: responsiveFontSize(20),
-    fontWeight: 'bold',
     color: '#FFFFFF',
   },
   patientAge: {
@@ -305,7 +302,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   bullet: {
-    fontWeight: 'bold',
+    fontFamily: theme.fonts.bold,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -318,7 +315,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: theme.typography.h3.fontFamily,
     fontSize: responsiveFontSize(18),
-    fontWeight: 'bold',
     color: theme.colors.neutral[900],
   },
   editButton: {
@@ -326,10 +322,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   editButtonText: {
-    fontFamily: theme.typography.bodyMedium.fontFamily,
+    fontFamily: theme.fonts.bold,
     fontSize: responsiveFontSize(15),
     color: theme.colors.primary,
-    fontWeight: 'bold',
     marginRight: 4,
   },
   editArrow: {
@@ -359,7 +354,6 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.bodyMedium.fontFamily,
     fontSize: responsiveFontSize(15),
     color: theme.colors.neutral[800],
-    fontWeight: '500',
     textAlign: 'right',
   },
   interestsContainer: {
@@ -383,7 +377,6 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.bodyMedium.fontFamily,
     fontSize: responsiveFontSize(14),
     color: theme.colors.neutral[700],
-    fontWeight: '500',
   },
   contactHeaderContainer: {
     paddingHorizontal: theme.spacing.lg,
@@ -417,10 +410,9 @@ const styles = StyleSheet.create({
     paddingLeft: 4,
   },
   contactName: {
-    fontFamily: theme.typography.bodyLarge.fontFamily,
+    fontFamily: theme.fonts.bold,
     fontSize: responsiveFontSize(16),
     color: theme.colors.neutral[900],
-    fontWeight: 'bold',
   },
   contactNameRow: {
     flexDirection: 'row',
@@ -434,10 +426,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   verifiedText: {
-    fontFamily: theme.typography.caption.fontFamily,
+    fontFamily: theme.fonts.semiBold,
     fontSize: responsiveFontSize(11),
     color: theme.colors.primary,
-    fontWeight: '600',
   },
   contactDetails: {
     fontFamily: theme.typography.bodyMedium.fontFamily,
@@ -453,7 +444,6 @@ const styles = StyleSheet.create({
   placeholderText: {
     fontFamily: theme.typography.h3.fontFamily,
     fontSize: responsiveFontSize(18),
-    fontWeight: 'bold',
     color: theme.colors.neutral[800],
   },
   placeholderSubtext: {

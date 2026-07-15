@@ -8,6 +8,8 @@ import { responsiveFontSize } from '@/utils/responsive';
 import { Screen, Header } from '@/components/layouts';
 import { ProfileScreen } from '@/features/profile/screens/ProfileScreen';
 import { SettingsScreen } from '@/features/settings/screens/SettingsScreen';
+import { HomeScreen as HomeTabScreen } from '@/features/home/screens/HomeScreen';
+import { ServicesScreen } from '@/features/services/screens/ServicesScreen';
 
 const TabScreenLayout = ({ name, showLogo = false }: { name: string; showLogo?: boolean }) => (
   <Screen safeAreaBottom={false} style={styles.screenContent}>
@@ -18,8 +20,8 @@ const TabScreenLayout = ({ name, showLogo = false }: { name: string; showLogo?: 
   </Screen>
 );
 
-const HomeScreen = () => <TabScreenLayout name="Home" showLogo={true} />;
-const ServiceScreen = () => <TabScreenLayout name="Service" />;
+const HomeScreen = () => <HomeTabScreen />;
+const ServiceScreen = () => <ServicesScreen />;
 const HelplineScreen = () => <TabScreenLayout name="Helpline" />;
 const SettingScreen = () => <SettingsScreen />;
 
@@ -220,6 +222,5 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(11),
     color: theme.colors.neutral[500],
     marginTop: 4,
-    fontWeight: '500',
   },
 });

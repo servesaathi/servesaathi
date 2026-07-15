@@ -10,7 +10,22 @@ export type RootStackParamList = {
   RoleSelection: undefined;
   CreateAccount: undefined;
   Permission: undefined;
+  ProfileSetup: undefined;
+  ProfileAddress: undefined;
+  ProfileHealth: undefined;
+  ProfileInterests: undefined;
+  ProfileCircle: undefined;
+  ProfileAccessibility: undefined;
+  Subscription: undefined;
+  PaymentMethod: undefined;
+  SettingUp: undefined;
   Home: undefined;
+  PersonalizedQuestions: { serviceType: string };
+  CaregiverList: { serviceType: string };
+  CaregiverDetail: { orgId: string };
+  Comparison: { orgIds: string[] };
+  RequestSetup: { orgId: string };
+  RequestDetails: undefined;
 };
 
 export type RootNavigationProp<RouteName extends keyof RootStackParamList> = StackNavigationProp<
