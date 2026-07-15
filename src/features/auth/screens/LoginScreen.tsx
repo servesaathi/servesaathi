@@ -9,6 +9,7 @@ import { PrimaryButton, TertiaryButton } from '@/components/buttons';
 import { TextInput } from '@/components/inputs';
 import { scale, responsiveFontSize } from '@/utils/responsive';
 import { useTranslation } from '@/utils/localization';
+import { digitsOnly, isValidIndianMobile } from '@/utils/validation';
 import { BrandLogoSVG } from '@/components/BrandLogoSVG';
 
 // Google Colored Vector Icon
@@ -37,8 +38,22 @@ export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'Login'>>();
   const { t } = useTranslation();
   const [mobile, setMobile] = useState('');
+  const [mobileTouched, setMobileTouched] = useState(false);
+
+  const isMobileValid = isValidIndianMobile(mobile);
+  // Show an error only once the user has left the field (or filled 10 digits) and it's invalid
+  const mobileError =
+    (mobileTouched || mobile.length === 10) && mobile.length > 0 && !isMobileValid
+      ? 'Enter a valid 10-digit mobile number starting with 6–9'
+      : undefined;
+
+  const handleMobileChange = (value: string) => {
+    // Digits only, hard-capped at 10 — blocks typing/pasting anything longer
+    setMobile(digitsOnly(value).slice(0, 10));
+  };
 
   const handleContinue = () => {
+    if (!isMobileValid) return;
     navigation.navigate('OTP');
   };
 
@@ -92,16 +107,19 @@ export const LoginScreen: React.FC = () => {
         <TextInput
           label="Mobile Number"
           placeholder="000-000-0000"
-          keyboardType="phone-pad"
+          keyboardType="number-pad"
+          maxLength={10}
           value={mobile}
-          onChangeText={setMobile}
+          onChangeText={handleMobileChange}
+          onBlur={() => setMobileTouched(true)}
+          error={mobileError}
           prefixIcon={<CountryCodePrefix />}
         />
 
         <Spacer size={24} />
 
-        {/* CONTINUE BUTTON */}
-        <PrimaryButton label="Continue" onPress={handleContinue} />
+        {/* CONTINUE BUTTON — stays disabled until the mobile number is valid */}
+        <PrimaryButton label="Continue" onPress={handleContinue} disabled={!isMobileValid} />
 
         <Spacer size={64} />
 
@@ -160,7 +178,6 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.h2.fontFamily,
     fontSize: responsiveFontSize(theme.typography.h2.fontSize),
     color: theme.colors.primary,
-    fontWeight: 'bold',
   },
   logoSvg: {
     marginTop: theme.spacing.sm,
@@ -183,7 +200,6 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.bodyLarge.fontFamily,
     fontSize: responsiveFontSize(16),
     color: theme.colors.neutral[900],
-    fontWeight: '500',
   },
   chevron: {
     marginLeft: 6,
@@ -237,10 +253,9 @@ const styles = StyleSheet.create({
     color: theme.colors.neutral[700],
   },
   loginLink: {
-    fontFamily: theme.typography.bodyMedium.fontFamily,
+    fontFamily: theme.fonts.bold,
     fontSize: responsiveFontSize(14),
     color: theme.colors.primary,
-    fontWeight: 'bold',
   },
 });
 

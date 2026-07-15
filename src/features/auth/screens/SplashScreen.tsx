@@ -17,10 +17,11 @@ export const SplashScreen: React.FC = () => {
   const setSplashVisible = useAppStore((state) => state.setSplashVisible);
   const { t } = useTranslation();
 
-  // Load custom Atkinson Hyperlegible fonts
+  // Load "Atkinson Hyperlegible Next" — the exact family used in the Figma design
   const [fontsLoaded] = useFonts({
-    'AtkinsonHyperlegible-Regular': require('../../../../assets/fonts/AtkinsonHyperlegible-Regular.ttf'),
-    'AtkinsonHyperlegible-Bold': require('../../../../assets/fonts/AtkinsonHyperlegible-Bold.ttf'),
+    'AtkinsonHyperlegibleNext-Regular': require('../../../../assets/fonts/AtkinsonHyperlegibleNext-Regular.ttf'),
+    'AtkinsonHyperlegibleNext-SemiBold': require('../../../../assets/fonts/AtkinsonHyperlegibleNext-SemiBold.ttf'),
+    'AtkinsonHyperlegibleNext-Bold': require('../../../../assets/fonts/AtkinsonHyperlegibleNext-Bold.ttf'),
   });
 
   useEffect(() => {
@@ -52,7 +53,7 @@ export const SplashScreen: React.FC = () => {
       />
       {/* Dark Green Gradient Overlay for readability and premium look */}
       <LinearGradient
-        colors={['rgba(28, 75, 30, 0.40)', 'rgba(9, 25, 10, 0.60)']}
+        colors={['rgba(46, 125, 50, 0.50)', 'rgba(18, 50, 20, 0.55)']}
         style={styles.backgroundImage}
       />
 
@@ -97,7 +98,6 @@ const styles = StyleSheet.create({
   subtitle: {
     fontFamily: theme.typography.h2.fontFamily,
     fontSize: responsiveFontSize(theme.typography.h2.fontSize),
-    fontWeight: '600',
     color: '#FFFFFF', // Pure white slogan text
     textAlign: 'center',
     marginTop: theme.spacing.lg,

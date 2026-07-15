@@ -1,11 +1,11 @@
 import React from 'react';
-import { StyleSheet, Text, View, Pressable, Dimensions, Image } from 'react-native';
+import { StyleSheet, Text, View, Pressable, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import Svg, { Path, Circle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/theme';
 import { Screen, Spacer } from '@/components/layouts';
 import { PrimaryButton } from '@/components/buttons';
+import { Checkbox } from '@/components/inputs';
 import { scale, responsiveFontSize } from '@/utils/responsive';
 import { RootNavigationProp } from '@/navigation/types';
 import { useAppStore } from '@/store/app.store';
@@ -56,23 +56,7 @@ export const LanguageSelectScreen: React.FC = () => {
               ]}
             >
               <Text style={styles.cardText}>English</Text>
-              {language === 'en' ? (
-                // Active orange checkbox (rounded square)
-                <View style={styles.checkboxActive}>
-                  <Svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                    <Path
-                      d="M4 12L9 17L20 6"
-                      stroke="#FFFFFF"
-                      strokeWidth="3.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </Svg>
-                </View>
-              ) : (
-                // Inactive checkbox
-                <View style={styles.checkboxOutline} />
-              )}
+              <Checkbox checked={language === 'en'} color="orange" onPress={() => setLanguage('en')} />
             </Pressable>
 
             <Spacer size="md" />
@@ -86,23 +70,7 @@ export const LanguageSelectScreen: React.FC = () => {
               ]}
             >
               <Text style={styles.cardText}>हिंदी</Text>
-              {language === 'hi' ? (
-                // Active orange checkbox (rounded square)
-                <View style={styles.checkboxActive}>
-                  <Svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                    <Path
-                      d="M4 12L9 17L20 6"
-                      stroke="#FFFFFF"
-                      strokeWidth="3.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </Svg>
-                </View>
-              ) : (
-                // Inactive checkbox
-                <View style={styles.checkboxOutline} />
-              )}
+              <Checkbox checked={language === 'hi'} color="orange" onPress={() => setLanguage('hi')} />
             </Pressable>
           </View>
         </View>
@@ -174,23 +142,6 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.bodyLarge.fontFamily,
     fontSize: responsiveFontSize(theme.typography.bodyLarge.fontSize),
     color: theme.colors.neutral[900],
-    fontWeight: '600',
-  },
-  checkboxOutline: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    borderWidth: 1.5,
-    borderColor: theme.colors.neutral[200],
-    backgroundColor: '#FFFFFF',
-  },
-  checkboxActive: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    backgroundColor: theme.colors.tertiary, // Orange 500 (#FF751F)
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   footer: {
     marginTop: 'auto',

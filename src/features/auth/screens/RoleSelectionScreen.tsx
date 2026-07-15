@@ -13,7 +13,8 @@ export const RoleSelectionScreen: React.FC = () => {
   const [selectedRole, setSelectedRole] = useState<string>('senior');
 
   const handleCreateAccount = () => {
-    navigation.navigate('CreateAccount');
+    // Figma flow: Join (Choose a role) → Mobile Phone Verify → OTP → Create Account
+    navigation.navigate('Login');
   };
 
   const roles = [
@@ -70,14 +71,15 @@ export const RoleSelectionScreen: React.FC = () => {
           })}
         </View>
 
-        <Spacer size="xxl" />
-
-        <PrimaryButton
-          label="Ready to create an account"
-          onPress={handleCreateAccount}
-          style={styles.actionBtn}
-        />
-        <Spacer size="xl" />
+        {/* Pinned to the bottom like the Figma frame (button at y=720/800) */}
+        <View style={styles.footer}>
+          <PrimaryButton
+            label="Ready to create an account"
+            onPress={handleCreateAccount}
+            style={styles.actionBtn}
+          />
+        </View>
+        <Spacer size="sm" />
       </View>
     </Screen>
   );
@@ -102,7 +104,6 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.h2.fontFamily,
     fontSize: responsiveFontSize(theme.typography.h2.fontSize),
     color: theme.colors.neutral[900],
-    fontWeight: 'bold',
   },
   subtitle: {
     fontFamily: theme.typography.bodyLarge.fontFamily,
@@ -140,5 +141,10 @@ const styles = StyleSheet.create({
   },
   actionBtn: {
     width: '100%',
+  },
+  footer: {
+    marginTop: 'auto',
+    width: '100%',
+    paddingTop: theme.spacing.xxl,
   },
 });

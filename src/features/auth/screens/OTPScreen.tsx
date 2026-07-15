@@ -12,8 +12,12 @@ export const OTPScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'OTP'>>();
   const [otpValue, setOtpValue] = useState('');
 
+  const isOtpComplete = otpValue.length === 4;
+
   const handleContinue = () => {
-    navigation.navigate('RoleSelection');
+    if (!isOtpComplete) return;
+    // Figma flow: OTP Verification → Create Account form
+    navigation.navigate('CreateAccount');
   };
 
   return (
@@ -42,7 +46,12 @@ export const OTPScreen: React.FC = () => {
         <Spacer size="xl" />
         <Spacer size="md" />
 
-        <PrimaryButton label="Continue" onPress={handleContinue} style={styles.button} />
+        <PrimaryButton
+          label="Continue"
+          onPress={handleContinue}
+          style={styles.button}
+          disabled={!isOtpComplete}
+        />
 
         <Spacer size="xl" />
 
@@ -64,7 +73,6 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.h2.fontFamily,
     fontSize: responsiveFontSize(22),
     color: theme.colors.neutral[900],
-    fontWeight: 'bold',
   },
   subtitle: {
     fontFamily: theme.typography.bodyMedium.fontFamily,
@@ -74,7 +82,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   highlightMobile: {
-    fontWeight: 'bold',
+    fontFamily: theme.fonts.bold,
     color: theme.colors.neutral[900],
   },
   button: {
@@ -86,7 +94,7 @@ const styles = StyleSheet.create({
     color: theme.colors.neutral[700],
   },
   resendTimer: {
-    fontWeight: 'bold',
+    fontFamily: theme.fonts.bold,
     color: theme.colors.neutral[900], // Adjust color if specific design needed
   },
 });

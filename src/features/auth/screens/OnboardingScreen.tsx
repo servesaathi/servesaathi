@@ -67,11 +67,15 @@ export const OnboardingScreen: React.FC = () => {
   };
 
   const handleSkip = () => {
-    navigation.replace('Home');
+    // Jump to the last slide, where the Create account / Log in choice lives
+    const lastIndex = SLIDES_DATA.length - 1;
+    setActiveSlide(lastIndex);
+    flatListRef.current?.scrollToIndex({ index: lastIndex, animated: true });
   };
 
   const handleCreateAccount = () => {
-    navigation.replace('Login');
+    // New-user flow starts with choosing a role (Figma: Onboarding → Join)
+    navigation.replace('RoleSelection');
   };
 
   const handleLogin = () => {
@@ -122,7 +126,7 @@ export const OnboardingScreen: React.FC = () => {
                 />
               </View>
 
-              {/* Content Section (Title, Subtitle) */}
+              {/* Content Section (Title, Subtitle, Dots) */}
               <View style={styles.contentContainer}>
                 {/* Heading */}
                 <Text style={styles.title}>
@@ -135,31 +139,31 @@ export const OnboardingScreen: React.FC = () => {
                 <Text style={styles.description}>
                   {t(item.descKey)}
                 </Text>
+
+                <Spacer size="lg" />
+
+                {/* Stepper indicator dots — directly under the description, per Figma */}
+                <View style={styles.indicatorContainer}>
+                  {SLIDES_DATA.map((_, index) => {
+                    const isActive = index === activeSlide;
+                    return (
+                      <View
+                        key={index}
+                        style={[
+                          styles.dot,
+                          isActive ? styles.activeDot : styles.inactiveDot,
+                        ]}
+                      />
+                    );
+                  })}
+                </View>
               </View>
             </View>
           )}
         />
 
-        {/* Static Footer Section (Pagination Dots and Action Buttons) */}
+        {/* Static Footer Section (Action Buttons) */}
         <View style={styles.footerContainer}>
-          {/* Stepper indicator dots */}
-          <View style={styles.indicatorContainer}>
-            {SLIDES_DATA.map((_, index) => {
-              const isActive = index === activeSlide;
-              return (
-                <View
-                  key={index}
-                  style={[
-                    styles.dot,
-                    isActive ? styles.activeDot : styles.inactiveDot,
-                  ]}
-                />
-              );
-            })}
-          </View>
-
-          <Spacer size="xxl" />
-
           {/* Action Row */}
           <View style={styles.actionSection}>
             {activeSlide < SLIDES_DATA.length - 1 ? (
@@ -254,8 +258,6 @@ const styles = StyleSheet.create({
   contentContainer: {
     alignItems: 'center',
     paddingHorizontal: scale(24),
-    height: verticalScale(142),
-    justifyContent: 'center',
     marginTop: verticalScale(16),
   },
   title: {
@@ -316,7 +318,6 @@ const styles = StyleSheet.create({
   skipButtonText: {
     fontFamily: theme.typography.label.fontFamily,
     fontSize: responsiveFontSize(theme.typography.label.fontSize),
-    fontWeight: 'bold',
     color: '#FFFFFF',
   },
   nextCircleButton: {

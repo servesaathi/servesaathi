@@ -7,6 +7,9 @@ import { Screen, Spacer, Header } from '@/components/layouts';
 import { PrimaryButton } from '@/components/buttons';
 import { TextInput, PasswordInput } from '@/components/inputs';
 import { responsiveFontSize } from '@/utils/responsive';
+import { isValidName, isValidEmail, isValidPassword, MIN_PASSWORD_LENGTH } from '@/utils/validation';
+
+type Touched = Partial<Record<'firstName' | 'lastName' | 'email' | 'password' | 'confirmPassword', boolean>>;
 
 export const CreateAccountScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'CreateAccount'>>();
@@ -15,8 +18,25 @@ export const CreateAccountScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [touched, setTouched] = useState<Touched>({});
+
+  const markTouched = (field: keyof Touched) => setTouched((prev) => ({ ...prev, [field]: true }));
+
+  const errors = {
+    firstName: !isValidName(firstName) ? 'Enter a valid first name' : undefined,
+    lastName: !isValidName(lastName) ? 'Enter a valid last name' : undefined,
+    email: !isValidEmail(email) ? 'Enter a valid email address' : undefined,
+    password: !isValidPassword(password)
+      ? `Password must be at least ${MIN_PASSWORD_LENGTH} characters`
+      : undefined,
+    confirmPassword: confirmPassword !== password || !confirmPassword
+      ? 'Passwords do not match'
+      : undefined,
+  };
+  const isFormValid = Object.values(errors).every((e) => !e);
 
   const handleCreateAccount = () => {
+    if (!isFormValid) return;
     navigation.navigate('Permission');
   };
 
@@ -30,12 +50,16 @@ export const CreateAccountScreen: React.FC = () => {
           placeholder="Enter recipient's name"
           value={firstName}
           onChangeText={setFirstName}
+          onBlur={() => markTouched('firstName')}
+          error={touched.firstName && firstName.length > 0 ? errors.firstName : undefined}
         />
         <TextInput
           label="Last name"
           placeholder="Enter recipient's last name"
           value={lastName}
           onChangeText={setLastName}
+          onBlur={() => markTouched('lastName')}
+          error={touched.lastName && lastName.length > 0 ? errors.lastName : undefined}
         />
         <TextInput
           label="Email address"
@@ -44,18 +68,24 @@ export const CreateAccountScreen: React.FC = () => {
           autoCapitalize="none"
           value={email}
           onChangeText={setEmail}
+          onBlur={() => markTouched('email')}
+          error={touched.email && email.length > 0 ? errors.email : undefined}
         />
         <PasswordInput
           label="New Password"
           placeholder="Enter your password"
           value={password}
           onChangeText={setPassword}
+          onBlur={() => markTouched('password')}
+          error={touched.password && password.length > 0 ? errors.password : undefined}
         />
         <PasswordInput
           label="Confirm Password"
           placeholder="Confirm your password"
           value={confirmPassword}
           onChangeText={setConfirmPassword}
+          onBlur={() => markTouched('confirmPassword')}
+          error={touched.confirmPassword && confirmPassword.length > 0 ? errors.confirmPassword : undefined}
         />
 
         <Text style={styles.terms}>
@@ -66,7 +96,7 @@ export const CreateAccountScreen: React.FC = () => {
 
         <Spacer size="xl" />
 
-        <PrimaryButton label="Create an account" onPress={handleCreateAccount} />
+        <PrimaryButton label="Create an account" onPress={handleCreateAccount} disabled={!isFormValid} />
         <Spacer size="xl" />
       </View>
     </Screen>

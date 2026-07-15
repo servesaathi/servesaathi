@@ -13,7 +13,8 @@ export const PermissionScreen: React.FC = () => {
   const [agreed, setAgreed] = useState(false);
 
   const handleProceed = () => {
-    navigation.replace('Home');
+    // Figma flow: Permission → Profile Creation wizard
+    navigation.replace('ProfileSetup');
   };
 
   return (
@@ -23,7 +24,7 @@ export const PermissionScreen: React.FC = () => {
       <View style={styles.content}>
         <View style={styles.topGroup}>
           <Image
-            source={theme.images.cloudBlob}
+            source={theme.images.permissionBlob}
             style={styles.illustration}
             resizeMode="contain"
           />
@@ -43,8 +44,11 @@ export const PermissionScreen: React.FC = () => {
           </View>
         </View>
 
-        <PrimaryButton label="Proceed" onPress={handleProceed} />
-        <Spacer size="xl" />
+        {/* Pinned to the bottom like the Figma frame (button at y=720/800) */}
+        <View style={styles.footer}>
+          <PrimaryButton label="Proceed" onPress={handleProceed} />
+        </View>
+        <Spacer size="sm" />
       </View>
     </Screen>
   );
@@ -53,13 +57,12 @@ export const PermissionScreen: React.FC = () => {
 const styles = StyleSheet.create({
   content: {
     flex: 1,
-    justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.xxl,
-    paddingTop: theme.spacing.xl,
+    paddingTop: theme.spacing.xxxl, // Figma: 32 below the header
   },
   topGroup: {
     alignItems: 'center',
-    gap: theme.spacing.xxxl,
+    gap: theme.spacing.hud, // Figma: 48 between illustration and paragraph
   },
   illustration: {
     width: scale(244),
@@ -76,12 +79,16 @@ const styles = StyleSheet.create({
     lineHeight: theme.typography.bodyLarge.lineHeight,
     color: theme.colors.neutral[700],
     textAlign: 'center',
+    maxWidth: 300, // Figma: paragraph is 300 wide inside the 312 content column
   },
   checkRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.xl,
+    width: '100%', // Figma: checkbox row spans the full 312px content width
+  },
+  footer: {
+    marginTop: 'auto',
   },
   agreeText: {
     flex: 1,
