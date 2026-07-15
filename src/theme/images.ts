@@ -9,6 +9,8 @@ export const images = {
   logo: require('../../assets/splash-icon.png'),
   languageSelectIllustrator: require('../../assets/language_selector_illustrator.png'),
   securityIllustration: require('../../assets/illustrations/security.png'),
+  permissionBlob: require('../../assets/illustrations/permission_blob.png'),
+  settingUpScribble: require('../../assets/illustrations/settingup_scribble.png'),
 };
 
 export type Images = typeof images;
