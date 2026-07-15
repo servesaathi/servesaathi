@@ -97,10 +97,13 @@ const styles = StyleSheet.create({
     borderTopRightRadius: theme.radius.md,
   },
   iconCircle: {
+    // Hi-fi "Our Service" cards: light circle with a green ring and green icon
     width: 40,
     height: 40,
     borderRadius: 200,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.background.layout,
+    borderWidth: 1.5,
+    borderColor: theme.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },

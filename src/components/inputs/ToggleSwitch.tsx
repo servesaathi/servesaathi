@@ -6,6 +6,7 @@ interface ToggleSwitchProps {
   value: boolean;
   onValueChange?: (value: boolean) => void;
   disabled?: boolean;
+  color?: 'green' | 'orange';
   style?: StyleProp<ViewStyle>;
 }
 
@@ -19,6 +20,7 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
   value,
   onValueChange,
   disabled = false,
+  color = 'green',
   style,
 }) => {
   const anim = useRef(new Animated.Value(value ? 1 : 0)).current;
@@ -33,7 +35,10 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
 
   const trackColor = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [theme.colors.forestGreen[100], theme.colors.primary],
+    outputRange: [
+      theme.colors.forestGreen[100],
+      color === 'orange' ? theme.colors.tertiary : theme.colors.primary,
+    ],
   });
 
   const thumbTranslate = anim.interpolate({

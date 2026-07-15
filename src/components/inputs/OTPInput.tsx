@@ -94,7 +94,6 @@ const styles = StyleSheet.create({
   otpText: {
     fontFamily: theme.typography.h1.fontFamily,
     fontSize: responsiveFontSize(theme.typography.h1.fontSize),
-    fontWeight: 'bold',
     color: theme.colors.neutral[900],
     width: '100%',
     height: '100%',

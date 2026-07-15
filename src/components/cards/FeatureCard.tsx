@@ -64,7 +64,6 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.h4.fontFamily,
     fontSize: responsiveFontSize(theme.typography.h4.fontSize),
     color: theme.colors.neutral[900],
-    fontWeight: 'bold',
     marginBottom: theme.spacing.xs,
   },
   featureDesc: {

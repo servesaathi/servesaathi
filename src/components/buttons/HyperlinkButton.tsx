@@ -67,8 +67,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.xs,
   },
   label: {
-    fontFamily: theme.typography.bodyLarge.fontFamily,
+    fontFamily: theme.fonts.semiBold,
     fontSize: responsiveFontSize(theme.typography.bodyLarge.fontSize),
-    fontWeight: '500',
   },
 });

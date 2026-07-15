@@ -52,7 +52,6 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontFamily: theme.typography.h5.fontFamily,
     fontSize: responsiveFontSize(theme.typography.h5.fontSize),
-    fontWeight: 'bold',
     marginBottom: theme.spacing.xs,
   },
   infoDesc: {

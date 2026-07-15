@@ -140,6 +140,6 @@ const styles = StyleSheet.create({
   },
   plainLabelActive: {
     color: theme.colors.primary,
-    fontWeight: '600',
+    fontFamily: theme.fonts.semiBold,
   },
 });

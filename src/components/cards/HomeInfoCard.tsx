@@ -205,7 +205,6 @@ const styles = StyleSheet.create({
   },
   dot: {
     color: theme.colors.tertiary,
-    fontWeight: 'bold',
   },
   walletLabel: {
     fontFamily: theme.typography.label.fontFamily,

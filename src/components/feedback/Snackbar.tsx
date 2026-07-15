@@ -77,5 +77,5 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dismissBtn: { paddingLeft: theme.spacing.md },
-  dismissText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: responsiveFontSize(16) },
+  dismissText: { color: '#FFFFFF', fontFamily: theme.fonts.bold, fontSize: responsiveFontSize(16) },
 });

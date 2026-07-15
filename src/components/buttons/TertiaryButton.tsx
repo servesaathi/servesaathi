@@ -109,10 +109,8 @@ const styles = StyleSheet.create({
   },
   mediumLabel: {
     fontSize: responsiveFontSize(theme.typography.label.fontSize),
-    fontWeight: '600',
   },
   smallLabel: {
     fontSize: responsiveFontSize(theme.typography.smallCaption.fontSize),
-    fontWeight: '600',
   },
 });

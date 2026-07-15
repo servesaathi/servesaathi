@@ -41,7 +41,6 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(theme.typography.h4.fontSize),
     color: theme.colors.neutral[900],
     marginTop: theme.spacing.md,
-    fontWeight: 'bold',
   },
   subText: {
     fontFamily: theme.typography.bodyMedium.fontFamily,

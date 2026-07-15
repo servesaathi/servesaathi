@@ -45,6 +45,44 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
+  if (stepper) {
+    // Progress Indicator style: back button, dashes filling the row, "n of total" at far right
+    return (
+      <View
+        style={[
+          styles.container,
+          transparent && styles.transparent,
+          { paddingTop: insets.top + theme.spacing.lg, paddingBottom: theme.spacing.sm },
+        ]}
+      >
+        {leftIcon !== 'none' && (
+          <IconButton
+            type={leftIcon}
+            accessibilityLabel={leftIcon === 'back' ? 'Go back' : 'Close'}
+            onPress={handleLeftPress}
+            size={40}
+          />
+        )}
+        <View style={styles.stepperFill}>
+          <View style={styles.dashesContainer}>
+            {Array.from({ length: stepper.total }).map((_, i) => (
+              <View
+                key={i}
+                style={[
+                  styles.dash,
+                  i < stepper.current ? styles.dashActive : styles.dashInactive,
+                ]}
+              />
+            ))}
+          </View>
+          <Text style={styles.stepperText}>
+            {stepper.current} of {stepper.total}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View
       style={[
@@ -62,24 +100,6 @@ export const Header: React.FC<HeaderProps> = ({
             onPress={handleLeftPress}
             size={40}
           />
-        )}
-        {stepper && (
-          <View style={styles.stepperContainer}>
-            <View style={styles.dashesContainer}>
-              {Array.from({ length: stepper.total }).map((_, i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.dash,
-                    i < stepper.current ? styles.dashActive : styles.dashInactive,
-                  ]}
-                />
-              ))}
-            </View>
-            <Text style={styles.stepperText}>
-              {stepper.current} of {stepper.total}
-            </Text>
-          </View>
         )}
       </View>
 
@@ -150,10 +170,12 @@ const styles = StyleSheet.create({
     height: 32,
     width: 120,
   },
-  stepperContainer: {
+  stepperFill: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    justifyContent: 'space-between',
+    marginLeft: theme.spacing.xl,
   },
   dashesContainer: {
     flexDirection: 'row',

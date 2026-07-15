@@ -81,7 +81,6 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.h5.fontFamily,
     fontSize: responsiveFontSize(theme.typography.h5.fontSize),
     color: theme.colors.neutral[900],
-    fontWeight: 'bold',
   },
   actionDesc: {
     fontFamily: theme.typography.bodySmall.fontFamily,

@@ -32,10 +32,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: theme.spacing.md,
+    // no internal gap — space-between separates label and checkbox, and long labels
+    // ("Kidney Disease") need the full width to stay on one line like Figma
     borderWidth: 1.5,
     borderRadius: theme.radius.sm,
-    paddingHorizontal: theme.spacing.xxl,
+    // Figma spec is 16px, but "Kidney Disease" measures exactly the available 100px
+    // at that padding (a rounding tie that wraps); 12px guarantees one line everywhere
+    paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.md,
   },
   selected: {
