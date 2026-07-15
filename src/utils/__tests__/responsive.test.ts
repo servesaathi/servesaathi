@@ -1,9 +1,10 @@
 import { describe, test, expect, jest } from '@jest/globals';
 
-// Mock react-native BEFORE importing responsive.ts
+// Mock react-native BEFORE importing responsive.ts.
+// 360×800 matches the Figma guideline base, so scaling is identity on this device.
 jest.mock('react-native', () => ({
   Dimensions: {
-    get: () => ({ width: 375, height: 812 }),
+    get: () => ({ width: 360, height: 800 }),
   },
   PixelRatio: {
     get: () => 2,
@@ -27,13 +28,13 @@ describe('Responsive Layout Utilities', () => {
   test('should scale size proportionally based on screen width', () => {
     const scaledSize = scale(100);
     expect(typeof scaledSize).toBe('number');
-    expect(scaledSize).toBe(100); // Because width is mock 375 (375/375 = 1)
+    expect(scaledSize).toBe(100); // Because width is mock 360 (360/360 = 1)
   });
 
   test('should verticalScale size proportionally based on screen height', () => {
     const verticalScaledSize = verticalScale(100);
     expect(typeof verticalScaledSize).toBe('number');
-    expect(verticalScaledSize).toBe(100); // Height mock 812 (812/812 = 1)
+    expect(verticalScaledSize).toBe(100); // Height mock 800 (800/800 = 1)
   });
 
   test('should compute moderateScale correctly with factors', () => {

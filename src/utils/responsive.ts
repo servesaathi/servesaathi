@@ -2,9 +2,10 @@ import { Dimensions, PixelRatio, Platform } from 'react-native';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-// Guideline sizes based on standard mobile device
-const GUIDELINE_BASE_WIDTH = 375;
-const GUIDELINE_BASE_HEIGHT = 812;
+// Guideline sizes matching the Figma design frames (360×800) so that px values
+// taken from the design render 1:1 on a 360dp device and scale proportionally elsewhere.
+const GUIDELINE_BASE_WIDTH = 360;
+const GUIDELINE_BASE_HEIGHT = 800;
 
 export const responsiveWidth = (wPercent: number): number => {
   return (SCREEN_WIDTH * wPercent) / 100;

@@ -1,7 +1,11 @@
+// Font faces match the Figma design system: "Atkinson Hyperlegible Next"
+// (Regular 400 / SemiBold 600 / Bold 700), loaded in SplashScreen.
+// Pick weight by font file — never layer fontWeight on top of these families,
+// or Android/web will synthesize a faux-bold heavier than the design.
 export const fonts = {
-  regular: 'AtkinsonHyperlegible-Regular',
-  semiBold: 'AtkinsonHyperlegible-Bold',
-  bold: 'AtkinsonHyperlegible-Bold',
+  regular: 'AtkinsonHyperlegibleNext-Regular',
+  semiBold: 'AtkinsonHyperlegibleNext-SemiBold',
+  bold: 'AtkinsonHyperlegibleNext-Bold',
 };
 
 export const typography = {
@@ -69,13 +73,11 @@ export const typography = {
     fontFamily: fonts.semiBold,
     fontSize: 24,
     lineHeight: 30,
-    fontWeight: '600' as const,
   },
   screenParagraph: {
     fontFamily: fonts.regular,
     fontSize: 15,
     lineHeight: 22,
-    fontWeight: '400' as const,
   },
 };
 

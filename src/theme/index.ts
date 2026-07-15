@@ -1,5 +1,5 @@
 import { colors } from './colors';
-import { typography } from './typography';
+import { typography, fonts } from './typography';
 import { spacing } from './spacing';
 import { radius } from './radius';
 import { shadows } from './shadows';
@@ -8,6 +8,7 @@ import { images } from './images';
 export const theme = {
   colors,
   typography,
+  fonts,
   spacing,
   radius,
   shadows,
