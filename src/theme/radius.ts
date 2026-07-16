@@ -6,6 +6,8 @@ export const radius = {
   xl: 20,
   xxl: 24,
   pill: 9999,
+  control: 6, 
+  input: 10, 
 };
 
 export type Radius = typeof radius;

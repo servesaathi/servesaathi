@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   },
   previewCard: {
     backgroundColor: theme.colors.background.base,
-    borderRadius: theme.radius.md,
+    borderRadius: theme.radius.input,
     paddingHorizontal: theme.spacing.xl,
     paddingVertical: theme.spacing.xl,
     alignItems: 'center',
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     paddingVertical: theme.spacing.xxl,
-    borderRadius: theme.radius.md,
+    borderRadius: theme.radius.input,
     borderWidth: 1.5,
     borderColor: theme.colors.border.green,
     backgroundColor: theme.colors.background.base,

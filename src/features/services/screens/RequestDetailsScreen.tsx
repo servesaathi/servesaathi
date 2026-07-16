@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   },
   receivedCard: {
     backgroundColor: theme.colors.background.base,
-    borderRadius: theme.radius.md,
+    borderRadius: theme.radius.sm,
     overflow: 'hidden',
     ...theme.shadows.sm,
   },

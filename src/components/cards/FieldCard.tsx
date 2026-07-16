@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
     backgroundColor: theme.colors.background.base,
     borderLeftWidth: 4,
-    borderRadius: theme.radius.md,
+    borderRadius: theme.radius.sm,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: 10,
     overflow: 'hidden',

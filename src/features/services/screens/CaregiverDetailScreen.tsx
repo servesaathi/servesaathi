@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
   },
   pill: {
     backgroundColor: theme.colors.background.base,
-    borderRadius: theme.radius.sm,
+    borderRadius: theme.radius.control,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
     alignItems: 'center',
@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
   },
   reviewCard: {
     backgroundColor: theme.colors.background.base,
-    borderRadius: theme.radius.md,
+    borderRadius: theme.radius.sm,
     padding: theme.spacing.lg,
     marginBottom: theme.spacing.md,
   },

@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
   },
   orgCard: {
     backgroundColor: theme.colors.background.base,
-    borderRadius: theme.radius.md,
+    borderRadius: theme.radius.sm,
     overflow: 'hidden',
     marginBottom: theme.spacing.lg,
     ...theme.shadows.sm,
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
   },
   compareBtn: {
     backgroundColor: theme.colors.forestGreen[900],
-    borderRadius: 6,
+    borderRadius: theme.radius.control,
     paddingHorizontal: theme.spacing.xxl,
     height: 40,
     alignItems: 'center',

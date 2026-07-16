@@ -71,11 +71,13 @@ export const typography = {
   },
   screenTitle: {
     fontFamily: fonts.semiBold,
+    fontWeight: '600',
     fontSize: 24,
     lineHeight: 30,
   },
   screenParagraph: {
     fontFamily: fonts.regular,
+    fontWeight: '400',
     fontSize: 15,
     lineHeight: 22,
   },

@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     height: 48,
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 10, // per design spec (Figma "Input - Text" uses 10px, not the 6px used by buttons)
+    borderRadius: theme.radius.input,
     paddingHorizontal: theme.spacing.md,
     backgroundColor: theme.colors.background.base,
   },

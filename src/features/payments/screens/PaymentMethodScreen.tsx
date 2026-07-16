@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1.5,
-    borderRadius: theme.radius.sm,
+    borderRadius: theme.radius.control,
     paddingHorizontal: theme.spacing.xxl,
     paddingVertical: theme.spacing.md,
   },

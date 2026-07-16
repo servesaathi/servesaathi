@@ -85,16 +85,16 @@ const styles = StyleSheet.create({
   eventField: {
     borderLeftWidth: 4,
     borderLeftColor: theme.colors.primary,
-    borderRadius: theme.radius.md,
+    borderRadius: theme.radius.sm,
   },
   statusField: {
     borderBottomWidth: 4,
     borderBottomColor: theme.colors.primary,
-    borderRadius: theme.radius.md,
+    borderRadius: theme.radius.sm,
   },
   categoryField: {
-    borderTopLeftRadius: theme.radius.md,
-    borderTopRightRadius: theme.radius.md,
+    borderTopLeftRadius: theme.radius.sm,
+    borderTopRightRadius: theme.radius.sm,
   },
   iconCircle: {
     // Hi-fi "Our Service" cards: light circle with a green ring and green icon
@@ -130,8 +130,8 @@ const styles = StyleSheet.create({
   },
   categoryFooter: {
     backgroundColor: theme.colors.primary,
-    borderBottomLeftRadius: theme.radius.md,
-    borderBottomRightRadius: theme.radius.md,
+    borderBottomLeftRadius: theme.radius.sm,
+    borderBottomRightRadius: theme.radius.sm,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.xs,
     alignItems: 'center',

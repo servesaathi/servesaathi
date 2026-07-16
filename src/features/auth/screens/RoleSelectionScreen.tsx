@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.xxl,
-    borderRadius: 6, // per design spec (theme.radius.sm is 8, doesn't match)
+    borderRadius: theme.radius.control,
     borderWidth: 1.5,
   },
   activeCard: {

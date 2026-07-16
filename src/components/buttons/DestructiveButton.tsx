@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
-    borderRadius: 6, // per design spec (theme.radius.sm is 8, doesn't match)
+    borderRadius: theme.radius.control,
     borderWidth: 1,
   },
   medium: {
