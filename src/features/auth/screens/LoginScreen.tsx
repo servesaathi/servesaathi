@@ -11,6 +11,8 @@ import { scale, responsiveFontSize } from '@/utils/responsive';
 import { useTranslation } from '@/utils/localization';
 import { digitsOnly, isValidIndianMobile } from '@/utils/validation';
 import { BrandLogoSVG } from '@/components/BrandLogoSVG';
+import { authService, getErrorMessage } from '@/api';
+import { useAuthStore } from '@/store/auth.store';
 
 // Google Colored Vector Icon
 const GoogleIcon = () => (
@@ -39,6 +41,8 @@ export const LoginScreen: React.FC = () => {
   const { t } = useTranslation();
   const [mobile, setMobile] = useState('');
   const [mobileTouched, setMobileTouched] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [apiError, setApiError] = useState<string | undefined>(undefined);
 
   const isMobileValid = isValidIndianMobile(mobile);
   // Show an error only once the user has left the field (or filled 10 digits) and it's invalid
@@ -50,11 +54,24 @@ export const LoginScreen: React.FC = () => {
   const handleMobileChange = (value: string) => {
     // Digits only, hard-capped at 10 — blocks typing/pasting anything longer
     setMobile(digitsOnly(value).slice(0, 10));
+    setApiError(undefined);
   };
 
-  const handleContinue = () => {
-    if (!isMobileValid) return;
-    navigation.navigate('OTP');
+  const handleContinue = async () => {
+    if (!isMobileValid || submitting) return;
+    const phone = `+91${mobile}`;
+    const { role, setPhone } = useAuthStore.getState();
+    setSubmitting(true);
+    setApiError(undefined);
+    try {
+      await authService.requestOtp({ phone, role });
+      setPhone(phone);
+      navigation.navigate('OTP', { phone });
+    } catch (err) {
+      setApiError(getErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleGoogleLogin = () => {
@@ -112,14 +129,19 @@ export const LoginScreen: React.FC = () => {
           value={mobile}
           onChangeText={handleMobileChange}
           onBlur={() => setMobileTouched(true)}
-          error={mobileError}
+          error={mobileError ?? apiError}
           prefixIcon={<CountryCodePrefix />}
         />
 
         <Spacer size={24} />
 
         {/* CONTINUE BUTTON — stays disabled until the mobile number is valid */}
-        <PrimaryButton label="Continue" onPress={handleContinue} disabled={!isMobileValid} />
+        <PrimaryButton
+          label="Continue"
+          onPress={handleContinue}
+          disabled={!isMobileValid}
+          loading={submitting}
+        />
 
         <Spacer size={64} />
 

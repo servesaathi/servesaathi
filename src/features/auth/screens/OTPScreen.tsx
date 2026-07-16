@@ -1,23 +1,80 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { RootNavigationProp } from '@/navigation/types';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { RootNavigationProp, RootRouteProp } from '@/navigation/types';
 import { theme } from '@/theme';
 import { Screen, Spacer, Header } from '@/components/layouts';
 import { PrimaryButton } from '@/components/buttons';
 import { OTPInput } from '@/components/inputs';
 import { responsiveFontSize } from '@/utils/responsive';
+import { authService, getErrorMessage } from '@/api';
+import { useAuthStore } from '@/store/auth.store';
+
+const OTP_LENGTH = 4;
+const RESEND_SECONDS = 30;
+
+// "+919777729450" → "+91-97****50"
+const maskPhone = (phone: string) => {
+  const match = phone.match(/^(\+\d{1,3})(\d{10})$/);
+  if (!match) return phone;
+  const digits = match[2];
+  return `${match[1]}-${digits.slice(0, 2)}****${digits.slice(8)}`;
+};
 
 export const OTPScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'OTP'>>();
+  const route = useRoute<RootRouteProp<'OTP'>>();
+  const storedPhone = useAuthStore((s) => s.phone);
+  const phone = route.params?.phone ?? storedPhone ?? '';
+
   const [otpValue, setOtpValue] = useState('');
+  const [verifying, setVerifying] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [resendIn, setResendIn] = useState(RESEND_SECONDS);
 
-  const isOtpComplete = otpValue.length === 4;
+  const isOtpComplete = otpValue.length === OTP_LENGTH;
 
-  const handleContinue = () => {
-    if (!isOtpComplete) return;
-    // Figma flow: OTP Verification → Create Account form
-    navigation.navigate('CreateAccount');
+  useEffect(() => {
+    if (resendIn === 0) return;
+    const id = setTimeout(() => setResendIn(resendIn - 1), 1000);
+    return () => clearTimeout(id);
+  }, [resendIn]);
+
+  const handleOtpChange = (value: string) => {
+    setOtpValue(value);
+    if (error) setError(null);
+  };
+
+  const handleContinue = async () => {
+    if (!isOtpComplete || verifying) return;
+    setVerifying(true);
+    setError(null);
+    try {
+      const data = await authService.verifyOtp({ phone, code: otpValue });
+      useAuthStore.getState().setPhoneVerification(data);
+      // Figma flow: OTP Verification → Create Account form; existing users skip it
+      navigation.navigate(data.isNewUser ? 'CreateAccount' : 'Home');
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (resendIn > 0 || resending) return;
+    setResending(true);
+    setError(null);
+    setOtpValue('');
+    try {
+      await authService.requestOtp({ phone, role: useAuthStore.getState().role });
+      setResendIn(RESEND_SECONDS);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setResending(false);
+    }
   };
 
   return (
@@ -30,18 +87,26 @@ export const OTPScreen: React.FC = () => {
         <Text style={styles.title}>Enter verification code</Text>
         <Spacer size="sm" />
         <Text style={styles.subtitle}>
-          The OPT has been sent to your verified mobile{' '}
-          <Text style={styles.highlightMobile}>+91-98****02</Text>
+          The OTP has been sent to your verified mobile{' '}
+          <Text style={styles.highlightMobile}>{maskPhone(phone)}</Text>
         </Text>
 
         <Spacer size="xl" />
         <Spacer size="md" />
 
         <OTPInput
-          length={4}
+          length={OTP_LENGTH}
           value={otpValue}
-          onChange={setOtpValue}
+          onChange={handleOtpChange}
+          error={!!error}
         />
+
+        {error && (
+          <>
+            <Spacer size="sm" />
+            <Text style={styles.errorText}>{error}</Text>
+          </>
+        )}
 
         <Spacer size="xl" />
         <Spacer size="md" />
@@ -51,13 +116,26 @@ export const OTPScreen: React.FC = () => {
           onPress={handleContinue}
           style={styles.button}
           disabled={!isOtpComplete}
+          loading={verifying}
         />
 
         <Spacer size="xl" />
 
-        <Text style={styles.resendText}>
-          Didn't receive OPT? <Text style={styles.resendTimer}>Resend in 00:28</Text>
-        </Text>
+        {resendIn > 0 ? (
+          <Text style={styles.resendText}>
+            Didn't receive OTP?{' '}
+            <Text style={styles.resendTimer}>
+              Resend in 00:{String(resendIn).padStart(2, '0')}
+            </Text>
+          </Text>
+        ) : (
+          <Text style={styles.resendText}>
+            Didn't receive OTP?{' '}
+            <Text style={styles.resendLink} onPress={handleResend}>
+              {resending ? 'Sending…' : 'Resend'}
+            </Text>
+          </Text>
+        )}
       </View>
     </Screen>
   );
@@ -88,6 +166,12 @@ const styles = StyleSheet.create({
   button: {
     width: '100%',
   },
+  errorText: {
+    fontFamily: theme.typography.bodyMedium.fontFamily,
+    fontSize: responsiveFontSize(14),
+    color: theme.colors.status.error,
+    textAlign: 'center',
+  },
   resendText: {
     fontFamily: theme.typography.bodyMedium.fontFamily,
     fontSize: responsiveFontSize(15),
@@ -95,6 +179,12 @@ const styles = StyleSheet.create({
   },
   resendTimer: {
     fontFamily: theme.fonts.bold,
-    color: theme.colors.neutral[900], // Adjust color if specific design needed
+    color: theme.colors.neutral[900],
+  },
+  resendLink: {
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.primary,
   },
 });
+
+export default OTPScreen;

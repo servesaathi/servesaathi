@@ -7,12 +7,24 @@ import { Screen, Spacer, Header } from '@/components/layouts';
 import { PrimaryButton } from '@/components/buttons';
 import { Checkbox } from '@/components/inputs';
 import { responsiveFontSize, scale } from '@/utils/responsive';
+import { useAuthStore } from '@/store/auth.store';
+import { ApiRole } from '@/api/types';
+
+// Maps the Figma role cards onto the roles the API understands.
+const API_ROLE_BY_ID: Record<string, ApiRole> = {
+  senior: 'customer',
+  family: 'customer',
+  saathi: 'caregiver',
+  partner: 'partner',
+};
 
 export const RoleSelectionScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'RoleSelection'>>();
   const [selectedRole, setSelectedRole] = useState<string>('senior');
+  const setRole = useAuthStore((s) => s.setRole);
 
   const handleCreateAccount = () => {
+    setRole(API_ROLE_BY_ID[selectedRole] ?? 'customer');
     // Figma flow: Join (Choose a role) → Mobile Phone Verify → OTP → Create Account
     navigation.navigate('Login');
   };

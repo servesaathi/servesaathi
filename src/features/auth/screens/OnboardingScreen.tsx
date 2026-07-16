@@ -8,6 +8,8 @@ import {
   Pressable,
   Platform,
   FlatList,
+  type ImageStyle,
+  type TextStyle,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
@@ -247,7 +249,7 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
-  },
+  } as ImageStyle,
   gradientOverlay: {
     position: 'absolute',
     bottom: 0,
@@ -265,13 +267,13 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(theme.typography.screenTitle.fontSize),
     color: theme.colors.neutral[900],
     textAlign: 'center',
-  },
+  } as TextStyle,
   description: {
     ...theme.typography.screenParagraph,
     fontSize: responsiveFontSize(theme.typography.screenParagraph.fontSize),
     color: theme.colors.neutral[700],
     textAlign: 'center',
-  },
+  } as TextStyle,
   footerContainer: {
     width: '100%',
     alignItems: 'center',

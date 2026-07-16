@@ -6,7 +6,7 @@ export type RootStackParamList = {
   LanguageSelect: undefined;
   Onboarding: undefined;
   Login: undefined;
-  OTP: undefined;
+  OTP: { phone: string };
   RoleSelection: undefined;
   CreateAccount: undefined;
   Permission: undefined;
