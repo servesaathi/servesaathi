@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, Platform } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { RootNavigationProp, RootRouteProp } from '@/navigation/types';
 import { theme } from '@/theme';
@@ -67,9 +67,9 @@ export const OTPScreen: React.FC = () => {
     setResending(true);
     setError(null);
     setOtpValue('');
+    setResendIn(RESEND_SECONDS);
     try {
       await authService.requestOtp({ phone, role: useAuthStore.getState().role });
-      setResendIn(RESEND_SECONDS);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -82,17 +82,15 @@ export const OTPScreen: React.FC = () => {
       <Header title="Create Account" leftIcon="back" transparent />
 
       <View style={styles.content}>
-        <Spacer size="xl" />
+        <Spacer size="xxl" />
 
         <Text style={styles.title}>Enter verification code</Text>
-        <Spacer size="sm" />
         <Text style={styles.subtitle}>
           The OTP has been sent to your verified mobile{' '}
           <Text style={styles.highlightMobile}>{maskPhone(phone)}</Text>
         </Text>
 
-        <Spacer size="xl" />
-        <Spacer size="md" />
+        <Spacer size="xxl" />
 
         <OTPInput
           length={OTP_LENGTH}
@@ -108,8 +106,7 @@ export const OTPScreen: React.FC = () => {
           </>
         )}
 
-        <Spacer size="xl" />
-        <Spacer size="md" />
+        <Spacer size="xxl" />
 
         <PrimaryButton
           label="Continue"
@@ -119,7 +116,7 @@ export const OTPScreen: React.FC = () => {
           loading={verifying}
         />
 
-        <Spacer size="xl" />
+        <Spacer size="lg" />
 
         {resendIn > 0 ? (
           <Text style={styles.resendText}>
@@ -145,7 +142,9 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: theme.spacing.xl,
+    paddingTop: theme.spacing.xxxxl,
     alignItems: 'center',
+    justifyContent: 'flex-start',
   },
   title: {
     fontFamily: theme.typography.h2.fontFamily,

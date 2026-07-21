@@ -48,6 +48,8 @@ export const CircleOfCareScreen: React.FC = () => {
 
   // Modal form state
   const [showForm, setShowForm] = useState(false);
+  const [showSentPopup, setShowSentPopup] = useState(false);
+  const [lastSentContact, setLastSentContact] = useState<EmergencyContact | null>(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [relationship, setRelationship] = useState<string | null>(null);
@@ -63,16 +65,16 @@ export const CircleOfCareScreen: React.FC = () => {
 
   const handleRequestSend = () => {
     if (!isContactFormValid) return;
-    setContacts((prev) => [
-      ...prev,
-      {
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        relationship: relationship ?? 'Other',
-        phone: `+91 ${phone}`,
-        status: 'waiting',
-      },
-    ]);
+    const newContact: EmergencyContact = {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      relationship: relationship ?? 'Other',
+      phone: `+91 ${phone}`,
+      status: 'waiting',
+    };
+    setContacts((prev) => [...prev, newContact]);
+    setLastSentContact(newContact);
+    setShowSentPopup(true);
     setFirstName('');
     setLastName('');
     setRelationship(null);
@@ -224,6 +226,39 @@ export const CircleOfCareScreen: React.FC = () => {
         </View>
       </Modal>
       )}
+
+      {/* Request-sent confirmation popup shown after adding a contact */}
+      {showSentPopup && lastSentContact && (
+        <Modal visible transparent animationType="fade" onRequestClose={() => setShowSentPopup(false)}>
+          <View style={styles.popupOverlay}>
+            <View style={styles.popupCard}>
+              <View style={styles.popupIconContainer}>
+                <Svg width={36} height={36} viewBox="0 0 16 16" fill="none">
+                  <Path
+                    d="M13.7524 2.24923C13.6446 2.14149 13.51 2.06443 13.3625 2.026C13.215 1.98757 13.0599 1.98916 12.9133 2.0306H12.9052L2.61994 5.15144C2.45297 5.19956 2.30456 5.29729 2.19438 5.43166C2.0842 5.56604 2.01745 5.73072 2.00298 5.90389C1.98851 6.07706 2.027 6.25054 2.11335 6.40134C2.19971 6.55214 2.32984 6.67313 2.48652 6.7483L7.03703 8.96461L9.25012 13.5124C9.31896 13.6593 9.4284 13.7835 9.56551 13.8702C9.70262 13.9568 9.86168 14.0025 10.0239 14.0017C10.0486 14.0017 10.0732 14.0006 10.0979 13.9985C10.2709 13.9845 10.4355 13.9179 10.5696 13.8076C10.7037 13.6974 10.8008 13.5487 10.8481 13.3817L13.9668 3.09642C13.9668 3.09374 13.9668 3.09106 13.9668 3.08839C14.0087 2.94208 14.011 2.78723 13.9733 2.63975C13.9357 2.49228 13.8594 2.35749 13.7524 2.24923ZM10.0287 13.1363L10.026 13.1438V13.14L7.8794 8.72991L10.4515 6.15778C10.5285 6.07674 10.5708 5.96881 10.5694 5.85703C10.5679 5.74524 10.5229 5.63844 10.4439 5.55939C10.3648 5.48034 10.258 5.4353 10.1462 5.43386C10.0344 5.43243 9.92651 5.47473 9.84546 5.55173L7.27334 8.12385L2.86162 5.9772H2.85787H2.86537L13.1458 2.85582L10.0287 13.1363Z"
+                    fill="#FFFFFF"
+                  />
+                </Svg>
+              </View>
+              <View>
+                <Text style={styles.popupTitle}>Request Sent to</Text>
+                <Text style={styles.popupTitle}>Family Member</Text>
+              </View>
+              <Text style={styles.popupBody}>
+
+                We’ve sent an approval link to{' '}
+                <Text style={styles.popupName}>{`${lastSentContact.firstName}\u00A0${lastSentContact.lastName}`}</Text>
+                {' '}
+                <Text style={styles.popupName}>{`(${lastSentContact.relationship})`}</Text>
+                . They just need to tap the link in their message to confirm they are your emergency contact. You’ll see a "Verified" badge on your profile once they’ve approved.
+              </Text>
+              <View style={styles.popupActions}>
+                <PrimaryButton label="Close" onPress={() => setShowSentPopup(false)} />
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
     </Screen>
   );
 };
@@ -280,7 +315,7 @@ const styles = StyleSheet.create({
   contactMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.xs,
+    gap: theme.spacing.md,
     marginTop: 2,
   },
   contactMeta: {
@@ -293,6 +328,7 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     backgroundColor: theme.colors.tertiary,
+    marginHorizontal: theme.spacing.xs,
   },
   addButton: {
     flexDirection: 'row',
@@ -381,6 +417,55 @@ const styles = StyleSheet.create({
   },
   modalFooter: {
     marginTop: 'auto',
+  },
+  popupOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.lg,
+  },
+  popupCard: {
+    width: '100%',
+    maxWidth: 312,
+    borderRadius: 16,
+    paddingVertical: 24,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+    backgroundColor: theme.colors.background.layout,
+  },
+  popupIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.colors.forestGreen[500],
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  popupTitle: {
+    fontFamily: theme.typography.h3.fontFamily,
+    lineHeight: 30,
+    fontSize: 20,
+    color: theme.colors.neutral[900],
+    textAlign: 'center',
+  },
+  popupBody: {
+    fontFamily: theme.typography.bodyMedium.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.bodyMedium.fontSize),
+    color: theme.colors.neutral[700],
+    textAlign: 'center',
+    lineHeight: 22,
+    marginVertical: theme.spacing.xxl,
+  },
+  popupActions: {
+    width: '100%',
+  },
+  popupName: {
+    fontFamily: theme.typography.bodyMedium.fontFamily,
+    fontWeight: '700',
+    fontSize: responsiveFontSize(theme.typography.bodyMedium.fontSize),
+    color: '#2E7D32',
   },
 });
 

@@ -86,6 +86,7 @@ const styles = StyleSheet.create({
     color: theme.colors.neutral[700],
     textAlign: 'center',
     lineHeight: 24,
+    paddingHorizontal: theme.spacing.xxl,
   },
   plans: {
     gap: theme.spacing.lg,

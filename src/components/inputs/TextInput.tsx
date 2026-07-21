@@ -17,6 +17,8 @@ export interface TextInputProps extends RNTextInputProps {
   error?: string;
   helperText?: string;
   containerStyle?: StyleProp<ViewStyle>;
+  /** Style applied to the internal input container (overrides default border/background) */
+  inputContainerStyle?: StyleProp<ViewStyle>;
   inputStyle?: StyleProp<TextStyle>;
   prefixIcon?: React.ReactNode;
   suffixIcon?: React.ReactNode;
@@ -27,6 +29,7 @@ export const TextInput: React.FC<TextInputProps> = ({
   error,
   helperText,
   containerStyle,
+  inputContainerStyle,
   inputStyle,
   prefixIcon,
   suffixIcon,
@@ -69,6 +72,7 @@ export const TextInput: React.FC<TextInputProps> = ({
       <View
         style={[
           styles.inputContainer,
+          // computed theme-aware border/background
           {
             borderColor: hasError
               ? theme.colors.status.error
@@ -79,6 +83,8 @@ export const TextInput: React.FC<TextInputProps> = ({
               : theme.colors.forestGreen[100],
             borderWidth: isFocused ? 1.35 : 1.5,
           },
+          // allow callers to override the internal input container (e.g. transparent border)
+          inputContainerStyle,
         ]}
       >
         {prefixIcon && <View style={styles.prefixIcon}>{prefixIcon}</View>}

@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { StyleSheet, Text, View, Pressable, Modal, ScrollView } from 'react-native';
 import Svg, { Rect, Circle, Path } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import { RootNavigationProp } from '@/navigation/types';
@@ -44,6 +44,7 @@ export const ProfileSetupScreen: React.FC = () => {
   const [dependencyLevels, setDependencyLevels] = useState<MasterDataOption[]>([]);
   const [isLoadingOptions, setIsLoadingOptions] = useState(true);
   const [optionsError, setOptionsError] = useState<string | null>(null);
+  const [activeDobField, setActiveDobField] = useState<'day' | 'month' | 'year' | null>(null);
 
   const isNameValid = isValidName(preferredName);
   const isDobComplete = dobDay.length > 0 && dobMonth.length > 0 && dobYear.length === 4;
@@ -83,6 +84,58 @@ export const ProfileSetupScreen: React.FC = () => {
     navigation.navigate('ProfileAddress');
   };
 
+  const today = new Date().getFullYear();
+  const dayOptions = useMemo(
+    () => Array.from({ length: 31 }, (_, index) => ({ value: String(index + 1).padStart(2, '0'), label: String(index + 1).padStart(2, '0') })),
+    []
+  );
+  const monthOptions = useMemo(
+    () => [
+      { value: '01', label: 'Jan' },
+      { value: '02', label: 'Feb' },
+      { value: '03', label: 'Mar' },
+      { value: '04', label: 'Apr' },
+      { value: '05', label: 'May' },
+      { value: '06', label: 'Jun' },
+      { value: '07', label: 'Jul' },
+      { value: '08', label: 'Aug' },
+      { value: '09', label: 'Sep' },
+      { value: '10', label: 'Oct' },
+      { value: '11', label: 'Nov' },
+      { value: '12', label: 'Dec' },
+    ],
+    []
+  );
+  const yearOptions = useMemo(
+    () => Array.from({ length: today - 1899 }, (_, index) => {
+      const year = today - index;
+      return { value: String(year), label: String(year) };
+    }),
+    [today]
+  );
+
+  const displayValue = (field: 'day' | 'month' | 'year') => {
+    if (field === 'day') return dobDay || 'DD';
+    if (field === 'month') return dobMonth ? monthOptions.find((item) => item.value === dobMonth)?.label ?? dobMonth : 'MM';
+    return dobYear || 'YYYY';
+  };
+
+  const currentOptions =
+    activeDobField === 'day'
+      ? dayOptions
+      : activeDobField === 'month'
+      ? monthOptions
+      : activeDobField === 'year'
+      ? yearOptions
+      : [];
+
+  const handleSelectDobValue = (value: string) => {
+    if (activeDobField === 'day') setDobDay(value);
+    if (activeDobField === 'month') setDobMonth(value);
+    if (activeDobField === 'year') setDobYear(value);
+    setActiveDobField(null);
+  };
+
   return (
     <Screen scrollable statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
       <Header leftIcon="back" transparent stepper={{ current: 1, total: 6 }} />
@@ -117,32 +170,82 @@ export const ProfileSetupScreen: React.FC = () => {
 
         <Text style={styles.sectionLabel}>Date of Birth</Text>
         <View style={styles.dobRow}>
-          <TextInput
-            placeholder="DD"
-            keyboardType="number-pad"
-            maxLength={2}
-            value={dobDay}
-            onChangeText={(v) => setDobDay(digitsOnly(v).slice(0, 2))}
-            containerStyle={styles.dobField}
-          />
-          <TextInput
-            placeholder="MM"
-            keyboardType="number-pad"
-            maxLength={2}
-            value={dobMonth}
-            onChangeText={(v) => setDobMonth(digitsOnly(v).slice(0, 2))}
-            containerStyle={styles.dobField}
-          />
-          <TextInput
-            placeholder="YYYY"
-            keyboardType="number-pad"
-            maxLength={4}
-            value={dobYear}
-            onChangeText={(v) => setDobYear(digitsOnly(v).slice(0, 4))}
-            containerStyle={styles.dobField}
-          />
+          <View style={styles.dobField}>
+            <TextInput
+              placeholder="DD"
+              value={dobDay}
+              onChangeText={(v) => setDobDay(digitsOnly(v).slice(0, 2))}
+              keyboardType="number-pad"
+              maxLength={2}
+              inputContainerStyle={styles.dobInputContainer}
+              inputStyle={styles.dobInputText}
+              suffixIcon={
+                <Pressable onPress={() => setActiveDobField('day')} style={{ padding: 6 }}>
+                  <Icon name="caretDown" variant="outline" size={14} color={theme.colors.neutral[700]} />
+                </Pressable>
+              }
+            />
+          </View>
+          <View style={styles.dobField}>
+            <TextInput
+              placeholder="MM"
+              value={dobMonth}
+              onChangeText={(v) => setDobMonth(digitsOnly(v).slice(0, 2))}
+              keyboardType="number-pad"
+              maxLength={2}
+              inputContainerStyle={styles.dobInputContainer}
+              inputStyle={styles.dobInputText}
+              suffixIcon={
+                <Pressable onPress={() => setActiveDobField('month')} style={{ padding: 6 }}>
+                  <Icon name="caretDown" variant="outline" size={14} color={theme.colors.neutral[700]} />
+                </Pressable>
+              }
+            />
+          </View>
+          <View style={styles.dobField}>
+            <TextInput
+              placeholder="YYYY"
+              value={dobYear}
+              onChangeText={(v) => setDobYear(digitsOnly(v).slice(0, 4))}
+              keyboardType="number-pad"
+              maxLength={4}
+              inputContainerStyle={styles.dobInputContainer}
+              inputStyle={styles.dobInputText}
+              suffixIcon={
+                <Pressable onPress={() => setActiveDobField('year')} style={{ padding: 6 }}>
+                  <Icon name="caretDown" variant="outline" size={14} color={theme.colors.neutral[700]} />
+                </Pressable>
+              }
+            />
+          </View>
         </View>
         {dobError && <Text style={styles.errorText}>{dobError}</Text>}
+
+        <Modal visible={!!activeDobField} transparent animationType="slide" onRequestClose={() => setActiveDobField(null)}>
+          <View style={styles.modalRoot}>
+            <View style={[styles.modalSheet, { paddingTop: theme.spacing.xl }]}> 
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>
+                  Select {activeDobField === 'day' ? 'Day' : activeDobField === 'month' ? 'Month' : 'Year'}
+                </Text>
+                <Pressable onPress={() => setActiveDobField(null)} style={styles.modalCloseButton}>
+                  <Text style={styles.modalCloseText}>Cancel</Text>
+                </Pressable>
+              </View>
+              <ScrollView style={styles.modalList} showsVerticalScrollIndicator={false}>
+                {currentOptions.map((item) => (
+                  <Pressable
+                    key={item.value}
+                    onPress={() => handleSelectDobValue(item.value)}
+                    style={styles.modalItem}
+                  >
+                    <Text style={styles.modalItemText}>{item.label}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
 
         <Text style={styles.sectionLabel}>Gender</Text>
         {isLoadingOptions ? (
@@ -212,6 +315,7 @@ export const ProfileSetupScreen: React.FC = () => {
 const styles = StyleSheet.create({
   content: {
     paddingHorizontal: theme.spacing.xl,
+    paddingBottom: theme.spacing.xl,
   },
   title: {
     fontFamily: theme.typography.h2.fontFamily,
@@ -260,6 +364,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: theme.spacing.sm, // Figma: 8 between the three equal fields
   },
+  dobField: {
+    flex: 1,
+  },
+  dobInputContainer: {
+    backgroundColor: theme.colors.background.base,
+    borderRadius: theme.radius.input,
+    height: 48,
+    justifyContent: 'center',
+    paddingHorizontal: theme.spacing.md,
+  },
+  dobInputText: {
+    textAlign: 'center',
+  },
+  dobTransparent: {
+    borderColor: 'transparent',
+    borderWidth: 0,
+    backgroundColor: 'transparent',
+  },
   errorText: {
     fontFamily: theme.typography.caption.fontFamily,
     fontSize: responsiveFontSize(theme.typography.caption.fontSize),
@@ -272,14 +394,56 @@ const styles = StyleSheet.create({
     color: theme.colors.neutral[600],
     marginBottom: theme.spacing.md,
   },
-  dobField: {
-    flex: 1,
-  },
   chipGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: theme.spacing.sm, // Figma: 8 between chips
     marginBottom: theme.spacing.md,
+  },
+  modalRoot: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    backgroundColor: theme.colors.background.base,
+    borderTopLeftRadius: theme.radius.lg,
+    borderTopRightRadius: theme.radius.lg,
+    maxHeight: '65%',
+    paddingHorizontal: theme.spacing.xl,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.sm,
+  },
+  modalTitle: {
+    fontFamily: theme.typography.h5.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.h5.fontSize),
+    color: theme.colors.neutral[900],
+  },
+  modalCloseButton: {
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+  },
+  modalCloseText: {
+    fontFamily: theme.typography.bodyMedium.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.bodyMedium.fontSize),
+    color: theme.colors.primary,
+  },
+  modalList: {
+    marginBottom: theme.spacing.lg,
+  },
+  modalItem: {
+    paddingVertical: theme.spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.neutral[200],
+  },
+  modalItemText: {
+    fontFamily: theme.typography.bodyLarge.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.bodyLarge.fontSize),
+    color: theme.colors.neutral[900],
   },
   chipHalf: {
     flexBasis: '47%',

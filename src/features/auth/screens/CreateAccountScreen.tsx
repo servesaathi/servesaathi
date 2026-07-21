@@ -6,6 +6,7 @@ import { theme } from '@/theme';
 import { Screen, Spacer, Header } from '@/components/layouts';
 import { PrimaryButton } from '@/components/buttons';
 import { TextInput, PasswordInput } from '@/components/inputs';
+
 import { responsiveFontSize } from '@/utils/responsive';
 import { isValidName, isValidEmail, isValidPassword, MIN_PASSWORD_LENGTH } from '@/utils/validation';
 
@@ -128,7 +129,6 @@ const styles = StyleSheet.create({
     paddingBottom: Platform.OS === 'ios' ? theme.spacing.hud : theme.spacing.xxl,
   },
   terms: {
-    marginTop: theme.spacing.lg,
     fontFamily: theme.typography.caption.fontFamily,
     fontSize: responsiveFontSize(theme.typography.caption.fontSize),
     lineHeight: theme.typography.caption.lineHeight,

@@ -9,6 +9,7 @@ export const ICON_NAMES = [
   'caregiver',
   'caretDown',
   'caretUp',
+  'celebrate',
   'check',
   'close',
   'companion',

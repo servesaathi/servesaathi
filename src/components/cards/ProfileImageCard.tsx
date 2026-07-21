@@ -22,21 +22,27 @@ export const ProfileImageCard: React.FC<ProfileImageCardProps> = ({
   style,
 }) => {
   return (
-    <View style={[styles.container, { width: size }, style]}>
+    <Pressable
+      onPress={onEditPress}
+      disabled={!onEditPress}
+      style={[styles.container, { width: size }, style]}
+      accessibilityRole={onEditPress ? 'button' : undefined}
+      accessibilityLabel={onEditPress ? 'Upload profile photo' : undefined}
+    >
       <View style={{ width: size, height: size }}>
         {photoUri ? (
           <Image source={{ uri: photoUri }} style={[styles.image, { borderRadius: size / 2 }]} />
         ) : (
           <View style={[styles.placeholder, { borderRadius: size / 2 }]}>
-            <Icon name="camera" variant="outline" size={40} color={theme.colors.forestGreen[500]} />
+            <Icon name="camera" variant="outline" size={40} color={theme.colors.primary} />
           </View>
         )}
-        <Pressable onPress={onEditPress} style={styles.editBadge}>
+        <View style={styles.editBadge}> 
           <Icon name="edit" variant="outline" size={16} color="#FFFFFF" />
-        </Pressable>
+        </View>
       </View>
       <Text style={styles.editLabel}>{editLabel}</Text>
-    </View>
+    </Pressable>
   );
 };
 
@@ -52,7 +58,7 @@ const styles = StyleSheet.create({
   placeholder: {
     width: '100%',
     height: '100%',
-    backgroundColor: theme.colors.border.green,
+    backgroundColor: theme.colors.forestGreen[100],
     justifyContent: 'center',
     alignItems: 'center',
   },

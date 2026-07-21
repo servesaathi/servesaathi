@@ -101,7 +101,7 @@ export const HomeScreen: React.FC = () => {
         {/* Upcoming events */}
         <SectionHeader title="Upcoming events" />
         <View style={styles.eventsEmpty}>
-          <Icon name="events" variant="outline" size={72} color={theme.colors.tertiary} />
+          <Icon name="celebrate" variant="filled" size={72} />
           <Spacer size="md" />
           <Text style={styles.emptyText}>There are no event scheduled.</Text>
           <Spacer size="lg" />

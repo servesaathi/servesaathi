@@ -102,6 +102,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   subtitle: {
+    paddingHorizontal: theme.spacing.xxl,
     fontFamily: theme.typography.bodyLarge.fontFamily,
     fontSize: responsiveFontSize(theme.typography.bodyLarge.fontSize),
     color: theme.colors.neutral[700],

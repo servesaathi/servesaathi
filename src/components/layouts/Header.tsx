@@ -46,24 +46,27 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   if (stepper) {
-    // Progress Indicator style: back button, dashes filling the row, "n of total" at far right
+    // Single-row layout: back button | dashes (flex) | "n of total" label — spaced across full width
     return (
       <View
         style={[
           styles.container,
           transparent && styles.transparent,
-          { paddingTop: insets.top + theme.spacing.lg, paddingBottom: theme.spacing.sm },
+          { paddingTop: insets.top + theme.spacing.lg, paddingBottom: theme.spacing.sm, paddingHorizontal: theme.spacing.lg },
         ]}
       >
-        {leftIcon !== 'none' && (
-          <IconButton
-            type={leftIcon}
-            accessibilityLabel={leftIcon === 'back' ? 'Go back' : 'Close'}
-            onPress={handleLeftPress}
-            size={40}
-          />
-        )}
-        <View style={styles.stepperFill}>
+        <View style={styles.stepperRow}>
+          <View style={styles.sideSmall}>
+            {leftIcon !== 'none' && (
+              <IconButton
+                type={leftIcon}
+                accessibilityLabel={leftIcon === 'back' ? 'Go back' : 'Close'}
+                onPress={handleLeftPress}
+                size={40}
+              />
+            )}
+          </View>
+
           <View style={styles.dashesContainer}>
             {Array.from({ length: stepper.total }).map((_, i) => (
               <View
@@ -71,13 +74,17 @@ export const Header: React.FC<HeaderProps> = ({
                 style={[
                   styles.dash,
                   i < stepper.current ? styles.dashActive : styles.dashInactive,
+                  i < stepper.total - 1 ? styles.dashSpacing : undefined,
                 ]}
               />
             ))}
           </View>
-          <Text style={styles.stepperText}>
-            {stepper.current} of {stepper.total}
-          </Text>
+
+          <View style={styles.sideSmall}>
+            <Text style={[styles.stepperText, { textAlign: 'right', marginLeft: 0 }]}> 
+              {stepper.current} of {stepper.total}
+            </Text>
+          </View>
         </View>
       </View>
     );
@@ -149,10 +156,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: theme.spacing.sm,
   },
+  sideSmall: {
+    width: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   center: {
     flex: 3,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  stepperRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   sideRight: {
     flex: 1,
@@ -171,31 +189,43 @@ const styles = StyleSheet.create({
     width: 120,
   },
   stepperFill: {
+    minWidth: 184,
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: theme.spacing.sm,
+  },
+  stepperCenter: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dashesContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginLeft: theme.spacing.xl,
-  },
-  dashesContainer: {
-    flexDirection: 'row',
-    gap: theme.spacing.xs,
   },
   dash: {
-    width: 24,
+    width: 34,
     height: 4,
     borderRadius: 2,
   },
   dashActive: {
-    backgroundColor: theme.colors.tertiary,
+    backgroundColor: '#FF751F',
   },
   dashInactive: {
-    backgroundColor: theme.colors.vividOrange[200],
+    backgroundColor: '#FFC8A5',
+  },
+  dashSpacing: {
+    marginRight: theme.spacing.xs,
   },
   stepperText: {
+    marginLeft: theme.spacing.sm,
     fontFamily: theme.typography.bodySmall.fontFamily,
     fontSize: responsiveFontSize(theme.typography.bodySmall.fontSize),
     lineHeight: theme.typography.bodySmall.lineHeight,
-    color: theme.colors.primary,
+    color: '#2E7D32',
   },
 });
