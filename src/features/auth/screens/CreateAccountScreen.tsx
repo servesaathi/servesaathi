@@ -41,63 +41,69 @@ export const CreateAccountScreen: React.FC = () => {
   };
 
   return (
-    <Screen scrollable statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
+    <Screen
+      scrollable
+      statusBarBg={theme.colors.background.layout}
+      statusBarStyle="dark-content"
+      contentContainerStyle={styles.screenContent}
+    >
       <Header title="Create Account" leftIcon="back" transparent />
 
       <View style={styles.content}>
-        <TextInput
-          label="First name"
-          placeholder="Enter recipient's name"
-          value={firstName}
-          onChangeText={setFirstName}
-          onBlur={() => markTouched('firstName')}
-          error={touched.firstName && firstName.length > 0 ? errors.firstName : undefined}
-        />
-        <TextInput
-          label="Last name"
-          placeholder="Enter recipient's last name"
-          value={lastName}
-          onChangeText={setLastName}
-          onBlur={() => markTouched('lastName')}
-          error={touched.lastName && lastName.length > 0 ? errors.lastName : undefined}
-        />
-        <TextInput
-          label="Email address"
-          placeholder="Enter Email address"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
-          onBlur={() => markTouched('email')}
-          error={touched.email && email.length > 0 ? errors.email : undefined}
-        />
-        <PasswordInput
-          label="New Password"
-          placeholder="Enter your password"
-          value={password}
-          onChangeText={setPassword}
-          onBlur={() => markTouched('password')}
-          error={touched.password && password.length > 0 ? errors.password : undefined}
-        />
-        <PasswordInput
-          label="Confirm Password"
-          placeholder="Confirm your password"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          onBlur={() => markTouched('confirmPassword')}
-          error={touched.confirmPassword && confirmPassword.length > 0 ? errors.confirmPassword : undefined}
-        />
+        <View style={styles.formSection}>
+          <TextInput
+            label="First name"
+            placeholder="Enter recipient's name"
+            value={firstName}
+            onChangeText={setFirstName}
+            onBlur={() => markTouched('firstName')}
+            error={touched.firstName && firstName.length > 0 ? errors.firstName : undefined}
+          />
+          <TextInput
+            label="Last name"
+            placeholder="Enter recipient's last name"
+            value={lastName}
+            onChangeText={setLastName}
+            onBlur={() => markTouched('lastName')}
+            error={touched.lastName && lastName.length > 0 ? errors.lastName : undefined}
+          />
+          <TextInput
+            label="Email address"
+            placeholder="Enter Email address"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
+            onBlur={() => markTouched('email')}
+            error={touched.email && email.length > 0 ? errors.email : undefined}
+          />
+          <PasswordInput
+            label="New Password"
+            placeholder="Enter your password"
+            value={password}
+            onChangeText={setPassword}
+            onBlur={() => markTouched('password')}
+            error={touched.password && password.length > 0 ? errors.password : undefined}
+          />
+          <PasswordInput
+            label="Confirm Password"
+            placeholder="Confirm your password"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            onBlur={() => markTouched('confirmPassword')}
+            error={touched.confirmPassword && confirmPassword.length > 0 ? errors.confirmPassword : undefined}
+          />
 
-        <Text style={styles.terms}>
-          By continuing, you agree to ServeSaathi's{' '}
-          <Text style={styles.termsLink}>Terms &amp; Conditions</Text> and{' '}
-          <Text style={styles.termsLink}>Privacy Policy</Text>.
-        </Text>
+          <Text style={styles.terms}>
+            By continuing, you agree to ServeSaathi's{' '}
+            <Text style={styles.termsLink}>Terms &amp; Conditions</Text> and{' '}
+            <Text style={styles.termsLink}>Privacy Policy</Text>.
+          </Text>
+        </View>
 
-        <Spacer size="xl" />
-
-        <PrimaryButton label="Create an account" onPress={handleCreateAccount} disabled={!isFormValid} />
-        <Spacer size="xl" />
+        <View style={styles.buttonContainer}>
+          <PrimaryButton label="Create an account" onPress={handleCreateAccount} disabled={!isFormValid} />
+        </View>
       </View>
     </Screen>
   );
@@ -105,11 +111,24 @@ export const CreateAccountScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   content: {
+    flex: 1,
     paddingHorizontal: theme.spacing.xl,
-    paddingTop: theme.spacing.md,
+    paddingTop: theme.spacing.xxxxl,
     paddingBottom: Platform.OS === 'ios' ? 44 : 32,
+    justifyContent: 'space-between',
+  },
+  screenContent: {
+    flexGrow: 1,
+  },
+  formSection: {
+    gap: theme.spacing.md,
+  },
+  buttonContainer: {
+    marginTop: 'auto',
+    paddingBottom: Platform.OS === 'ios' ? theme.spacing.hud : theme.spacing.xxl,
   },
   terms: {
+    marginTop: theme.spacing.lg,
     fontFamily: theme.typography.caption.fontFamily,
     fontSize: responsiveFontSize(theme.typography.caption.fontSize),
     lineHeight: theme.typography.caption.lineHeight,

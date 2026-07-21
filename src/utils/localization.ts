@@ -6,18 +6,18 @@ export const translations = {
     splashSubtitle: 'Companionship and Care, Right at Home',
     // Language select
     selectLanguage: 'Please select your language',
-    selectLanguageSubtitle: 'Choose your comfortable language which you can understand',
+    selectLanguageSubtitle: 'Choose your comfortable language\n which you can understand',
     getStarted: 'Get Started',
     // Onboarding
     skip: 'Skip',
     createAccount: 'Create an account',
     login: 'Log in',
     slide0Title: 'Caring Support for\nEvery Senior, Every Day',
-    slide0Desc: 'From companionship to daily assistance, your Saathi is here to make life easier, warmer, and more connected.',
+    slide0Desc: 'From companionship to daily assistance,\n your Saathi is here tomake life easier,\n warmer, and more connected.',
     slide1Title: 'Warm Care,\nSmart Technology',
-    slide1Desc: 'Verified Saathi help with errands, visits, and conversations while the app keeps everything organized and effortless.',
+    slide1Desc: 'Verified Saathi help with errands, visits, and\n conversations while the app keeps\n everything organized and effortless.',
     slide2Title: 'Safety You Can Trust',
-    slide2Desc: 'Every Saathi is trained and background verified, and every visit is tracked giving seniors comfort and families peace of mind.',
+    slide2Desc: 'Every Saathi is trained and background\nverified, and every visit is tracked giving\nseniors comfort and families peace of mind.',
     // Register Flow
     registerTitle: 'Create Account',
     stepProgress: 'Step {step} of {total}',

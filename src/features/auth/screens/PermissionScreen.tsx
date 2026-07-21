@@ -31,8 +31,8 @@ export const PermissionScreen: React.FC = () => {
 
           <View style={styles.textGroup}>
             <Text style={styles.privacyText}>
-              To protect your privacy, your activity on ServeSaathi app is not linked to your
-              identity, and your personal information is never shared with advertisers.
+              To protect your privacy, your activity on ServeSaathi app is not linked to your identity,
+              and your personal information is never shared with advertisers.
             </Text>
 
             <Pressable style={styles.checkRow} onPress={() => setAgreed((v) => !v)}>
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     lineHeight: theme.typography.bodyLarge.lineHeight,
     color: theme.colors.neutral[700],
     textAlign: 'center',
-    maxWidth: 300, // Figma: paragraph is 300 wide inside the 312 content column
+    maxWidth: 312,
   },
   checkRow: {
     flexDirection: 'row',
@@ -89,6 +89,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     marginTop: 'auto',
+    paddingBottom: theme.spacing.md,
   },
   agreeText: {
     flex: 1,
@@ -96,8 +97,10 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(theme.typography.bodyLarge.fontSize),
     lineHeight: theme.typography.bodyLarge.lineHeight,
     color: theme.colors.neutral[900],
+    maxWidth: 284, 
   },
   agreeLink: {
     color: theme.colors.primary,
+    maxWidth: 312,
   },
 });
