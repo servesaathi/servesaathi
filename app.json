@@ -7,9 +7,9 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "cover",
-      "backgroundColor": "#2E7D32"
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#123214"
     },
     "ios": {
       "supportsTablet": true,
@@ -32,9 +32,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#2E7D32",
-          "image": "./assets/adaptive-icon.png",
-          "imageWidth": 150
+          "backgroundColor": "#123214"
         }
       ]
     ]

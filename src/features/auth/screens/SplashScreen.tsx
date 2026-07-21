@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, Text, View, Pressable, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFonts } from 'expo-font';
@@ -10,6 +10,8 @@ import { responsiveFontSize } from '@/utils/responsive';
 import { RootNavigationProp } from '@/navigation/types';
 import { useTranslation } from '@/utils/localization';
 
+const SPLASH_DISPLAY_MS = 3200;
+
 export const SplashScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'Splash'>>();
   const { t } = useTranslation();
@@ -20,32 +22,31 @@ export const SplashScreen: React.FC = () => {
     'AtkinsonHyperlegibleNext-SemiBold': require('../../../../assets/fonts/AtkinsonHyperlegibleNext-SemiBold.ttf'),
     'AtkinsonHyperlegibleNext-Bold': require('../../../../assets/fonts/AtkinsonHyperlegibleNext-Bold.ttf'),
   });
-  const [bgLoaded, setBgLoaded] = useState(false);
-
-  // Everything below renders UNDER the native splash (App.tsx calls
-  // preventAutoHideAsync). We reveal it in one atomic swap only when both the
-  // fonts and the background image are decoded — no layer-by-layer pop-in.
-  const isReady = fontsLoaded && bgLoaded;
 
   useEffect(() => {
-    if (isReady) {
-      ExpoSplashScreen.hideAsync().catch(() => {});
-      // Auto transition after 3.2 seconds of the fully drawn splash
-      const timer = setTimeout(handleSkip, 3200);
-      return () => clearTimeout(timer);
-    }
-    // Safety net: never leave the user stuck on the native splash if an asset
-    // callback misfires — force the reveal after 3s and move on.
-    const fallback = setTimeout(() => {
-      ExpoSplashScreen.hideAsync().catch(() => {});
-      setBgLoaded(true);
-    }, 3000);
-    return () => clearTimeout(fallback);
-  }, [isReady]);
+    let isMounted = true;
+
+    // Hide the native Expo splash immediately so the custom splash can appear
+    // without the green launch background lingering first.
+    ExpoSplashScreen.hideAsync().catch(() => {});
+
+    const timer = setTimeout(() => {
+      if (isMounted) {
+        navigation.replace('LanguageSelect');
+      }
+    }, SPLASH_DISPLAY_MS);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [navigation]);
 
   const handleSkip = () => {
     navigation.replace('LanguageSelect');
   };
+
+  const subtitleFontFamily = fontsLoaded ? theme.typography.h2.fontFamily : 'System';
 
   return (
     <Pressable onPress={handleSkip} style={styles.container}>
@@ -65,7 +66,6 @@ export const SplashScreen: React.FC = () => {
         style={[styles.backgroundImage, styles.leafTexture]}
         resizeMode="cover"
         fadeDuration={0} // Android fades images in over 300ms by default — kill it
-        onLoadEnd={() => setBgLoaded(true)}
       />
 
       <View style={styles.centerContent}>
@@ -73,7 +73,7 @@ export const SplashScreen: React.FC = () => {
         <LogoSvg color="#FFFFFF" width={264} height={71} />
 
         {/* Slogan */}
-        <Text style={styles.subtitle}>
+        <Text style={[styles.subtitle, { fontFamily: subtitleFontFamily }]}>
           {t('splashSubtitle').replace(', ', ',\n')}
         </Text>
       </View>
