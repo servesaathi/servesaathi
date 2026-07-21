@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
   textGroup: {
     width: '100%',
     alignItems: 'center',
-    gap: theme.spacing.xxl,
+    gap: theme.spacing.lg,
   },
   privacyText: {
     fontFamily: theme.typography.bodyLarge.fontFamily,
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     marginTop: 'auto',
-    paddingBottom: theme.spacing.md,
+    paddingBottom: theme.spacing.xxl,
   },
   agreeText: {
     flex: 1,
