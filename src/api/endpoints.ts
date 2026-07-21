@@ -17,6 +17,18 @@ export const ENDPOINTS = {
     list: '/services',
     details: (id: string) => `/services/${id}`,
   },
+  masterData: {
+    languages: '/languages',
+    genders: '/genders',
+    livingSituations: '/living-situations',
+    dependencyLevels: '/dependency-levels',
+    interests: '/interests',
+    colorContrasts: '/color-contrasts',
+    medicalConditions: '/medical-conditions',
+    mobilitySupports: '/mobility-supports',
+    cognitiveConditions: '/cognitive-conditions',
+    familyRelationships: '/family-relationships',
+  },
 } as const;
 
 export default ENDPOINTS;

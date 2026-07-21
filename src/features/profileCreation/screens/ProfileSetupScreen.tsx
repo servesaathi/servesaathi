@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import Svg, { Rect, Circle, Path } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
@@ -10,11 +10,9 @@ import { TextInput, SelectableChip } from '@/components/inputs';
 import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
 import { digitsOnly, isValidName, isValidDateOfBirth } from '@/utils/validation';
+import { masterdataService, type MasterDataOption } from '@/api';
 
 // "Profile Creation 1a/1b" (Figma 1248:44068 / 1248:44150) — step 1 of 6.
-const GENDERS = ['Female', 'Male', 'Non-binary'];
-const LIVING_SITUATIONS = ['Alone', 'Partner', 'Family', 'Caregiver'];
-const DEPENDENCY_LEVELS = ['Independent', 'Fully', 'Semi-Dependent'];
 
 // Image-placeholder glyph from the Figma photo circle (rounded frame, sun dot, mountains)
 const ImagePlaceholderIcon = ({ size = 40, color = '' }) => (
@@ -41,6 +39,11 @@ export const ProfileSetupScreen: React.FC = () => {
   const [living, setLiving] = useState<string | null>(null);
   const [dependency, setDependency] = useState<string | null>(null);
   const [nameTouched, setNameTouched] = useState(false);
+  const [genders, setGenders] = useState<MasterDataOption[]>([]);
+  const [livingSituations, setLivingSituations] = useState<MasterDataOption[]>([]);
+  const [dependencyLevels, setDependencyLevels] = useState<MasterDataOption[]>([]);
+  const [isLoadingOptions, setIsLoadingOptions] = useState(true);
+  const [optionsError, setOptionsError] = useState<string | null>(null);
 
   const isNameValid = isValidName(preferredName);
   const isDobComplete = dobDay.length > 0 && dobMonth.length > 0 && dobYear.length === 4;
@@ -51,6 +54,29 @@ export const ProfileSetupScreen: React.FC = () => {
     nameTouched && preferredName.length > 0 && !isNameValid ? 'Enter a valid name' : undefined;
   const dobError =
     isDobComplete && !isDobValid ? 'Enter a valid date of birth (DD/MM/YYYY)' : undefined;
+
+  useEffect(() => {
+    const loadOptions = async () => {
+      try {
+        setIsLoadingOptions(true);
+        setOptionsError(null);
+        const [genderOptions, livingOptions, dependencyOptions] = await Promise.all([
+          masterdataService.getGenders(),
+          masterdataService.getLivingSituations(),
+          masterdataService.getDependencyLevels(),
+        ]);
+        setGenders(genderOptions);
+        setLivingSituations(livingOptions);
+        setDependencyLevels(dependencyOptions);
+      } catch (err) {
+        setOptionsError('Unable to load profile options right now.');
+      } finally {
+        setIsLoadingOptions(false);
+      }
+    };
+
+    loadOptions();
+  }, []);
 
   const handleContinue = () => {
     if (!isFormValid) return;
@@ -119,43 +145,61 @@ export const ProfileSetupScreen: React.FC = () => {
         {dobError && <Text style={styles.errorText}>{dobError}</Text>}
 
         <Text style={styles.sectionLabel}>Gender</Text>
-        <View style={styles.chipGrid}>
-          {GENDERS.map((item) => (
-            <SelectableChip
-              key={item}
-              label={item}
-              selected={gender === item}
-              onPress={() => setGender(item)}
-              style={item === 'Non-binary' ? styles.chipFull : styles.chipHalf}
-            />
-          ))}
-        </View>
+        {isLoadingOptions ? (
+          <Text style={styles.helperText}>Loading options…</Text>
+        ) : optionsError ? (
+          <Text style={styles.helperText}>{optionsError}</Text>
+        ) : (
+          <View style={styles.chipGrid}>
+            {genders.map((item) => (
+              <SelectableChip
+                key={item.id}
+                label={item.label}
+                selected={gender === item.value}
+                onPress={() => setGender(item.value)}
+                style={item.label === 'Non-binary' ? styles.chipFull : styles.chipHalf}
+              />
+            ))}
+          </View>
+        )}
 
         <Text style={styles.sectionLabel}>Living Situation</Text>
-        <View style={styles.chipGrid}>
-          {LIVING_SITUATIONS.map((item) => (
-            <SelectableChip
-              key={item}
-              label={item}
-              selected={living === item}
-              onPress={() => setLiving(item)}
-              style={styles.chipHalf}
-            />
-          ))}
-        </View>
+        {isLoadingOptions ? (
+          <Text style={styles.helperText}>Loading options…</Text>
+        ) : optionsError ? (
+          <Text style={styles.helperText}>{optionsError}</Text>
+        ) : (
+          <View style={styles.chipGrid}>
+            {livingSituations.map((item) => (
+              <SelectableChip
+                key={item.id}
+                label={item.label}
+                selected={living === item.value}
+                onPress={() => setLiving(item.value)}
+                style={styles.chipHalf}
+              />
+            ))}
+          </View>
+        )}
 
         <Text style={styles.sectionLabel}>Dependency Levels</Text>
-        <View style={styles.chipGrid}>
-          {DEPENDENCY_LEVELS.map((item) => (
-            <SelectableChip
-              key={item}
-              label={item}
-              selected={dependency === item}
-              onPress={() => setDependency(item)}
-              style={styles.chipFull}
-            />
-          ))}
-        </View>
+        {isLoadingOptions ? (
+          <Text style={styles.helperText}>Loading options…</Text>
+        ) : optionsError ? (
+          <Text style={styles.helperText}>{optionsError}</Text>
+        ) : (
+          <View style={styles.chipGrid}>
+            {dependencyLevels.map((item) => (
+              <SelectableChip
+                key={item.id}
+                label={item.label}
+                selected={dependency === item.value}
+                onPress={() => setDependency(item.value)}
+                style={styles.chipFull}
+              />
+            ))}
+          </View>
+        )}
 
         <Spacer size="xl" />
         <PrimaryButton label="Continue" onPress={handleContinue} disabled={!isFormValid} />
@@ -221,6 +265,12 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(theme.typography.caption.fontSize),
     color: theme.colors.status.error,
     marginTop: -theme.spacing.xs,
+  },
+  helperText: {
+    fontFamily: theme.typography.bodyMedium.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.bodyMedium.fontSize),
+    color: theme.colors.neutral[600],
+    marginBottom: theme.spacing.md,
   },
   dobField: {
     flex: 1,

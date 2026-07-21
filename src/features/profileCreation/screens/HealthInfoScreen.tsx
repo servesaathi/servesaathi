@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { RootNavigationProp } from '@/navigation/types';
@@ -7,14 +7,9 @@ import { Screen, Spacer, Header } from '@/components/layouts';
 import { PrimaryButton } from '@/components/buttons';
 import { TextInput, Checkbox, SelectableChip } from '@/components/inputs';
 import { responsiveFontSize } from '@/utils/responsive';
+import { masterdataService, type MasterDataOption } from '@/api';
 
 // "Profile Creation 3a" (Figma 1248:44732) — step 3 of 6.
-const MEDICAL_CONDITIONS = [
-  'Arthritis', "Alzheimer's", 'COPD', 'Diabetes', 'Dementia',
-  'Heart Disease', 'Hypertension', "Parkinson's", 'Kidney Disease', 'Other',
-];
-const MOBILITY_SUPPORT = ['Independent', 'Wheelchair', 'Assisted', 'Bedridden'];
-const COGNITIVE_CONDITIONS = ['None', 'Mild Memory Issues', 'Dementia', "Alzheimer's"];
 
 export const HealthInfoScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'ProfileHealth'>>();
@@ -23,6 +18,11 @@ export const HealthInfoScreen: React.FC = () => {
   const [cognitive, setCognitive] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
   const [regularMedication, setRegularMedication] = useState(false);
+  const [medicalConditions, setMedicalConditions] = useState<MasterDataOption[]>([]);
+  const [mobilitySupports, setMobilitySupports] = useState<MasterDataOption[]>([]);
+  const [cognitiveConditions, setCognitiveConditions] = useState<MasterDataOption[]>([]);
+  const [isLoadingOptions, setIsLoadingOptions] = useState(true);
+  const [optionsError, setOptionsError] = useState<string | null>(null);
 
   const toggleCondition = (item: string) => {
     setConditions((prev) =>
@@ -32,6 +32,29 @@ export const HealthInfoScreen: React.FC = () => {
 
   // The design marks Existing Medical Conditions and Mobility Support with *
   const isFormValid = conditions.length > 0 && mobility !== null;
+
+  useEffect(() => {
+    const loadOptions = async () => {
+      try {
+        setIsLoadingOptions(true);
+        setOptionsError(null);
+        const [medical, mobility, cognitive] = await Promise.all([
+          masterdataService.getMedicalConditions(),
+          masterdataService.getMobilitySupports(),
+          masterdataService.getCognitiveConditions(),
+        ]);
+        setMedicalConditions(medical);
+        setMobilitySupports(mobility);
+        setCognitiveConditions(cognitive);
+      } catch (err) {
+        setOptionsError('Unable to load health options right now.');
+      } finally {
+        setIsLoadingOptions(false);
+      }
+    };
+
+    loadOptions();
+  }, []);
 
   const handleContinue = () => {
     if (!isFormValid) return;
@@ -50,45 +73,63 @@ export const HealthInfoScreen: React.FC = () => {
         <Text style={styles.sectionLabel}>
           Existing Medical Conditions <Text style={styles.required}>*</Text>
         </Text>
-        <View style={styles.chipGrid}>
-          {MEDICAL_CONDITIONS.map((item) => (
-            <SelectableChip
-              key={item}
-              label={item}
-              selected={conditions.includes(item)}
-              onPress={() => toggleCondition(item)}
-              style={styles.chipHalf}
-            />
-          ))}
-        </View>
+        {isLoadingOptions ? (
+          <Text style={styles.helperText}>Loading options…</Text>
+        ) : optionsError ? (
+          <Text style={styles.helperText}>{optionsError}</Text>
+        ) : (
+          <View style={styles.chipGrid}>
+            {medicalConditions.map((item) => (
+              <SelectableChip
+                key={item.id}
+                label={item.label}
+                selected={conditions.includes(item.value)}
+                onPress={() => toggleCondition(item.value)}
+                style={styles.chipHalf}
+              />
+            ))}
+          </View>
+        )}
 
         <Text style={styles.sectionLabel}>
           Mobility Support <Text style={styles.required}>*</Text>
         </Text>
-        <View style={styles.chipGrid}>
-          {MOBILITY_SUPPORT.map((item) => (
-            <SelectableChip
-              key={item}
-              label={item}
-              selected={mobility === item}
-              onPress={() => setMobility(item)}
-              style={styles.chipHalf}
-            />
-          ))}
-        </View>
+        {isLoadingOptions ? (
+          <Text style={styles.helperText}>Loading options…</Text>
+        ) : optionsError ? (
+          <Text style={styles.helperText}>{optionsError}</Text>
+        ) : (
+          <View style={styles.chipGrid}>
+            {mobilitySupports.map((item) => (
+              <SelectableChip
+                key={item.id}
+                label={item.label}
+                selected={mobility === item.value}
+                onPress={() => setMobility(item.value)}
+                style={styles.chipHalf}
+              />
+            ))}
+          </View>
+        )}
 
         <Text style={styles.sectionLabel}>Cognitive Conditions</Text>
-        <View style={styles.chipGrid}>
-          {COGNITIVE_CONDITIONS.map((item) => (
-            <SelectableChip
-              key={item}
-              label={item}
-              selected={cognitive === item}
-              onPress={() => setCognitive(item)}
-              style={styles.chipFull}
-            />
-          ))}
-        </View>
+        {isLoadingOptions ? (
+          <Text style={styles.helperText}>Loading options…</Text>
+        ) : optionsError ? (
+          <Text style={styles.helperText}>{optionsError}</Text>
+        ) : (
+          <View style={styles.chipGrid}>
+            {cognitiveConditions.map((item) => (
+              <SelectableChip
+                key={item.id}
+                label={item.label}
+                selected={cognitive === item.value}
+                onPress={() => setCognitive(item.value)}
+                style={styles.chipFull}
+              />
+            ))}
+          </View>
+        )}
 
         <Spacer size="md" />
         <TextInput
@@ -147,6 +188,12 @@ const styles = StyleSheet.create({
   },
   chipFull: {
     width: '100%',
+  },
+  helperText: {
+    fontFamily: theme.typography.bodyMedium.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.bodyMedium.fontSize),
+    color: theme.colors.neutral[600],
+    marginBottom: theme.spacing.md,
   },
   checkRow: {
     flexDirection: 'row',

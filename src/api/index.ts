@@ -8,3 +8,5 @@ export { authService } from './services/auth.service';
 export type { VerifyOtpData, RequestOtpPayload, VerifyOtpPayload } from './services/auth.service';
 export { customerService } from './services/customer.service';
 export type { Address, AddressPayload } from './services/customer.service';
+export { masterdataService, normalizeMasterDataResponse } from './services/masterdata.service';
+export type { MasterDataOption } from './services/masterdata.service';

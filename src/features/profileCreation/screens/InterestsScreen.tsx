@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { RootNavigationProp } from '@/navigation/types';
@@ -7,22 +7,39 @@ import { Screen, Spacer, Header } from '@/components/layouts';
 import { PrimaryButton } from '@/components/buttons';
 import { SelectableChip } from '@/components/inputs';
 import { responsiveFontSize } from '@/utils/responsive';
+import { masterdataService, type MasterDataOption } from '@/api';
 
 // "Profile Creation 4" (Figma 1248:44337) — step 4 of 6.
-const INTERESTS = [
-  'Mediation', 'Music', 'Yoga', 'Badminton', 'Dancing', 'Chess',
-  'Knitting', 'Art & Craft', 'Party', 'Baking', 'Carrom', 'Walk',
-];
 
 export const InterestsScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'ProfileInterests'>>();
   const [selected, setSelected] = useState<string[]>([]);
+  const [interests, setInterests] = useState<MasterDataOption[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const toggleInterest = (item: string) => {
     setSelected((prev) =>
       prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item],
     );
   };
+
+  useEffect(() => {
+    const loadInterests = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await masterdataService.getInterests();
+        setInterests(data);
+      } catch (err) {
+        setError('Unable to load interests right now.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadInterests();
+  }, []);
 
   const handleContinue = () => {
     navigation.navigate('ProfileCircle');
@@ -41,17 +58,23 @@ export const InterestsScreen: React.FC = () => {
         </Text>
         <Spacer size="xxl" />
 
-        <View style={styles.chipGrid}>
-          {INTERESTS.map((item) => (
-            <SelectableChip
-              key={item}
-              label={item}
-              selected={selected.includes(item)}
-              onPress={() => toggleInterest(item)}
-              style={styles.chipHalf}
-            />
-          ))}
-        </View>
+        {isLoading ? (
+          <Text style={styles.helperText}>Loading interests…</Text>
+        ) : error ? (
+          <Text style={styles.helperText}>{error}</Text>
+        ) : (
+          <View style={styles.chipGrid}>
+            {interests.map((item) => (
+              <SelectableChip
+                key={item.id}
+                label={item.label}
+                selected={selected.includes(item.value)}
+                onPress={() => toggleInterest(item.value)}
+                style={styles.chipHalf}
+              />
+            ))}
+          </View>
+        )}
 
         <Spacer size="xxl" />
         <View style={styles.footer}>
@@ -93,6 +116,12 @@ const styles = StyleSheet.create({
   chipHalf: {
     flexBasis: '46%',
     flexGrow: 1,
+  },
+  helperText: {
+    fontFamily: theme.typography.bodyMedium.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.bodyMedium.fontSize),
+    color: theme.colors.neutral[600],
+    textAlign: 'center',
   },
   footer: {
     marginTop: 'auto',
