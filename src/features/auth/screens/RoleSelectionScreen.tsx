@@ -26,7 +26,7 @@ export const RoleSelectionScreen: React.FC = () => {
   const handleCreateAccount = () => {
     setRole(API_ROLE_BY_ID[selectedRole] ?? 'customer');
     // Figma flow: Join (Choose a role) → Mobile Phone Verify → OTP → Create Account
-    navigation.navigate('Login');
+    navigation.navigate('Login', { intent: 'signup' });
   };
 
   const roles = [

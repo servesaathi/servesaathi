@@ -1,5 +1,20 @@
 export type ApiRole = 'customer' | 'caregiver' | 'partner';
 
+/** Full set of roles the backend can assign a user — broader than ApiRole, which is only what Join can select. */
+export type UserRole = 'customer' | 'provider' | 'family' | 'partner' | 'admin' | 'super_admin';
+
+/** Authenticated user, as returned by /auth/login and /auth/register. */
+export interface User {
+  id: number;
+  email: string;
+  phone: string | null;
+  firstName: string;
+  lastName: string;
+  roles: UserRole[];
+  isActive: boolean;
+  isBanned: boolean;
+}
+
 /** Every successful response is wrapped in this envelope. */
 export interface ApiEnvelope<T> {
   success: true;

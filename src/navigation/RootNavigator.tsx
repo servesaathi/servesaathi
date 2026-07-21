@@ -6,6 +6,11 @@ import LanguageSelectScreen from '@/features/auth/screens/LanguageSelectScreen';
 import OnboardingScreen from '@/features/auth/screens/OnboardingScreen';
 import { LoginScreen } from '@/features/auth/screens/LoginScreen';
 import { OTPScreen } from '@/features/auth/screens/OTPScreen';
+import { EnterEmailScreen } from '@/features/auth/screens/EnterEmailScreen';
+import { ForgotPasswordMethodScreen } from '@/features/auth/screens/ForgotPasswordMethodScreen';
+import { ForgotPasswordContactScreen } from '@/features/auth/screens/ForgotPasswordContactScreen';
+import { ResetOtpScreen } from '@/features/auth/screens/ResetOtpScreen';
+import { NewPasswordScreen } from '@/features/auth/screens/NewPasswordScreen';
 import { RoleSelectionScreen } from '@/features/auth/screens/RoleSelectionScreen';
 import { CreateAccountScreen } from '@/features/auth/screens/CreateAccountScreen';
 import { PermissionScreen } from '@/features/auth/screens/PermissionScreen';
@@ -42,6 +47,11 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen name="Onboarding" component={OnboardingScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="OTP" component={OTPScreen} />
+      <Stack.Screen name="EnterEmail" component={EnterEmailScreen} />
+      <Stack.Screen name="ForgotPasswordMethod" component={ForgotPasswordMethodScreen} />
+      <Stack.Screen name="ForgotPasswordContact" component={ForgotPasswordContactScreen} />
+      <Stack.Screen name="ResetOtp" component={ResetOtpScreen} />
+      <Stack.Screen name="NewPassword" component={NewPasswordScreen} />
       <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
       <Stack.Screen name="CreateAccount" component={CreateAccountScreen} />
       <Stack.Screen name="Permission" component={PermissionScreen} />

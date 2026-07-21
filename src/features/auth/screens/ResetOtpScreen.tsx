@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Platform } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { RootNavigationProp, RootRouteProp } from '@/navigation/types';
 import { theme } from '@/theme';
@@ -8,7 +8,6 @@ import { PrimaryButton } from '@/components/buttons';
 import { OTPInput } from '@/components/inputs';
 import { responsiveFontSize } from '@/utils/responsive';
 import { authService, getErrorMessage } from '@/api';
-import { useAuthStore } from '@/store/auth.store';
 
 const OTP_LENGTH = 4;
 const RESEND_SECONDS = 30;
@@ -21,15 +20,24 @@ const maskPhone = (phone: string) => {
   return `${match[1]}-${digits.slice(0, 2)}****${digits.slice(8)}`;
 };
 
-export const OTPScreen: React.FC = () => {
-  const navigation = useNavigation<RootNavigationProp<'OTP'>>();
-  const route = useRoute<RootRouteProp<'OTP'>>();
-  const storedPhone = useAuthStore((s) => s.phone);
-  const phone = route.params?.phone ?? storedPhone ?? '';
-  const intent = route.params?.intent ?? 'signup';
+// "kamala.sharma@gmail.com" → "ka******@gmail.com"
+const maskEmail = (email: string) => {
+  const [name, domain] = email.split('@');
+  if (!name || !domain) return email;
+  const visible = name.slice(0, 2);
+  return `${visible}${'*'.repeat(Math.max(name.length - 2, 3))}@${domain}`;
+};
+
+// "OPT Verification" (Figma 1257:23316 / 1257:24412) — reset-password OTP step. Unlike the
+// login OTP screen, there's no /auth verify call here: the entered code becomes the `token`
+// sent straight to /auth/reset-password on the next screen.
+export const ResetOtpScreen: React.FC = () => {
+  const navigation = useNavigation<RootNavigationProp<'ResetOtp'>>();
+  const route = useRoute<RootRouteProp<'ResetOtp'>>();
+  const { channel, contact } = route.params;
+  const isEmail = channel === 'email';
 
   const [otpValue, setOtpValue] = useState('');
-  const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resendIn, setResendIn] = useState(RESEND_SECONDS);
@@ -47,20 +55,9 @@ export const OTPScreen: React.FC = () => {
     if (error) setError(null);
   };
 
-  const handleContinue = async () => {
-    if (!isOtpComplete || verifying) return;
-    setVerifying(true);
-    setError(null);
-    try {
-      const data = await authService.verifyOtp({ phone, code: otpValue });
-      useAuthStore.getState().setPhoneVerification(data);
-      // Figma flow: OTP Verification → Create Account form; existing users skip it
-      navigation.navigate(data.isNewUser ? 'CreateAccount' : 'Home');
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setVerifying(false);
-    }
+  const handleContinue = () => {
+    if (!isOtpComplete) return;
+    navigation.navigate('NewPassword', { token: otpValue });
   };
 
   const handleResend = async () => {
@@ -70,7 +67,10 @@ export const OTPScreen: React.FC = () => {
     setOtpValue('');
     setResendIn(RESEND_SECONDS);
     try {
-      await authService.requestOtp({ phone, role: useAuthStore.getState().role });
+      if (isEmail) {
+        await authService.forgotPassword({ email: contact });
+      }
+      // SMS channel has no backend support yet — nothing to resend.
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -80,25 +80,21 @@ export const OTPScreen: React.FC = () => {
 
   return (
     <Screen statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
-      <Header title={intent === 'login' ? 'Log in' : 'Create Account'} leftIcon="back" transparent />
+      <Header leftIcon="back" transparent />
 
       <View style={styles.content}>
         <Spacer size="xxl" />
 
-        <Text style={styles.title}>Enter verification code</Text>
+        <Text style={styles.title}>OTP code verification</Text>
         <Text style={styles.subtitle}>
-          The OTP has been sent to your verified mobile{' '}
-          <Text style={styles.highlightMobile}>{maskPhone(phone)}</Text>
+          The OTP has been sent to your verified {isEmail ? 'email' : 'mobile'}{' '}
+          <Text style={styles.highlight}>{isEmail ? maskEmail(contact) : maskPhone(contact)}</Text>
+          . Enter the OTP code below to verify.
         </Text>
 
         <Spacer size="xxl" />
 
-        <OTPInput
-          length={OTP_LENGTH}
-          value={otpValue}
-          onChange={handleOtpChange}
-          error={!!error}
-        />
+        <OTPInput length={OTP_LENGTH} value={otpValue} onChange={handleOtpChange} error={!!error} />
 
         {error && (
           <>
@@ -114,7 +110,6 @@ export const OTPScreen: React.FC = () => {
           onPress={handleContinue}
           style={styles.button}
           disabled={!isOtpComplete}
-          loading={verifying}
         />
 
         <Spacer size="lg" />
@@ -122,9 +117,7 @@ export const OTPScreen: React.FC = () => {
         {resendIn > 0 ? (
           <Text style={styles.resendText}>
             Didn't receive OTP?{' '}
-            <Text style={styles.resendTimer}>
-              Resend in 00:{String(resendIn).padStart(2, '0')}
-            </Text>
+            <Text style={styles.resendTimer}>Resend in 00:{String(resendIn).padStart(2, '0')}</Text>
           </Text>
         ) : (
           <Text style={styles.resendText}>
@@ -159,7 +152,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
   },
-  highlightMobile: {
+  highlight: {
     fontFamily: theme.fonts.bold,
     color: theme.colors.neutral[900],
   },
@@ -187,4 +180,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default OTPScreen;
+export default ResetOtpScreen;

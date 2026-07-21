@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, Platform } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
-import { RootNavigationProp } from '@/navigation/types';
+import { RootNavigationProp, RootRouteProp } from '@/navigation/types';
 import { theme } from '@/theme';
 import { Screen, Spacer, Header } from '@/components/layouts';
 import { PrimaryButton, TertiaryButton } from '@/components/buttons';
@@ -38,6 +38,9 @@ const GoogleIcon = () => (
 
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'Login'>>();
+  const route = useRoute<RootRouteProp<'Login'>>();
+  const intent = route.params?.intent ?? 'signup';
+  const isLogin = intent === 'login';
   const { t } = useTranslation();
   const [mobile, setMobile] = useState('');
   const [mobileTouched, setMobileTouched] = useState(false);
@@ -66,7 +69,7 @@ export const LoginScreen: React.FC = () => {
     try {
       await authService.requestOtp({ phone, role });
       setPhone(phone);
-      navigation.navigate('OTP', { phone });
+      navigation.navigate('OTP', { phone, intent });
     } catch (err) {
       setApiError(getErrorMessage(err));
     } finally {
@@ -75,11 +78,13 @@ export const LoginScreen: React.FC = () => {
   };
 
   const handleGoogleLogin = () => {
-    // Add logic later
+    // TODO: no Google/OAuth endpoint exists on the backend yet — wire this up once
+    // one is added (checked the live Swagger docs: only phone-OTP and email/password
+    // auth are implemented server-side today).
   };
 
   const handleEmailLogin = () => {
-    // Add logic later
+    navigation.navigate('EnterEmail');
   };
 
   // Custom Country Code Prefix Selector component mimicking the design spec
@@ -114,7 +119,9 @@ export const LoginScreen: React.FC = () => {
           />
           <Spacer size="md" />
           <Text style={styles.subtitle}>
-            Create profiles for the seniors you care about and begin their journey with us.
+            {isLogin
+              ? 'Log in to check on the seniors you care about and continue their journey with us.'
+              : 'Create profiles for the seniors you care about and begin their journey with us.'}
           </Text>
         </View>
 
@@ -175,10 +182,24 @@ export const LoginScreen: React.FC = () => {
         {/* FOOTER SECTION */}
         <View style={styles.footer}>
           <View style={styles.footerRow}>
-            <Text style={styles.footerText}>Already have an account? </Text>
-            <Text style={styles.loginLink} onPress={() => {}}>
-              Log in
-            </Text>
+            {isLogin ? (
+              <>
+                <Text style={styles.footerText}>Don't have an account yet? </Text>
+                <Text style={styles.loginLink} onPress={() => navigation.navigate('RoleSelection')}>
+                  Sign up
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.footerText}>Already have an account? </Text>
+                <Text
+                  style={styles.loginLink}
+                  onPress={() => navigation.replace('Login', { intent: 'login' })}
+                >
+                  Log in
+                </Text>
+              </>
+            )}
           </View>
         </View>
       </View>

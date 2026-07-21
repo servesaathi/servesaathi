@@ -1,6 +1,6 @@
 import apiClient from '../axios';
 import ENDPOINTS from '../endpoints';
-import { ApiEnvelope, ApiRole } from '../types';
+import { ApiEnvelope, ApiRole, User } from '../types';
 
 export interface RequestOtpPayload {
   /** E.164 format, e.g. "+919777729450". */
@@ -18,6 +18,26 @@ export interface VerifyOtpData {
   phoneVerificationToken: string;
 }
 
+export interface LoginPayload {
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  user: User;
+}
+
+export interface ForgotPasswordPayload {
+  email: string;
+}
+
+export interface ResetPasswordPayload {
+  /** The OTP code sent to the user's email, used as the reset token. */
+  token: string;
+  newPassword: string;
+}
+
 export const authService = {
   /** Sends an OTP to the given phone. */
   requestOtp: async (payload: RequestOtpPayload): Promise<void> => {
@@ -31,6 +51,22 @@ export const authService = {
       payload
     );
     return res.data.data;
+  },
+
+  /** Email/password login; throws ApiError(401) for wrong credentials. */
+  login: async (payload: LoginPayload): Promise<AuthResponse> => {
+    const res = await apiClient.post<ApiEnvelope<AuthResponse>>(ENDPOINTS.auth.login, payload);
+    return res.data.data;
+  },
+
+  /** Requests a password-reset code by email. */
+  forgotPassword: async (payload: ForgotPasswordPayload): Promise<void> => {
+    await apiClient.post<void>(ENDPOINTS.auth.forgotPassword, payload);
+  },
+
+  /** Resets the password using the code sent by forgotPassword. */
+  resetPassword: async (payload: ResetPasswordPayload): Promise<void> => {
+    await apiClient.post<void>(ENDPOINTS.auth.resetPassword, payload);
   },
 };
 

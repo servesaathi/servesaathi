@@ -81,7 +81,7 @@ export const OnboardingScreen: React.FC = () => {
   };
 
   const handleLogin = () => {
-    navigation.replace('Login');
+    navigation.replace('Login', { intent: 'login' });
   };
 
   const handleMomentumScrollEnd = (event: any) => {

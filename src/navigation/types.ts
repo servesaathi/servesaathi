@@ -5,8 +5,13 @@ export type RootStackParamList = {
   Splash: undefined;
   LanguageSelect: undefined;
   Onboarding: undefined;
-  Login: undefined;
-  OTP: { phone: string };
+  Login: { intent?: 'signup' | 'login' } | undefined;
+  OTP: { phone: string; intent?: 'signup' | 'login' };
+  EnterEmail: undefined;
+  ForgotPasswordMethod: undefined;
+  ForgotPasswordContact: { channel: 'sms' | 'email' };
+  ResetOtp: { channel: 'sms' | 'email'; contact: string };
+  NewPassword: { token: string };
   RoleSelection: undefined;
   CreateAccount: undefined;
   Permission: undefined;

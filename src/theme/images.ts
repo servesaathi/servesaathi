@@ -8,6 +8,7 @@ export const images = {
   languageSelectIllustrator: require('../../assets/language_selector_illustrator.png'),
   permissionBlob: require('../../assets/illustrations/permission_blob.png'),
   settingUpScribble: require('../../assets/illustrations/settingup_scribble.png'),
+  homeInfoBg: require('../../assets/home-info-bg.png'),
 };
 
 export type Images = typeof images;

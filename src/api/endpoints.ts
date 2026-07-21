@@ -7,6 +7,9 @@ export const ENDPOINTS = {
     otpVerify: '/auth/otp/verify',
     register: '/auth/register',
     refreshToken: '/auth/refresh',
+    login: '/auth/login',
+    forgotPassword: '/auth/forgot-password',
+    resetPassword: '/auth/reset-password',
   },
   customers: {
     me: '/customers/me',

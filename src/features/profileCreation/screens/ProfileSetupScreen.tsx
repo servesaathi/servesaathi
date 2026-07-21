@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, View, Pressable, Modal, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, Image, Pressable, Modal, ScrollView, Alert } from 'react-native';
 import Svg, { Rect, Circle, Path } from 'react-native-svg';
+import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import { RootNavigationProp } from '@/navigation/types';
 import { theme } from '@/theme';
@@ -45,6 +46,7 @@ export const ProfileSetupScreen: React.FC = () => {
   const [isLoadingOptions, setIsLoadingOptions] = useState(true);
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [activeDobField, setActiveDobField] = useState<'day' | 'month' | 'year' | null>(null);
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
 
   const isNameValid = isValidName(preferredName);
   const isDobComplete = dobDay.length > 0 && dobMonth.length > 0 && dobYear.length === 4;
@@ -82,6 +84,28 @@ export const ProfileSetupScreen: React.FC = () => {
   const handleContinue = () => {
     if (!isFormValid) return;
     navigation.navigate('ProfileAddress');
+  };
+
+  const handlePickPhoto = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'Photo access needed',
+        'Allow ServeSaathi to access your photos in Settings to set a profile picture.'
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets?.[0]?.uri) {
+      setPhotoUri(result.assets[0].uri);
+    }
   };
 
   const today = new Date().getFullYear();
@@ -147,12 +171,21 @@ export const ProfileSetupScreen: React.FC = () => {
 
         {/* Profile photo picker */}
         <View style={styles.photoSection}>
-          <View style={styles.photoCircle}>
-            <ImagePlaceholderIcon size={40} color={theme.colors.primary} />
-            <Pressable style={styles.editBadge} accessibilityLabel="Edit your photo">
+          <Pressable
+            style={styles.photoCircle}
+            onPress={handlePickPhoto}
+            accessibilityRole="button"
+            accessibilityLabel="Upload profile photo"
+          >
+            {photoUri ? (
+              <Image source={{ uri: photoUri }} style={styles.photoImage} />
+            ) : (
+              <ImagePlaceholderIcon size={40} color={theme.colors.primary} />
+            )}
+            <View style={styles.editBadge}>
               <Icon name="edit" variant="outline" size={14} color="#FFFFFF" />
-            </Pressable>
-          </View>
+            </View>
+          </Pressable>
           <Spacer size="sm" />
           <Text style={styles.editPhotoText}>Edit your photo</Text>
         </View>
@@ -333,6 +366,11 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.forestGreen[100],
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  photoImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 84,
   },
   editBadge: {
     // Figma: 24px badge sitting on the circle's lower-right edge

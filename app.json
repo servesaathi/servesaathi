@@ -34,6 +34,12 @@
         {
           "backgroundColor": "#123214"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "ServeSaathi needs access to your photos so you can set a profile picture."
+        }
       ]
     ]
   }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { StyleSheet, Text, View, Pressable, Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
 import { RootNavigationProp } from '@/navigation/types';
@@ -7,6 +7,7 @@ import { theme } from '@/theme';
 import { Screen, Spacer, Header } from '@/components/layouts';
 import { PrimaryButton } from '@/components/buttons';
 import { TextInput, Checkbox } from '@/components/inputs';
+import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
 import { digitsOnly, isValidPinCode } from '@/utils/validation';
 
@@ -21,6 +22,7 @@ export const AddressScreen: React.FC = () => {
   const [pinCode, setPinCode] = useState('');
   const [landmark, setLandmark] = useState('');
   const [detectLocation, setDetectLocation] = useState(false);
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
 
   const isPinValid = isValidPinCode(pinCode);
   const pinError =
@@ -37,6 +39,19 @@ export const AddressScreen: React.FC = () => {
   const handleContinue = () => {
     if (!isFormValid) return;
     navigation.navigate('ProfileHealth');
+  };
+
+  const handleDetectLocationPress = () => {
+    if (detectLocation) {
+      setDetectLocation(false);
+      return;
+    }
+    setShowLocationPrompt(true);
+  };
+
+  const handleLocationChoice = (allow: boolean) => {
+    setDetectLocation(allow);
+    setShowLocationPrompt(false);
   };
 
   const Chevron = () => (
@@ -107,10 +122,10 @@ export const AddressScreen: React.FC = () => {
           onChangeText={setLandmark}
         />
 
-        <Pressable style={styles.checkRow} onPress={() => setDetectLocation((v) => !v)}>
+        <Pressable style={styles.checkRow} onPress={handleDetectLocationPress}>
           <Checkbox
             checked={detectLocation}
-            onPress={() => setDetectLocation((v) => !v)}
+            onPress={handleDetectLocationPress}
             color="orange"
           />
           <Text style={styles.checkText}>Enable access to detect where you are.</Text>
@@ -120,6 +135,49 @@ export const AddressScreen: React.FC = () => {
         <PrimaryButton label="Continue" onPress={handleContinue} disabled={!isFormValid} />
         <Spacer size="xl" />
       </View>
+
+      <Modal
+        visible={showLocationPrompt}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLocationPrompt(false)}
+      >
+        <View style={styles.promptOverlay}>
+          <View style={styles.promptCard}>
+            <Icon name="location" variant="filled" size={28} color={theme.colors.tertiary} />
+            <Spacer size="xl" />
+            <Text style={styles.promptTitle}>
+              <Text style={styles.promptTitleRegular}>Allow </Text>
+              <Text style={styles.promptTitleBold}>ServeSaathi</Text>
+              <Text style={styles.promptTitleRegular}>
+                {' '}
+                to access this device’s precise location?
+              </Text>
+            </Text>
+            <Spacer size="xl" />
+            <View style={styles.promptButtons}>
+              <Pressable
+                style={[styles.promptButton, styles.promptButtonTop]}
+                onPress={() => handleLocationChoice(true)}
+              >
+                <Text style={styles.promptButtonText}>While using the app</Text>
+              </Pressable>
+              <Pressable
+                style={styles.promptButton}
+                onPress={() => handleLocationChoice(true)}
+              >
+                <Text style={styles.promptButtonText}>Only this time</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.promptButton, styles.promptButtonBottom]}
+                onPress={() => handleLocationChoice(false)}
+              >
+                <Text style={styles.promptButtonText}>Don’t allow</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </Screen>
   );
 };
@@ -145,6 +203,63 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.bodyMedium.fontFamily,
     fontSize: responsiveFontSize(theme.typography.bodyMedium.fontSize),
     color: theme.colors.neutral[900],
+  },
+  promptOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.xl,
+  },
+  promptCard: {
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: 26,
+    padding: theme.spacing.xl,
+    alignItems: 'center',
+    backgroundColor: theme.colors.background.base,
+  },
+  promptTitle: {
+    textAlign: 'center',
+    fontSize: responsiveFontSize(18),
+    lineHeight: responsiveFontSize(18) * 1.3,
+  },
+  promptTitleRegular: {
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.neutral[900],
+  },
+  promptTitleBold: {
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.neutral[900],
+  },
+  promptButtons: {
+    width: '100%',
+    gap: theme.spacing.sm,
+  },
+  promptButton: {
+    width: '100%',
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.forestGreen[100],
+    borderTopLeftRadius: theme.radius.xs,
+    borderTopRightRadius: theme.radius.xs,
+    borderBottomLeftRadius: theme.radius.xs,
+    borderBottomRightRadius: theme.radius.xs,
+  },
+  promptButtonTop: {
+    borderTopLeftRadius: theme.radius.md,
+    borderTopRightRadius: theme.radius.md,
+  },
+  promptButtonBottom: {
+    borderBottomLeftRadius: theme.radius.md,
+    borderBottomRightRadius: theme.radius.md,
+  },
+  promptButtonText: {
+    fontFamily: theme.fonts.regular,
+    fontSize: responsiveFontSize(13),
+    color: theme.colors.neutral[900],
+    textAlign: 'center',
   },
 });
 

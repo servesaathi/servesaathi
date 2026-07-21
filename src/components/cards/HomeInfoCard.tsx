@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, Image, Pressable, StyleProp, ViewStyle } from 'react-native';
+import { StyleSheet, Text, View, Image, ImageBackground, Pressable, StyleProp, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '@/theme';
 import { responsiveFontSize } from '@/utils/responsive';
@@ -33,8 +33,7 @@ interface HomeInfoCardProps {
 }
 
 // "Card View" (Label Cards) from Figma Card Views (node 103:288) — the dark-green
-// gradient home-screen info card, 6 status variants. Figma's decorative dot-pattern
-// background is approximated here with a plain green gradient (no pattern asset).
+// home-screen info card, 6 status variants, using the dot-pattern background asset.
 export const HomeInfoCard: React.FC<HomeInfoCardProps> = ({
   status = 'withoutCaption',
   subheadline = 'Safety Check-in',
@@ -60,12 +59,18 @@ export const HomeInfoCard: React.FC<HomeInfoCardProps> = ({
   const showButton = ['quote', 'withCaption', 'withoutCaption'].includes(status);
 
   return (
-    <LinearGradient
-      colors={[theme.colors.forestGreen[500], theme.colors.forestGreen[900]]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
+    <ImageBackground
+      source={theme.images.homeInfoBg}
+      imageStyle={styles.cardImage}
       style={[styles.card, style]}
     >
+      <LinearGradient
+        colors={[theme.colors.primary, theme.colors.primary, 'rgba(46, 125, 50, 0)']}
+        locations={[0, 0.6262, 1]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={StyleSheet.absoluteFill}
+      />
       {isProfile ? (
         <View style={styles.profileRow}>
           {profilePhotoUri && <Image source={{ uri: profilePhotoUri }} style={styles.profilePhoto} />}
@@ -95,7 +100,7 @@ export const HomeInfoCard: React.FC<HomeInfoCardProps> = ({
         <>
           {status === 'withoutButton' && <Text style={styles.eyebrow}>What do you need today?</Text>}
           {isQuote && <Text style={styles.eyebrowSmall}>Quote of the day</Text>}
-          <Text style={styles.subheadline}>{isQuote ? undefined : subheadline}</Text>
+          {!isQuote && <Text style={styles.subheadline}>{subheadline}</Text>}
           <Text style={styles.bodyText}>{isQuote ? `"${quoteText}"` : bodyText}</Text>
           {showButton && (
             <Pressable onPress={onButtonPress} style={styles.button}>
@@ -113,15 +118,20 @@ export const HomeInfoCard: React.FC<HomeInfoCardProps> = ({
           )}
         </>
       )}
-    </LinearGradient>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: theme.radius.md,
+    borderRadius: theme.radius.sm,
     padding: theme.spacing.lg,
     gap: theme.spacing.lg,
+    overflow: 'hidden',
+  },
+  cardImage: {
+    borderRadius: theme.radius.sm,
+    resizeMode: 'cover',
   },
   textCol: {
     gap: theme.spacing.xs,
