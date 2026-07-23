@@ -105,26 +105,56 @@ export const ProfileSetupScreen: React.FC = () => {
     }
   };
 
-  const handlePickPhoto = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(
-        'Photo access needed',
-        'Allow ServeSaathi to access your photos in Settings to set a profile picture.'
-      );
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
+  const applyPickedImage = (result: ImagePicker.ImagePickerResult) => {
     if (!result.canceled && result.assets?.[0]?.uri) {
       setPhotoUri(result.assets[0].uri);
     }
+  };
+
+  const pickFromGallery = async () => {
+    try {
+      // The system photo picker needs no permission on iOS (PHPicker) or
+      // Android 13+ — gating it behind requestMediaLibraryPermissionsAsync
+      // was what kept the gallery from ever opening.
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+      applyPickedImage(result);
+    } catch {
+      Alert.alert('Something went wrong', 'Could not open your photo gallery. Please try again.');
+    }
+  };
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'Camera access needed',
+        'Allow ServeSaathi to use your camera in Settings to take a profile picture.'
+      );
+      return;
+    }
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+      applyPickedImage(result);
+    } catch {
+      Alert.alert('Something went wrong', 'Could not open the camera. Please try again.');
+    }
+  };
+
+  const handlePickPhoto = () => {
+    Alert.alert('Profile photo', 'How would you like to add your photo?', [
+      { text: 'Take a photo', onPress: takePhoto },
+      { text: 'Choose from gallery', onPress: pickFromGallery },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
   };
 
   const today = new Date().getFullYear();
