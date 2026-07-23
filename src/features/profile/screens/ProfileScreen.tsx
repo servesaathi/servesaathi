@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { StyleSheet, Text, View, Image, Pressable } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,8 +10,41 @@ import { IconButton } from '@/components/buttons';
 import { responsiveFontSize } from '@/utils/responsive';
 import { BottomTabParamList } from '@/navigation/BottomTabNavigator';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import {
+  careProfileService,
+  customerService,
+  type Address,
+  type CareProfile,
+  type FamilyMember,
+  type HealthProfile,
+} from '@/api';
+import { useUserStore } from '@/store/user.store';
+import { ProfileEditSheet, type EditSection } from '../components/ProfileEditSheet';
+import { FamilyMemberSheet } from '../components/FamilyMemberSheet';
 
 type ProfileScreenNavigationProp = BottomTabNavigationProp<BottomTabParamList, 'ProfileTab'>;
+
+const AVATAR_FALLBACK = 'https://images.unsplash.com/photo-1566616213894-2d4e1baee5d8?w=150';
+
+// "1966-04-29" → "29/04/1966"
+const formatDob = (iso?: string) => {
+  if (!iso) return '—';
+  const [year, month, day] = iso.split('T')[0].split('-');
+  return year && month && day ? `${day}/${month}/${year}` : '—';
+};
+
+const ageFromDob = (iso?: string): number | null => {
+  if (!iso) return null;
+  const dob = new Date(iso);
+  if (Number.isNaN(dob.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - dob.getFullYear();
+  const beforeBirthday =
+    now.getMonth() < dob.getMonth() ||
+    (now.getMonth() === dob.getMonth() && now.getDate() < dob.getDate());
+  if (beforeBirthday) age -= 1;
+  return age >= 0 ? age : null;
+};
 
 const InfoRow = ({ label, value }: { label: string; value: string }) => (
   <View style={styles.infoRow}>
@@ -42,6 +75,67 @@ export const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const [activeTab, setActiveTab] = useState<'basic' | 'medical' | 'history'>('basic');
   const insets = useSafeAreaInsets();
+  const userProfile = useUserStore((s) => s.profile);
+  const [careProfile, setCareProfile] = useState<CareProfile | null>(null);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
+  const [healthProfile, setHealthProfile] = useState<HealthProfile | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [editSection, setEditSection] = useState<EditSection | null>(null);
+  const [contactSheetOpen, setContactSheetOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState<FamilyMember | null>(null);
+
+  const loadData = useCallback(async () => {
+    try {
+      setLoadError(null);
+      const [profile, addressList, members, health] = await Promise.all([
+        careProfileService.getCareProfile(),
+        customerService.getAddresses(),
+        careProfileService.getFamilyMembers(),
+        // Health may not exist yet for users who skipped that onboarding step.
+        careProfileService.getHealthProfile().catch(() => null),
+      ]);
+      setCareProfile(profile);
+      setAddresses(addressList);
+      setFamilyMembers(members);
+      setHealthProfile(health);
+    } catch {
+      setLoadError('Unable to load your profile right now.');
+    }
+  }, []);
+
+  // Refetch on focus so edits made elsewhere (profile creation, settings) show up.
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
+
+  const handleSaved = () => {
+    setEditSection(null);
+    loadData();
+  };
+
+  const openAddContact = () => {
+    setEditingMember(null);
+    setContactSheetOpen(true);
+  };
+
+  const openEditContact = (member: FamilyMember) => {
+    setEditingMember(member);
+    setContactSheetOpen(true);
+  };
+
+  const handleContactSaved = () => {
+    setContactSheetOpen(false);
+    setEditingMember(null);
+    loadData();
+  };
+
+  const displayName = careProfile?.preferredName || userProfile?.name || '—';
+  const age = ageFromDob(careProfile?.dateOfBirth);
+  const homeAddress = addresses.find((a) => a.isDefault) ?? addresses[0];
+  const interests = careProfile?.interests ?? [];
 
   return (
     <Screen scrollable safeAreaBottom={false} contentContainerStyle={styles.screenContent}>
@@ -105,6 +199,8 @@ export const ProfileScreen: React.FC = () => {
 
       {activeTab === 'basic' && (
         <View>
+          {loadError && <Text style={styles.loadError}>{loadError}</Text>}
+
           {/* Patient Card */}
           <View style={styles.patientCardContainer}>
             <LinearGradient
@@ -114,12 +210,20 @@ export const ProfileScreen: React.FC = () => {
               style={styles.patientCard}
             >
               <Image
-                source={{ uri: 'https://images.unsplash.com/photo-1566616213894-2d4e1baee5d8?w=150' }}
+                source={{ uri: careProfile?.avatarUrl || AVATAR_FALLBACK }}
                 style={styles.avatar}
               />
               <View style={styles.patientInfo}>
-                <Text style={styles.patientName}>Kamala Sharma</Text>
-                <Text style={styles.patientAge}>60 years old <Text style={styles.bullet}>•</Text> Female</Text>
+                <Text style={styles.patientName}>{displayName}</Text>
+                <Text style={styles.patientAge}>
+                  {age !== null ? `${age} years old` : '—'}
+                  {careProfile?.gender?.name ? (
+                    <>
+                      {' '}
+                      <Text style={styles.bullet}>•</Text> {careProfile.gender.name}
+                    </>
+                  ) : null}
+                </Text>
               </View>
             </LinearGradient>
           </View>
@@ -127,91 +231,163 @@ export const ProfileScreen: React.FC = () => {
           <Spacer size="md" />
 
           {/* Personal Details */}
-          <SectionHeader title="Personal Details" onEdit={() => {}} />
+          <SectionHeader title="Personal Details" onEdit={() => setEditSection('details')} />
           <View style={styles.detailsBlock}>
-            <InfoRow label="Full Name" value="Kamala Sharma" />
-            <InfoRow label="Saathi ID" value="Kamala" />
-            <InfoRow label="Date of Birth" value="23/02/1996" />
-            <InfoRow label="Gender" value="Female" />
-            <InfoRow label="Living Situation" value="Alone" />
-            <InfoRow label="Dependency Level" value="Independent" />
-            <InfoRow label="Phone number" value="+91 98100 XXXXX" />
-            <InfoRow label="Language" value="Hindi, English" />
+            <InfoRow label="Full Name" value={userProfile?.name || displayName} />
+            <InfoRow label="Preferred Name" value={careProfile?.preferredName || '—'} />
+            <InfoRow label="Date of Birth" value={formatDob(careProfile?.dateOfBirth)} />
+            <InfoRow label="Gender" value={careProfile?.gender?.name || '—'} />
+            <InfoRow label="Living Situation" value={careProfile?.livingSituation?.name || '—'} />
+            <InfoRow label="Dependency Level" value={careProfile?.dependencyLevel?.name || '—'} />
+            <InfoRow label="Phone number" value={userProfile?.phone || '—'} />
+            <InfoRow label="Email" value={userProfile?.email || '—'} />
           </View>
 
           <Spacer size="md" />
 
           {/* Home Address */}
-          <SectionHeader title="Home Address" onEdit={() => {}} />
+          <SectionHeader title="Home Address" onEdit={() => setEditSection('address')} />
           <View style={styles.detailsBlock}>
-            <InfoRow label="Home Address" value="123, Residency Road" />
-            <InfoRow label="City" value="Mumbai" />
-            <InfoRow label="State" value="Maharashtra" />
+            <InfoRow
+              label={homeAddress?.label || 'Home Address'}
+              value={
+                homeAddress
+                  ? [homeAddress.line1, homeAddress.line2].filter(Boolean).join(', ')
+                  : '—'
+              }
+            />
+            <InfoRow label="City" value={homeAddress?.city || '—'} />
+            <InfoRow label="State" value={homeAddress?.state || '—'} />
+            <InfoRow label="PIN Code" value={homeAddress?.pincode || '—'} />
           </View>
 
           <Spacer size="md" />
 
           {/* Interests of Events */}
-          <SectionHeader title="Interests of Events" onEdit={() => {}} />
+          <SectionHeader title="Interests of Events" onEdit={() => setEditSection('interests')} />
           <View style={styles.interestsContainer}>
-            {['Yoga', 'Art & Craft', 'Music', 'Party'].map((interest) => (
-              <View key={interest} style={styles.interestBadge}>
-                <Text style={styles.interestText}>{interest}</Text>
-              </View>
-            ))}
+            {interests.length === 0 ? (
+              <Text style={styles.emptyText}>No interests added yet.</Text>
+            ) : (
+              interests.map((interest) => (
+                <View key={interest.id} style={styles.interestBadge}>
+                  <Text style={styles.interestText}>{interest.name}</Text>
+                </View>
+              ))
+            )}
           </View>
 
           <Spacer size="lg" />
 
-          {/* List Contacts */}
+          {/* List Contacts — tap a card to edit, "+ Add" to create */}
           <View style={styles.contactHeaderContainer}>
             <Text style={styles.sectionTitle}>List Contacts</Text>
+            <Pressable onPress={openAddContact} style={styles.editButton}>
+              <Text style={styles.editButtonText}>+ Add</Text>
+            </Pressable>
           </View>
           <Spacer size="sm" />
-          
+
           <View style={styles.contactsContainer}>
-            {/* Contact 1 */}
-            <View style={styles.contactCard}>
-              <View style={[styles.contactIndicatorBar, { backgroundColor: theme.colors.primary }]} />
-              <View style={styles.contactContent}>
-                <View style={styles.contactNameRow}>
-                  <Text style={styles.contactName}>Suresh Sharma</Text>
-                  <View style={styles.verifiedBadge}>
-                    <Text style={styles.verifiedText}>Verified</Text>
+            {familyMembers.length === 0 ? (
+              <Text style={styles.emptyText}>No contacts added yet.</Text>
+            ) : (
+              familyMembers.map((member) => (
+                <Pressable
+                  key={member.id}
+                  style={styles.contactCard}
+                  onPress={() => openEditContact(member)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Edit contact ${member.firstName} ${member.lastName}`}
+                >
+                  <View
+                    style={[
+                      styles.contactIndicatorBar,
+                      {
+                        backgroundColor:
+                          member.status === 'accepted'
+                            ? theme.colors.primary
+                            : theme.colors.tertiary,
+                      },
+                    ]}
+                  />
+                  <View style={styles.contactContent}>
+                    <View style={styles.contactNameRow}>
+                      <Text style={styles.contactName}>
+                        {`${member.firstName} ${member.lastName}`.trim()}
+                      </Text>
+                      {member.status === 'accepted' && (
+                        <View style={styles.verifiedBadge}>
+                          <Text style={styles.verifiedText}>Verified</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Spacer size="xs" />
+                    <Text style={styles.contactDetails}>
+                      {member.relationship?.name ?? 'Family'}{' '}
+                      <Text style={styles.bullet}>•</Text> {member.phone}
+                    </Text>
                   </View>
-                </View>
-                <Spacer size="xs" />
-                <Text style={styles.contactDetails}>Son <Text style={styles.bullet}>•</Text> +91 9876543210</Text>
-              </View>
-            </View>
-
-            {/* Contact 2 */}
-            <View style={styles.contactCard}>
-              <View style={[styles.contactIndicatorBar, { backgroundColor: theme.colors.tertiary }]} />
-              <View style={styles.contactContent}>
-                <Text style={styles.contactName}>Dr. Apurva Pande</Text>
-                <Spacer size="xs" />
-                <Text style={styles.contactDetails}>Gastritis <Text style={styles.bullet}>•</Text> +91 9876543210</Text>
-              </View>
-            </View>
-
-            {/* Contact 3 */}
-            <View style={styles.contactCard}>
-              <View style={[styles.contactIndicatorBar, { backgroundColor: theme.colors.tertiary }]} />
-              <View style={styles.contactContent}>
-                <Text style={styles.contactName}>Dr. S.L. Broor</Text>
-                <Spacer size="xs" />
-                <Text style={styles.contactDetails}>Primary Care Prov. <Text style={styles.bullet}>•</Text> +91 9876543210</Text>
-              </View>
-            </View>
+                </Pressable>
+              ))
+            )}
           </View>
         </View>
       )}
 
       {activeTab === 'medical' && (
-        <View style={styles.tabContentPlaceholder}>
-          <Text style={styles.placeholderText}>Medical Information Screen</Text>
-          <Text style={styles.placeholderSubtext}>Coming Soon</Text>
+        <View>
+          {healthProfile ? (
+            <>
+              <View style={styles.contactHeaderContainer}>
+                <Text style={styles.sectionTitle}>Medical Conditions</Text>
+              </View>
+              <Spacer size="sm" />
+              <View style={styles.interestsContainer}>
+                {healthProfile.medicalConditions.length === 0 ? (
+                  <Text style={styles.emptyText}>No conditions recorded.</Text>
+                ) : (
+                  healthProfile.medicalConditions.map((condition) => (
+                    <View key={condition.id} style={styles.interestBadge}>
+                      <Text style={styles.interestText}>{condition.name}</Text>
+                    </View>
+                  ))
+                )}
+              </View>
+
+              <Spacer size="md" />
+
+              <View style={styles.contactHeaderContainer}>
+                <Text style={styles.sectionTitle}>Health Details</Text>
+              </View>
+              <Spacer size="sm" />
+              <View style={styles.detailsBlock}>
+                <InfoRow
+                  label="Mobility Support"
+                  value={healthProfile.mobilitySupport?.name || '—'}
+                />
+                <InfoRow
+                  label="Cognitive Condition"
+                  value={healthProfile.cognitiveCondition?.name || '—'}
+                />
+                <InfoRow
+                  label="Regular Medication"
+                  value={healthProfile.medicationRequired ? 'Yes' : 'No'}
+                />
+                <InfoRow label="Notes" value={healthProfile.notes || '—'} />
+                {healthProfile.otherConditionNote ? (
+                  <InfoRow label="Other Condition" value={healthProfile.otherConditionNote} />
+                ) : null}
+              </View>
+            </>
+          ) : (
+            <View style={styles.tabContentPlaceholder}>
+              <Text style={styles.placeholderText}>No medical information yet</Text>
+              <Text style={styles.placeholderSubtext}>
+                Complete the health step in profile setup to see it here.
+              </Text>
+            </View>
+          )}
         </View>
       )}
 
@@ -221,6 +397,24 @@ export const ProfileScreen: React.FC = () => {
           <Text style={styles.placeholderSubtext}>Coming Soon</Text>
         </View>
       )}
+
+      <ProfileEditSheet
+        section={editSection}
+        careProfile={careProfile}
+        address={homeAddress ?? null}
+        onClose={() => setEditSection(null)}
+        onSaved={handleSaved}
+      />
+
+      <FamilyMemberSheet
+        visible={contactSheetOpen}
+        member={editingMember}
+        onClose={() => {
+          setContactSheetOpen(false);
+          setEditingMember(null);
+        }}
+        onSaved={handleContactSaved}
+      />
     </Screen>
   );
 };
@@ -379,6 +573,9 @@ const styles = StyleSheet.create({
     color: theme.colors.neutral[700],
   },
   contactHeaderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.lg,
     marginTop: theme.spacing.lg,
   },
@@ -451,6 +648,19 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(14),
     color: theme.colors.neutral[500],
     marginTop: 4,
+  },
+  loadError: {
+    fontFamily: theme.typography.bodyMedium.fontFamily,
+    fontSize: responsiveFontSize(14),
+    color: theme.colors.status.error,
+    textAlign: 'center',
+    marginHorizontal: theme.spacing.lg,
+    marginBottom: theme.spacing.sm,
+  },
+  emptyText: {
+    fontFamily: theme.typography.bodyMedium.fontFamily,
+    fontSize: responsiveFontSize(14),
+    color: theme.colors.neutral[500],
   },
 });
 

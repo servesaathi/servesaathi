@@ -9,6 +9,7 @@ import { OTPInput } from '@/components/inputs';
 import { responsiveFontSize } from '@/utils/responsive';
 import { authService, getErrorMessage } from '@/api';
 import { useAuthStore } from '@/store/auth.store';
+import { useUserStore } from '@/store/user.store';
 
 const OTP_LENGTH = 4;
 const RESEND_SECONDS = 30;
@@ -54,8 +55,25 @@ export const OTPScreen: React.FC = () => {
     try {
       const data = await authService.verifyOtp({ phone, code: otpValue });
       useAuthStore.getState().setPhoneVerification(data);
-      // Figma flow: OTP Verification → Create Account form; existing users skip it
-      navigation.navigate(data.isNewUser ? 'CreateAccount' : 'Home');
+      if (data.isNewUser) {
+        // New phone: carry the phoneVerificationToken into the Create Account form,
+        // which finishes signup via POST /auth/register.
+        navigation.navigate('CreateAccount');
+      } else {
+        // Existing account: /auth/otp/verify already logged us in and returned
+        // accessToken + user — this IS the phone login.
+        useAuthStore.getState().setToken(data.accessToken ?? null);
+        if (data.user) {
+          useUserStore.getState().setProfile({
+            name: `${data.user.firstName} ${data.user.lastName}`.trim(),
+            email: data.user.email,
+            phone: data.user.phone ?? phone,
+            role: null,
+            age: '',
+          });
+        }
+        navigation.replace('Home');
+      }
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -83,7 +101,7 @@ export const OTPScreen: React.FC = () => {
       <Header title={intent === 'login' ? 'Log in' : 'Create Account'} leftIcon="back" transparent />
 
       <View style={styles.content}>
-        <Spacer size="xxl" />
+        <Spacer size="xxxl" />
 
         <Text style={styles.title}>Enter verification code</Text>
         <Text style={styles.subtitle}>
@@ -151,8 +169,10 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.h2.fontFamily,
     fontSize: responsiveFontSize(22),
     color: theme.colors.neutral[900],
+    marginBottom: 24,
   },
   subtitle: {
+    paddingHorizontal: responsiveFontSize(36),
     fontFamily: theme.typography.bodyMedium.fontFamily,
     fontSize: responsiveFontSize(16),
     color: theme.colors.neutral[700],

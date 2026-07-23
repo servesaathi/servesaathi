@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, Pressable, Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
@@ -11,18 +11,17 @@ import { TextInput, SelectableChip, ToggleSwitch } from '@/components/inputs';
 import { StatusChip } from '@/components/cards';
 import { responsiveFontSize } from '@/utils/responsive';
 import { digitsOnly, isValidIndianMobile, isValidName } from '@/utils/validation';
+import {
+  careProfileService,
+  masterdataService,
+  getErrorMessage,
+  type FamilyMember,
+  type MasterDataOption,
+} from '@/api';
 
 // "Profile Creation 5a/5b/5c/5d" (Figma 1248:44491 / 44283 / 44310 / 44544) — step 5 of 6.
 // Sharing toggles + emergency contacts list, with a full-screen "Emergency Contacts" form modal.
-const RELATIONSHIPS = ['Son', 'Daughter', 'Partner', 'Relative', 'Friend', 'Other'];
-
-interface EmergencyContact {
-  firstName: string;
-  lastName: string;
-  relationship: string;
-  phone: string;
-  status: 'waiting' | 'accepted';
-}
+// Contacts go to POST /care-profiles/me/family-members; toggles PATCH /care-profiles/me on Continue.
 
 interface SharingToggleProps {
   label: string;
@@ -44,16 +43,44 @@ export const CircleOfCareScreen: React.FC = () => {
   const [seeHealthNotes, setSeeHealthNotes] = useState(true);
   const [seeVisitReports, setSeeVisitReports] = useState(true);
   const [shareLocation, setShareLocation] = useState(true);
-  const [contacts, setContacts] = useState<EmergencyContact[]>([]);
+  const [contacts, setContacts] = useState<FamilyMember[]>([]);
+  const [relationships, setRelationships] = useState<MasterDataOption[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Modal form state
   const [showForm, setShowForm] = useState(false);
   const [showSentPopup, setShowSentPopup] = useState(false);
-  const [lastSentContact, setLastSentContact] = useState<EmergencyContact | null>(null);
+  const [lastSentContact, setLastSentContact] = useState<{ name: string; relationship: string } | null>(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [relationship, setRelationship] = useState<string | null>(null);
+  const [relationshipId, setRelationshipId] = useState<string | null>(null);
   const [phone, setPhone] = useState('');
+  const [sending, setSending] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Relationship chips come from master data (numeric ids the POST needs);
+    // existing members load so revisiting the step doesn't look empty.
+    const load = async () => {
+      try {
+        const [options, members] = await Promise.all([
+          masterdataService.getFamilyRelationships(),
+          careProfileService.getFamilyMembers(),
+        ]);
+        setRelationships(options);
+        setContacts(members);
+      } catch {
+        // Non-fatal: chips render empty and the form shows an error on send.
+      }
+    };
+    load();
+  }, []);
+
+  const relationshipName = (member: FamilyMember) =>
+    member.relationship?.name ??
+    relationships.find((r) => Number(r.id) === member.familyRelationshipId)?.label ??
+    'Family';
 
   const isPhoneValid = isValidIndianMobile(phone);
   const phoneError =
@@ -61,29 +88,54 @@ export const CircleOfCareScreen: React.FC = () => {
       ? 'Enter a valid 10-digit mobile number starting with 6–9'
       : undefined;
   const isContactFormValid =
-    isValidName(firstName) && isValidName(lastName) && relationship !== null && isPhoneValid;
+    isValidName(firstName) && isValidName(lastName) && relationshipId !== null && isPhoneValid;
 
-  const handleRequestSend = () => {
-    if (!isContactFormValid) return;
-    const newContact: EmergencyContact = {
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      relationship: relationship ?? 'Other',
-      phone: `+91 ${phone}`,
-      status: 'waiting',
-    };
-    setContacts((prev) => [...prev, newContact]);
-    setLastSentContact(newContact);
-    setShowSentPopup(true);
-    setFirstName('');
-    setLastName('');
-    setRelationship(null);
-    setPhone('');
-    setShowForm(false);
+  const handleRequestSend = async () => {
+    if (!isContactFormValid || sending) return;
+    setSending(true);
+    setFormError(null);
+    try {
+      const member = await careProfileService.addFamilyMember({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        familyRelationshipId: Number(relationshipId),
+        phone: `+91${phone}`,
+      });
+      setContacts((prev) => [...prev, member]);
+      setLastSentContact({
+        name: `${member.firstName} ${member.lastName}`.trim(),
+        relationship: relationshipName(member),
+      });
+      setFirstName('');
+      setLastName('');
+      setRelationshipId(null);
+      setPhone('');
+      setShowForm(false);
+      setShowSentPopup(true);
+    } catch (err) {
+      setFormError(getErrorMessage(err));
+    } finally {
+      setSending(false);
+    }
   };
 
-  const handleContinue = () => {
-    navigation.navigate('ProfileAccessibility');
+  const handleContinue = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await careProfileService.updateCareProfile({
+        shareUpcomingEvents: saveEvents,
+        shareHealthNotes: seeHealthNotes,
+        shareVisitReports: seeVisitReports,
+        shareLocation,
+      });
+      navigation.navigate('ProfileAccessibility');
+    } catch (err) {
+      setSubmitError(getErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const CountryCodePrefix = () => (
@@ -124,21 +176,23 @@ export const CircleOfCareScreen: React.FC = () => {
         <Text style={styles.sectionLabel}>Emergency Contacts</Text>
         <Spacer size="sm" />
 
-        {contacts.map((contact, index) => (
-          <View key={index} style={styles.contactCard}>
+        {contacts.map((contact) => (
+          <View key={contact.id} style={styles.contactCard}>
             <View style={styles.contactInfo}>
               <Text style={styles.contactName}>
                 {contact.firstName} {contact.lastName}
               </Text>
               <View style={styles.contactMetaRow}>
-                <Text style={styles.contactMeta}>{contact.relationship}</Text>
+                <Text style={styles.contactMeta}>{relationshipName(contact)}</Text>
                 <View style={styles.metaDot} />
                 <Text style={styles.contactMeta}>{contact.phone}</Text>
               </View>
             </View>
             <StatusChip
-              label="Waiting"
-              bgColor={theme.colors.tertiary}
+              label={contact.status === 'accepted' ? 'Verified' : 'Waiting'}
+              bgColor={
+                contact.status === 'accepted' ? theme.colors.primary : theme.colors.tertiary
+              }
               textColor="#FFFFFF"
             />
           </View>
@@ -154,7 +208,8 @@ export const CircleOfCareScreen: React.FC = () => {
             You're always in control. Change these anytime in your profile settings
           </Text>
           <Spacer size="md" />
-          <PrimaryButton label="Continue" onPress={handleContinue} />
+          {submitError && <Text style={styles.errorText}>{submitError}</Text>}
+          <PrimaryButton label="Continue" onPress={handleContinue} loading={submitting} />
           <Spacer size="xl" />
         </View>
       </View>
@@ -191,15 +246,19 @@ export const CircleOfCareScreen: React.FC = () => {
 
             <Text style={styles.sectionLabel}>Family Relationship</Text>
             <View style={styles.chipGrid}>
-              {RELATIONSHIPS.map((item) => (
-                <SelectableChip
-                  key={item}
-                  label={item}
-                  selected={relationship === item}
-                  onPress={() => setRelationship(item)}
-                  style={styles.chipHalf}
-                />
-              ))}
+              {relationships.length === 0 ? (
+                <Text style={styles.contactMeta}>Loading relationships…</Text>
+              ) : (
+                relationships.map((item) => (
+                  <SelectableChip
+                    key={item.id}
+                    label={item.label}
+                    selected={relationshipId === item.id}
+                    onPress={() => setRelationshipId(item.id)}
+                    style={styles.chipHalf}
+                  />
+                ))
+              )}
             </View>
 
             <Spacer size="md" />
@@ -215,10 +274,12 @@ export const CircleOfCareScreen: React.FC = () => {
             />
 
             <View style={styles.modalFooter}>
+              {formError && <Text style={styles.errorText}>{formError}</Text>}
               <PrimaryButton
                 label="Request Send"
                 onPress={handleRequestSend}
                 disabled={!isContactFormValid}
+                loading={sending}
               />
               <Spacer size="xl" />
             </View>
@@ -247,7 +308,7 @@ export const CircleOfCareScreen: React.FC = () => {
               <Text style={styles.popupBody}>
 
                 We’ve sent an approval link to{' '}
-                <Text style={styles.popupName}>{`${lastSentContact.firstName}\u00A0${lastSentContact.lastName}`}</Text>
+                <Text style={styles.popupName}>{lastSentContact.name.replace(' ', '\u00A0')}</Text>
                 {' '}
                 <Text style={styles.popupName}>{`(${lastSentContact.relationship})`}</Text>
                 . They just need to tap the link in their message to confirm they are your emergency contact. You’ll see a "Verified" badge on your profile once they’ve approved.
@@ -359,6 +420,13 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(theme.typography.bodyMedium.fontSize),
     color: theme.colors.neutral[700],
     lineHeight: 20,
+  },
+  errorText: {
+    fontFamily: theme.typography.caption.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.caption.fontSize),
+    color: theme.colors.status.error,
+    textAlign: 'center',
+    marginBottom: theme.spacing.md,
   },
   modalRoot: {
     flex: 1,

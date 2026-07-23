@@ -1,9 +1,10 @@
 import React from 'react';
-import { StyleSheet, Text, View, Pressable, Image } from 'react-native';
+import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/theme';
-import { Screen, Spacer } from '@/components/layouts';
+import LanguageSelectIllustrator from '../../../../assets/illustrations/language_selector_illustrator.svg';
+import { Screen } from '@/components/layouts';
 import { PrimaryButton } from '@/components/buttons';
 import { Checkbox } from '@/components/inputs';
 import { scale, responsiveFontSize } from '@/utils/responsive';
@@ -23,27 +24,31 @@ export const LanguageSelectScreen: React.FC = () => {
 
   return (
     <Screen safeAreaBottom={false} statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
-      <View style={[styles.container, { paddingTop: insets.top + theme.spacing.sm, paddingBottom: insets.bottom + theme.spacing.lg }]}>
-        <View style={styles.contentWrapper}>
-          {/* Top Illustration Graphic */}
+      <View
+        style={[
+          styles.container,
+          {
+            // Adaptive (insets.top + 118, Figma's 162px offset minus its 44px status
+            // bar) but never less than 150 — on short-status-bar devices the illustrator
+            // would otherwise sit uncomfortably close to the top edge.
+            paddingTop: Math.max(insets.top + 118, 200),
+            paddingBottom: insets.bottom + theme.spacing.xxl,
+          },
+        ]}
+      >
+        {/* Mirrors Figma's "Center Group" auto-layout frame (gap-24) */}
+        <View style={styles.centerGroup}>
           <View style={styles.graphicContainer}>
-            <Image
-              source={theme.images.languageSelectIllustrator}
-              style={styles.cloudBlob}
-              resizeMode="contain"
-            />
+            <LanguageSelectIllustrator width={scale(279)} height={scale(159)} />
           </View>
 
-          <Spacer size="xl" />
-
-          {/* Text Headers */}
-          <Text style={styles.title}>{t('selectLanguage')}</Text>
-          <Spacer size="xs" />
-          <Text style={styles.subtitle}>
-            {t('selectLanguageSubtitle')}
-          </Text>
-
-          <Spacer size="xxl" />
+          {/* Mirrors Figma's "Text" auto-layout frame (gap-16) */}
+          <View style={styles.textBlock}>
+            <Text style={styles.title}>{t('selectLanguage')}</Text>
+            <Text style={styles.subtitle}>
+              {t('selectLanguageSubtitle')}
+            </Text>
+          </View>
 
           {/* Selection Cards */}
           <View style={styles.cardsContainer}>
@@ -58,8 +63,6 @@ export const LanguageSelectScreen: React.FC = () => {
               <Text style={styles.cardText}>English</Text>
               <Checkbox checked={language === 'en'} color="orange" onPress={() => setLanguage('en')} />
             </Pressable>
-
-            <Spacer size="md" />
 
             {/* Hindi Card */}
             <Pressable
@@ -90,20 +93,22 @@ export const LanguageSelectScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.xxl, // 24 — matches Figma's content frame px-24
     backgroundColor: theme.colors.background.layout, // #EAF2EA
   },
-  contentWrapper: {
-    flex: 1,
-    justifyContent: 'center',
+  centerGroup: {
+    width: '100%',
+    alignItems: 'center',
+    gap: theme.spacing.xxl, // 24 — Figma "Center Group" gap-24 (illustration → text → cards)
   },
   graphicContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: theme.spacing.xxl, 
   },
-  cloudBlob: {
-    width: scale(293),
-    height: scale(191),
+  textBlock: {
+    alignItems: 'center',
+    gap: theme.spacing.lg, // 16 — Figma "Text" gap-16 (title → subtitle)
   },
   title: {
     ...(theme.typography.screenTitle as any),
@@ -116,12 +121,11 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(theme.typography.screenParagraph.fontSize),
     color: theme.colors.neutral[700],
     textAlign: 'center',
-    paddingHorizontal: theme.spacing.lg,
-    marginHorizontal: 20,
-    marginVertical: 16,
+    paddingHorizontal: theme.spacing.xl, // 20 — matches Figma's 272px text width centered in 312
   },
   cardsContainer: {
     width: '100%',
+    gap: theme.spacing.lg, // 16 — Figma "Select Input" gap-16
   },
   card: {
     height: 48,

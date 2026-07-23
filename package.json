@@ -15,8 +15,9 @@
     "expo": "~56.0.11",
     "expo-constants": "~56.0.18",
     "expo-font": "~56.0.6",
-    "expo-image-picker": "~14.1.1",
+    "expo-image-picker": "~56.0.21",
     "expo-linear-gradient": "~56.0.4",
+    "expo-location": "~56.0.22",
     "expo-splash-screen": "~56.0.12",
     "expo-status-bar": "~56.0.4",
     "lucide-react-native": "^1.22.0",
@@ -42,6 +43,7 @@
     "babel-preset-expo": "^56.0.15",
     "jest": "^30.4.2",
     "react-devtools": "^7.0.1",
+    "react-native-svg-transformer": "^1.5.3",
     "ts-jest": "^29.4.11",
     "typescript": "~6.0.3"
   },

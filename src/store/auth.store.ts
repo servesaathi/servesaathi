@@ -16,7 +16,7 @@ interface AuthState {
   setToken: (token: string | null) => void;
   setRole: (role: ApiRole) => void;
   setPhone: (phone: string | null) => void;
-  setPhoneVerification: (data: { phoneVerificationToken: string; isNewUser: boolean }) => void;
+  setPhoneVerification: (data: { phoneVerificationToken?: string; isNewUser: boolean }) => void;
   logout: () => void;
 }
 
@@ -39,7 +39,7 @@ export const useAuthStore = create<AuthState>()(
       setRole: (role) => set({ role }),
       setPhone: (phone) => set({ phone }),
       setPhoneVerification: ({ phoneVerificationToken, isNewUser }) =>
-        set({ phoneVerificationToken, isNewUser }),
+        set({ phoneVerificationToken: phoneVerificationToken ?? null, isNewUser }),
       logout: () =>
         set({
           token: null,

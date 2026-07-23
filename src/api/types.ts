@@ -1,4 +1,4 @@
-export type ApiRole = 'customer' | 'caregiver' | 'partner';
+export type ApiRole = 'customer' | 'provider' | 'family' | 'partner';
 
 /** Full set of roles the backend can assign a user — broader than ApiRole, which is only what Join can select. */
 export type UserRole = 'customer' | 'provider' | 'family' | 'partner' | 'admin' | 'super_admin';

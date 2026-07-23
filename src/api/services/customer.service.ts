@@ -9,13 +9,14 @@ export interface AddressPayload {
   city?: string;
   state?: string;
   pincode?: string;
+  isDefault?: boolean;
   // Backend validates these as "latitude/longitude string or number"
   latitude?: string | number;
   longitude?: string | number;
 }
 
 export interface Address extends AddressPayload {
-  id: string;
+  id: string | number;
 }
 
 export const customerService = {
@@ -32,7 +33,15 @@ export const customerService = {
     return res.data.data;
   },
 
-  deleteAddress: async (id: string): Promise<void> => {
+  updateAddress: async (id: string | number, payload: AddressPayload): Promise<Address> => {
+    const res = await apiClient.patch<ApiEnvelope<Address>>(
+      ENDPOINTS.customers.address(id),
+      payload
+    );
+    return res.data.data;
+  },
+
+  deleteAddress: async (id: string | number): Promise<void> => {
     await apiClient.delete(ENDPOINTS.customers.address(id));
   },
 };

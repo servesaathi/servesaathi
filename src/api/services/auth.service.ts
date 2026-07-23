@@ -15,7 +15,26 @@ export interface VerifyOtpPayload {
 
 export interface VerifyOtpData {
   isNewUser: boolean;
-  phoneVerificationToken: string;
+  /** Present when isNewUser=true — pass to register(). */
+  phoneVerificationToken?: string;
+  /** Present when isNewUser=false — the phone belongs to an existing account and this call logged it in. */
+  accessToken?: string;
+  /** Present when isNewUser=false. */
+  user?: User;
+}
+
+export interface RegisterPayload {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  role?: ApiRole;
+  /**
+   * Token from verifyOtp. When present the backend takes phone/role from the
+   * token and creates the account with the phone already verified.
+   */
+  phoneVerificationToken?: string;
 }
 
 export interface LoginPayload {
@@ -50,6 +69,12 @@ export const authService = {
       ENDPOINTS.auth.otpVerify,
       payload
     );
+    return res.data.data;
+  },
+
+  /** Creates the account after phone verification; returns a logged-in session. */
+  register: async (payload: RegisterPayload): Promise<AuthResponse> => {
+    const res = await apiClient.post<ApiEnvelope<AuthResponse>>(ENDPOINTS.auth.register, payload);
     return res.data.data;
   },
 

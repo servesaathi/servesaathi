@@ -109,75 +109,68 @@ export const LoginScreen: React.FC = () => {
       <Header leftIcon="back" transparent />
 
       <View style={styles.content}>
-        {/* BRANDING SECTION */}
-        <View style={styles.branding}>
-          <Text style={styles.welcomeText}>Welcome to</Text>
-          <BrandLogoSVG
-            width={240}
-            height={64}
-            style={styles.logoSvg}
-          />
-          <Spacer size="md" />
+        {/* Mirrors Figma's "Enter mobile number Input" auto-layout frame (gap-24) */}
+        <View style={styles.formGroup}>
+          {/* Mirrors Figma's "Logo - Welcome" auto-layout frame (gap-16) */}
+          <View style={styles.brandingGroup}>
+            <Text style={styles.welcomeText}>Welcome to</Text>
+            <BrandLogoSVG width={240} height={64} />
+          </View>
+
           <Text style={styles.subtitle}>
             {isLogin
-              ? 'Log in to check on the seniors you care about and continue their journey with us.'
-              : 'Create profiles for the seniors you care about and begin their journey with us.'}
+              ? 'Log in to check on the seniors you care\n about and continue their journey with us.'
+              : 'Create profiles for the seniors you care\n about and begin their journey with us.'}
           </Text>
+
+          {/* INPUT FIELD */}
+          <TextInput
+            label="Mobile Number"
+            placeholder="000-000-0000"
+            keyboardType="number-pad"
+            maxLength={10}
+            value={mobile}
+            onChangeText={handleMobileChange}
+            onBlur={() => setMobileTouched(true)}
+            error={mobileError ?? apiError}
+            prefixIcon={<CountryCodePrefix />}
+          />
+
+          {/* CONTINUE BUTTON — stays disabled until the mobile number is valid */}
+          <PrimaryButton
+            label="Continue"
+            onPress={handleContinue}
+            disabled={!isMobileValid}
+            loading={submitting}
+          />
         </View>
-
-        <Spacer size={48} />
-
-        {/* INPUT FIELD */}
-        <TextInput
-          label="Mobile Number"
-          placeholder="000-000-0000"
-          keyboardType="number-pad"
-          maxLength={10}
-          value={mobile}
-          onChangeText={handleMobileChange}
-          onBlur={() => setMobileTouched(true)}
-          error={mobileError ?? apiError}
-          prefixIcon={<CountryCodePrefix />}
-        />
-
-        <Spacer size={24} />
-
-        {/* CONTINUE BUTTON — stays disabled until the mobile number is valid */}
-        <PrimaryButton
-          label="Continue"
-          onPress={handleContinue}
-          disabled={!isMobileValid}
-          loading={submitting}
-        />
 
         <Spacer size={64} />
 
-        {/* OR DIVIDER */}
-        <View style={styles.dividerContainer}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>OR</Text>
-          <View style={styles.dividerLine} />
+        {/* OR divider + social buttons all sit on Figma's shared gap-16 */}
+        <View style={styles.dividerGroup}>
+          <View style={styles.dividerContainer}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>OR</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <TertiaryButton
+            label="Sign in with Google"
+            onPress={handleGoogleLogin}
+            prefixIcon={<GoogleIcon />}
+            style={styles.socialButton}
+            labelStyle={styles.socialButtonText}
+          />
+          <TertiaryButton
+            label="Sign in with Email"
+            onPress={handleEmailLogin}
+            style={styles.socialButton}
+            labelStyle={styles.socialButtonText}
+          />
         </View>
 
-        <Spacer size={48} />
-
-        {/* SOCIAL SIGN IN BUTTONS */}
-        <TertiaryButton
-          label="Sign in with Google"
-          onPress={handleGoogleLogin}
-          prefixIcon={<GoogleIcon />}
-          style={styles.socialButton}
-          labelStyle={styles.socialButtonText}
-        />
-        <Spacer size="md" />
-        <TertiaryButton
-          label="Sign in with Email"
-          onPress={handleEmailLogin}
-          style={styles.socialButton}
-          labelStyle={styles.socialButtonText}
-        />
-
-        <Spacer size={64} />
+        {/* <Spacer size="xl" /> */}
 
         {/* FOOTER SECTION */}
         <View style={styles.footer}>
@@ -209,21 +202,26 @@ export const LoginScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   content: {
-    paddingHorizontal: theme.spacing.xl,
-    paddingTop: theme.spacing.md,
+    flex: 1, // fill viewport so the auto margins below can distribute leftover space
+    paddingHorizontal: theme.spacing.xxl,
+    paddingTop: theme.spacing.hud, // 48 — extra breathing room between header and branding
     paddingBottom: Platform.OS === 'ios' ? 44 : 32, // Safe padding at the bottom of ScrollView
   },
-  branding: {
+  formGroup: {
+    width: '100%',
     alignItems: 'center',
+    gap: theme.spacing.xxl, // 24 — Figma "Enter mobile number Input" gap-24
     marginTop: theme.spacing.md,
+  },
+  brandingGroup: {
+    alignItems: 'center',
+    gap: theme.spacing.lg, // 16 — Figma "Logo - Welcome" gap-16
+    paddingVertical: theme.spacing.sm,
   },
   welcomeText: {
     fontFamily: theme.typography.h2.fontFamily,
-    fontSize: responsiveFontSize(theme.typography.h2.fontSize),
+    fontSize: responsiveFontSize(22),
     color: theme.colors.primary,
-  },
-  logoSvg: {
-    marginTop: theme.spacing.sm,
   },
   subtitle: {
     fontFamily: theme.typography.bodyLarge.fontFamily,
@@ -231,7 +229,6 @@ const styles = StyleSheet.create({
     color: theme.colors.neutral[700],
     textAlign: 'center',
     lineHeight: 22,
-    paddingHorizontal: theme.spacing.sm,
   },
   countryCodeContainer: {
     flexDirection: 'row',
@@ -253,6 +250,14 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.forestGreen[100],
     position: 'absolute',
     right: 0,
+  },
+  dividerGroup: {
+    // Figma anchors OR + social buttons + footer to the bottom; the flexible space
+    // lives between the Continue button and the OR divider (y=482 → y=544).
+    marginTop: 'auto',
+    width: '100%',
+    alignItems: 'center',
+    gap: theme.spacing.lg, // 16 — Figma: OR divider → Google → Email all share gap-16
   },
   dividerContainer: {
     flexDirection: 'row',
@@ -282,6 +287,9 @@ const styles = StyleSheet.create({
     color: theme.colors.neutral[900],
   },
   footer: {
+    // Second auto margin: leftover screen height splits equally between the
+    // Continue→OR gap and the Email→footer gap, spreading blocks down the screen.
+    marginTop: 'auto',
     width: '100%',
     alignItems: 'center',
   },
@@ -292,12 +300,12 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontFamily: theme.typography.bodyMedium.fontFamily,
-    fontSize: responsiveFontSize(14),
+    fontSize: responsiveFontSize(16),
     color: theme.colors.neutral[700],
   },
   loginLink: {
     fontFamily: theme.fonts.bold,
-    fontSize: responsiveFontSize(14),
+    fontSize: responsiveFontSize(16),
     color: theme.colors.primary,
   },
 });

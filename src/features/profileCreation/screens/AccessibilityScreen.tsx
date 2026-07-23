@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { RootNavigationProp } from '@/navigation/types';
@@ -7,21 +7,52 @@ import { Screen, Spacer, Header } from '@/components/layouts';
 import { PrimaryButton } from '@/components/buttons';
 import { ToggleSwitch } from '@/components/inputs';
 import { responsiveFontSize } from '@/utils/responsive';
+import { masterdataService, careProfileService, getErrorMessage, type MasterDataOption } from '@/api';
 
 // "Profile Creation 6a" (Figma 1248:44362) — step 6 of 6: Accessibility preferences.
 type FontSizeOption = 0 | 1 | 2; // small / medium / large
 
 const FONT_PREVIEW_SIZES: Record<FontSizeOption, number> = { 0: 14, 1: 16, 2: 19 };
+// Backend fontSize is 1 (smallest) … 5 (largest); the 3-stop slider maps onto its ends/middle.
+const API_FONT_SIZE: Record<FontSizeOption, number> = { 0: 1, 1: 3, 2: 5 };
 
 export const AccessibilityScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'ProfileAccessibility'>>();
   const [fontSize, setFontSize] = useState<FontSizeOption>(1);
   const [voiceCommands, setVoiceCommands] = useState(false);
   const [contrast, setContrast] = useState<'normal' | 'high'>('normal');
+  const [contrastOptions, setContrastOptions] = useState<MasterDataOption[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const handleContinue = () => {
-    // Figma flow: Accessibility → Subscription → Payment method → Setting up
-    navigation.navigate('Subscription');
+  useEffect(() => {
+    masterdataService
+      .getColorContrasts()
+      .then(setContrastOptions)
+      .catch(() => setContrastOptions([]));
+  }, []);
+
+  const handleContinue = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      // The normal/high cards map onto the color-contrast master data by label.
+      const highOption = contrastOptions.find((o) => /high/i.test(o.label));
+      const normalOption = contrastOptions.find((o) => !/high/i.test(o.label));
+      const contrastOption = contrast === 'high' ? highOption : normalOption;
+      await careProfileService.updateCareProfile({
+        fontSize: API_FONT_SIZE[fontSize],
+        voiceCommandsEnabled: voiceCommands,
+        ...(contrastOption ? { colorContrastId: Number(contrastOption.id) } : {}),
+      });
+      // Figma flow: Accessibility → Subscription → Payment method → Setting up
+      navigation.navigate('Subscription');
+    } catch (err) {
+      setSubmitError(getErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -105,7 +136,8 @@ export const AccessibilityScreen: React.FC = () => {
 
         <Spacer size="xxl" />
         <View style={styles.footer}>
-          <PrimaryButton label="Continue" onPress={handleContinue} />
+          {submitError && <Text style={styles.submitError}>{submitError}</Text>}
+          <PrimaryButton label="Continue" onPress={handleContinue} loading={submitting} />
         </View>
         <Spacer size="xl" />
       </View>
@@ -236,6 +268,13 @@ const styles = StyleSheet.create({
   },
   footer: {
     marginTop: 'auto',
+  },
+  submitError: {
+    fontFamily: theme.typography.caption.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.caption.fontSize),
+    color: theme.colors.status.error,
+    textAlign: 'center',
+    marginBottom: theme.spacing.md,
   },
 });
 

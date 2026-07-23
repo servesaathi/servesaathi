@@ -11,7 +11,7 @@ import { TextInput, SelectableChip } from '@/components/inputs';
 import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
 import { digitsOnly, isValidName, isValidDateOfBirth } from '@/utils/validation';
-import { masterdataService, type MasterDataOption } from '@/api';
+import { masterdataService, careProfileService, getErrorMessage, type MasterDataOption } from '@/api';
 
 // "Profile Creation 1a/1b" (Figma 1248:44068 / 1248:44150) — step 1 of 6.
 
@@ -47,6 +47,8 @@ export const ProfileSetupScreen: React.FC = () => {
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [activeDobField, setActiveDobField] = useState<'day' | 'month' | 'year' | null>(null);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const isNameValid = isValidName(preferredName);
   const isDobComplete = dobDay.length > 0 && dobMonth.length > 0 && dobYear.length === 4;
@@ -81,9 +83,26 @@ export const ProfileSetupScreen: React.FC = () => {
     loadOptions();
   }, []);
 
-  const handleContinue = () => {
-    if (!isFormValid) return;
-    navigation.navigate('ProfileAddress');
+  const handleContinue = async () => {
+    if (!isFormValid || submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      // Step 1 of the care profile: PATCH /care-profiles/me with the
+      // numeric master-data ids (gender/living/dependency chips store option ids).
+      await careProfileService.updateCareProfile({
+        preferredName,
+        dateOfBirth: `${dobYear}-${dobMonth.padStart(2, '0')}-${dobDay.padStart(2, '0')}`,
+        ...(gender ? { genderId: Number(gender) } : {}),
+        ...(living ? { livingSituationId: Number(living) } : {}),
+        ...(dependency ? { dependencyLevelId: Number(dependency) } : {}),
+      });
+      navigation.navigate('ProfileAddress');
+    } catch (err) {
+      setSubmitError(getErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handlePickPhoto = async () => {
@@ -291,8 +310,8 @@ export const ProfileSetupScreen: React.FC = () => {
               <SelectableChip
                 key={item.id}
                 label={item.label}
-                selected={gender === item.value}
-                onPress={() => setGender(item.value)}
+                selected={gender === item.id}
+                onPress={() => setGender(item.id)}
                 style={item.label === 'Non-binary' ? styles.chipFull : styles.chipHalf}
               />
             ))}
@@ -310,8 +329,8 @@ export const ProfileSetupScreen: React.FC = () => {
               <SelectableChip
                 key={item.id}
                 label={item.label}
-                selected={living === item.value}
-                onPress={() => setLiving(item.value)}
+                selected={living === item.id}
+                onPress={() => setLiving(item.id)}
                 style={styles.chipHalf}
               />
             ))}
@@ -329,8 +348,8 @@ export const ProfileSetupScreen: React.FC = () => {
               <SelectableChip
                 key={item.id}
                 label={item.label}
-                selected={dependency === item.value}
-                onPress={() => setDependency(item.value)}
+                selected={dependency === item.id}
+                onPress={() => setDependency(item.id)}
                 style={styles.chipFull}
               />
             ))}
@@ -338,7 +357,13 @@ export const ProfileSetupScreen: React.FC = () => {
         )}
 
         <Spacer size="xl" />
-        <PrimaryButton label="Continue" onPress={handleContinue} disabled={!isFormValid} />
+        {submitError && <Text style={styles.errorText}>{submitError}</Text>}
+        <PrimaryButton
+          label="Continue"
+          onPress={handleContinue}
+          disabled={!isFormValid}
+          loading={submitting}
+        />
         <Spacer size="xl" />
       </View>
     </Screen>

@@ -14,7 +14,13 @@ export const ENDPOINTS = {
   customers: {
     me: '/customers/me',
     addresses: '/customers/me/addresses',
-    address: (id: string) => `/customers/me/addresses/${id}`,
+    address: (id: string | number) => `/customers/me/addresses/${id}`,
+  },
+  careProfiles: {
+    me: '/care-profiles/me',
+    health: '/care-profiles/me/health',
+    familyMembers: '/care-profiles/me/family-members',
+    familyMember: (id: string | number) => `/care-profiles/me/family-members/${id}`,
   },
   services: {
     list: '/services',

@@ -9,6 +9,9 @@ import { TextInput, PasswordInput } from '@/components/inputs';
 
 import { responsiveFontSize } from '@/utils/responsive';
 import { isValidName, isValidEmail, isValidPassword, MIN_PASSWORD_LENGTH } from '@/utils/validation';
+import { authService, getErrorMessage } from '@/api';
+import { useAuthStore } from '@/store/auth.store';
+import { useUserStore } from '@/store/user.store';
 
 type Touched = Partial<Record<'firstName' | 'lastName' | 'email' | 'password' | 'confirmPassword', boolean>>;
 
@@ -20,6 +23,8 @@ export const CreateAccountScreen: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [touched, setTouched] = useState<Touched>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const markTouched = (field: keyof Touched) => setTouched((prev) => ({ ...prev, [field]: true }));
 
@@ -36,9 +41,37 @@ export const CreateAccountScreen: React.FC = () => {
   };
   const isFormValid = Object.values(errors).every((e) => !e);
 
-  const handleCreateAccount = () => {
-    if (!isFormValid) return;
-    navigation.navigate('Permission');
+  const handleCreateAccount = async () => {
+    if (!isFormValid || submitting) return;
+    const { phone, role, phoneVerificationToken } = useAuthStore.getState();
+    setSubmitting(true);
+    setApiError(null);
+    try {
+      // phoneVerificationToken comes from the OTP-verify step; the backend takes
+      // phone/role from it and marks the phone verified.
+      const { accessToken, user } = await authService.register({
+        email,
+        password,
+        firstName,
+        lastName,
+        phone: phone ?? undefined,
+        role,
+        phoneVerificationToken: phoneVerificationToken ?? undefined,
+      });
+      useAuthStore.getState().setToken(accessToken);
+      useUserStore.getState().setProfile({
+        name: `${user.firstName} ${user.lastName}`.trim(),
+        email: user.email,
+        phone: user.phone ?? phone ?? '',
+        role: null,
+        age: '',
+      });
+      navigation.navigate('Permission');
+    } catch (err) {
+      setApiError(getErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -103,7 +136,13 @@ export const CreateAccountScreen: React.FC = () => {
         </View>
 
         <View style={styles.buttonContainer}>
-          <PrimaryButton label="Create an account" onPress={handleCreateAccount} disabled={!isFormValid} />
+          {apiError && <Text style={styles.apiError}>{apiError}</Text>}
+          <PrimaryButton
+            label="Create an account"
+            onPress={handleCreateAccount}
+            disabled={!isFormValid}
+            loading={submitting}
+          />
         </View>
       </View>
     </Screen>
@@ -136,5 +175,12 @@ const styles = StyleSheet.create({
   },
   termsLink: {
     color: theme.colors.primary,
+  },
+  apiError: {
+    fontFamily: theme.typography.caption.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.caption.fontSize),
+    color: theme.colors.status.error,
+    textAlign: 'center',
+    marginBottom: theme.spacing.md,
   },
 });

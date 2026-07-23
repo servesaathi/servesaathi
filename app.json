@@ -6,11 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#123214"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.ServeSaathi"
@@ -32,6 +27,8 @@
       [
         "expo-splash-screen",
         {
+          "image": "./assets/icon.png",
+          "resizeMode": "contain",
           "backgroundColor": "#123214"
         }
       ],
@@ -39,6 +36,12 @@
         "expo-image-picker",
         {
           "photosPermission": "ServeSaathi needs access to your photos so you can set a profile picture."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "ServeSaathi uses your location to detect your address and connect you with nearby services."
         }
       ]
     ]

@@ -10,6 +10,8 @@ import { TextInput, Checkbox } from '@/components/inputs';
 import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
 import { digitsOnly, isValidPinCode } from '@/utils/validation';
+import { customerService, careProfileService, getErrorMessage } from '@/api';
+import * as Location from 'expo-location';
 
 // "Profile Creation 2a/2b" (Figma 1248:44227 / 1248:44255) — step 2 of 6.
 export const AddressScreen: React.FC = () => {
@@ -23,6 +25,10 @@ export const AddressScreen: React.FC = () => {
   const [landmark, setLandmark] = useState('');
   const [detectLocation, setDetectLocation] = useState(false);
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [detecting, setDetecting] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const isPinValid = isValidPinCode(pinCode);
   const pinError =
@@ -36,22 +42,83 @@ export const AddressScreen: React.FC = () => {
     state.trim().length > 0 &&
     isPinValid;
 
-  const handleContinue = () => {
-    if (!isFormValid) return;
-    navigation.navigate('ProfileHealth');
+  const handleContinue = async () => {
+    if (!isFormValid || submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      // Onboarding home address → POST /customers/me/addresses. The DTO has no
+      // landmark field, so it rides along on line2.
+      await customerService.addAddress({
+        label: 'Home',
+        line1: `${houseNo.trim()}, ${street.trim()}`,
+        line2: landmark.trim() ? `${area.trim()}, ${landmark.trim()}` : area.trim(),
+        city: city.trim(),
+        state: state.trim(),
+        pincode: pinCode,
+        isDefault: true,
+        ...(coords ? { latitude: coords.latitude, longitude: coords.longitude } : {}),
+      });
+      // The "detect where you are" consent maps to the care profile flag.
+      await careProfileService.updateCareProfile({ locationAccessEnabled: detectLocation });
+      navigation.navigate('ProfileHealth');
+    } catch (err) {
+      setSubmitError(getErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleDetectLocationPress = () => {
     if (detectLocation) {
       setDetectLocation(false);
+      setCoords(null);
       return;
     }
     setShowLocationPrompt(true);
   };
 
-  const handleLocationChoice = (allow: boolean) => {
-    setDetectLocation(allow);
+  const handleLocationChoice = async (allow: boolean) => {
     setShowLocationPrompt(false);
+    if (!allow) {
+      setDetectLocation(false);
+      setCoords(null);
+      return;
+    }
+    setDetecting(true);
+    try {
+      // The Figma popup is only the explainer — this is the real OS permission prompt.
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setDetectLocation(false);
+        setCoords(null);
+        return;
+      }
+      setDetectLocation(true);
+      const position = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      const { latitude, longitude } = position.coords;
+      setCoords({ latitude, longitude });
+
+      // Prefill whatever the user hasn't typed yet from the detected place.
+      const [place] = await Location.reverseGeocodeAsync({ latitude, longitude });
+      if (place) {
+        if (place.street) setStreet((prev) => prev || place.street || '');
+        if (place.district || place.subregion) {
+          setArea((prev) => prev || place.district || place.subregion || '');
+        }
+        if (place.city) setCity((prev) => prev || place.city || '');
+        if (place.region) setState((prev) => prev || place.region || '');
+        if (place.postalCode) {
+          setPinCode((prev) => prev || digitsOnly(place.postalCode || '').slice(0, 6));
+        }
+      }
+    } catch {
+      // Detection is best-effort — the form still works fully manually.
+    } finally {
+      setDetecting(false);
+    }
   };
 
   const Chevron = () => (
@@ -128,11 +195,19 @@ export const AddressScreen: React.FC = () => {
             onPress={handleDetectLocationPress}
             color="orange"
           />
-          <Text style={styles.checkText}>Enable access to detect where you are.</Text>
+          <Text style={styles.checkText}>
+            {detecting ? 'Detecting your location…' : 'Enable access to detect where you are.'}
+          </Text>
         </Pressable>
 
-        <Spacer size="xl" />
-        <PrimaryButton label="Continue" onPress={handleContinue} disabled={!isFormValid} />
+        <Spacer size="xxxl" />
+        {submitError && <Text style={styles.submitError}>{submitError}</Text>}
+        <PrimaryButton
+          label="Continue"
+          onPress={handleContinue}
+          disabled={!isFormValid}
+          loading={submitting}
+        />
         <Spacer size="xl" />
       </View>
 
@@ -196,13 +271,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
-    marginTop: theme.spacing.sm,
+    marginVertical: theme.spacing.sm,
   },
   checkText: {
     flex: 1,
     fontFamily: theme.typography.bodyMedium.fontFamily,
     fontSize: responsiveFontSize(theme.typography.bodyMedium.fontSize),
     color: theme.colors.neutral[900],
+  },
+  submitError: {
+    fontFamily: theme.typography.caption.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.caption.fontSize),
+    color: theme.colors.status.error,
+    textAlign: 'center',
+    marginBottom: theme.spacing.md,
   },
   promptOverlay: {
     flex: 1,

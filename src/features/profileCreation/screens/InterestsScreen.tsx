@@ -7,9 +7,10 @@ import { Screen, Spacer, Header } from '@/components/layouts';
 import { PrimaryButton } from '@/components/buttons';
 import { SelectableChip } from '@/components/inputs';
 import { responsiveFontSize } from '@/utils/responsive';
-import { masterdataService, type MasterDataOption } from '@/api';
+import { masterdataService, careProfileService, getErrorMessage, type MasterDataOption } from '@/api';
 
 // "Profile Creation 4" (Figma 1248:44337) — step 4 of 6.
+// `selected` holds interest ids, PATCHed to /care-profiles/me as interestIds.
 
 export const InterestsScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'ProfileInterests'>>();
@@ -17,6 +18,8 @@ export const InterestsScreen: React.FC = () => {
   const [interests, setInterests] = useState<MasterDataOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const toggleInterest = (item: string) => {
     setSelected((prev) =>
@@ -41,8 +44,18 @@ export const InterestsScreen: React.FC = () => {
     loadInterests();
   }, []);
 
-  const handleContinue = () => {
-    navigation.navigate('ProfileCircle');
+  const handleContinue = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await careProfileService.updateCareProfile({ interestIds: selected.map(Number) });
+      navigation.navigate('ProfileCircle');
+    } catch (err) {
+      setSubmitError(getErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -68,8 +81,8 @@ export const InterestsScreen: React.FC = () => {
               <SelectableChip
                 key={item.id}
                 label={item.label}
-                selected={selected.includes(item.value)}
-                onPress={() => toggleInterest(item.value)}
+                selected={selected.includes(item.id)}
+                onPress={() => toggleInterest(item.id)}
                 style={styles.chipHalf}
               />
             ))}
@@ -78,10 +91,12 @@ export const InterestsScreen: React.FC = () => {
 
         <Spacer size="xxl" />
         <View style={styles.footer}>
+          {submitError && <Text style={styles.helperText}>{submitError}</Text>}
           <PrimaryButton
             label="Continue"
             onPress={handleContinue}
             disabled={selected.length < 3}
+            loading={submitting}
           />
         </View>
         <Spacer size="xl" />

@@ -7,9 +7,10 @@ import { Screen, Spacer, Header } from '@/components/layouts';
 import { PrimaryButton } from '@/components/buttons';
 import { TextInput, Checkbox, SelectableChip } from '@/components/inputs';
 import { responsiveFontSize } from '@/utils/responsive';
-import { masterdataService, type MasterDataOption } from '@/api';
+import { masterdataService, careProfileService, getErrorMessage, type MasterDataOption } from '@/api';
 
 // "Profile Creation 3a" (Figma 1248:44732) — step 3 of 6.
+// Selections hold master-data option ids so they can be PATCHed to /care-profiles/me/health.
 
 export const HealthInfoScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'ProfileHealth'>>();
@@ -18,6 +19,8 @@ export const HealthInfoScreen: React.FC = () => {
   const [cognitive, setCognitive] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
   const [regularMedication, setRegularMedication] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [medicalConditions, setMedicalConditions] = useState<MasterDataOption[]>([]);
   const [mobilitySupports, setMobilitySupports] = useState<MasterDataOption[]>([]);
   const [cognitiveConditions, setCognitiveConditions] = useState<MasterDataOption[]>([]);
@@ -56,9 +59,24 @@ export const HealthInfoScreen: React.FC = () => {
     loadOptions();
   }, []);
 
-  const handleContinue = () => {
-    if (!isFormValid) return;
-    navigation.navigate('ProfileInterests');
+  const handleContinue = async () => {
+    if (!isFormValid || submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await careProfileService.updateHealthProfile({
+        medicalConditionIds: conditions.map(Number),
+        mobilitySupportId: mobility ? Number(mobility) : undefined,
+        ...(cognitive ? { cognitiveConditionId: Number(cognitive) } : {}),
+        medicationRequired: regularMedication,
+        ...(notes.trim() ? { notes: notes.trim() } : {}),
+      });
+      navigation.navigate('ProfileInterests');
+    } catch (err) {
+      setSubmitError(getErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -83,8 +101,8 @@ export const HealthInfoScreen: React.FC = () => {
               <SelectableChip
                 key={item.id}
                 label={item.label}
-                selected={conditions.includes(item.value)}
-                onPress={() => toggleCondition(item.value)}
+                selected={conditions.includes(item.id)}
+                onPress={() => toggleCondition(item.id)}
                 style={styles.chipHalf}
               />
             ))}
@@ -104,8 +122,8 @@ export const HealthInfoScreen: React.FC = () => {
               <SelectableChip
                 key={item.id}
                 label={item.label}
-                selected={mobility === item.value}
-                onPress={() => setMobility(item.value)}
+                selected={mobility === item.id}
+                onPress={() => setMobility(item.id)}
                 style={styles.chipHalf}
               />
             ))}
@@ -123,8 +141,8 @@ export const HealthInfoScreen: React.FC = () => {
               <SelectableChip
                 key={item.id}
                 label={item.label}
-                selected={cognitive === item.value}
-                onPress={() => setCognitive(item.value)}
+                selected={cognitive === item.id}
+                onPress={() => setCognitive(item.id)}
                 style={styles.chipFull}
               />
             ))}
@@ -148,8 +166,14 @@ export const HealthInfoScreen: React.FC = () => {
           <Text style={styles.checkText}>Regular medication required.</Text>
         </Pressable>
 
-        <Spacer size="xl" />
-        <PrimaryButton label="Continue" onPress={handleContinue} disabled={!isFormValid} />
+        <Spacer size="xxxl" />
+        {submitError && <Text style={styles.submitError}>{submitError}</Text>}
+        <PrimaryButton
+          label="Continue"
+          onPress={handleContinue}
+          disabled={!isFormValid}
+          loading={submitting}
+        />
         <Spacer size="xl" />
       </View>
     </Screen>
@@ -199,13 +223,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
-    marginTop: theme.spacing.sm,
+    marginVertical: theme.spacing.sm,
   },
   checkText: {
     flex: 1,
     fontFamily: theme.typography.bodyMedium.fontFamily,
     fontSize: responsiveFontSize(theme.typography.bodyMedium.fontSize),
     color: theme.colors.neutral[900],
+  },
+  submitError: {
+    fontFamily: theme.typography.caption.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.caption.fontSize),
+    color: theme.colors.status.error,
+    textAlign: 'center',
+    marginBottom: theme.spacing.md,
   },
 });
 

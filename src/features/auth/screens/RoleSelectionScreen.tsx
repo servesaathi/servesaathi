@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, Image, Pressable } from 'react-native';
+import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { RootNavigationProp } from '@/navigation/types';
 import { theme } from '@/theme';
-import { Screen, Spacer, Header } from '@/components/layouts';
+import RoleIllustrator from '../../../../assets/illustrations/role.svg';
+import { Screen, Header } from '@/components/layouts';
 import { PrimaryButton } from '@/components/buttons';
 import { Checkbox } from '@/components/inputs';
 import { responsiveFontSize, scale } from '@/utils/responsive';
@@ -13,8 +14,8 @@ import { ApiRole } from '@/api/types';
 // Maps the Figma role cards onto the roles the API understands.
 const API_ROLE_BY_ID: Record<string, ApiRole> = {
   senior: 'customer',
-  family: 'customer',
-  saathi: 'caregiver',
+  family: 'family',
+  saathi: 'provider',
   partner: 'partner',
 };
 
@@ -40,47 +41,44 @@ export const RoleSelectionScreen: React.FC = () => {
     <Screen statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content" scrollable>
       <Header transparent />
 
-      <View style={styles.graphicContainer}>
-        <Image
-          source={theme.images.cloudBlob}
-          style={styles.cloudBlob}
-          resizeMode="contain"
-        />
-      </View>
-
       <View style={styles.content}>
-        <Spacer size="md" />
-        
-        <Text style={styles.title}>Choose a role</Text>
-        <Spacer size="sm" />
-        <Text style={styles.subtitle}>
-          Choose How You Want to Be Part of the ServeSaathi Community
-        </Text>
+        {/* Mirrors Figma's "Center Body" auto-layout frame (gap-24) */}
+        <View style={styles.centerBody}>
+          <View style={styles.graphicContainer}>
+            <RoleIllustrator width={scale(279)} height={scale(159)} />
+          </View>
 
-        <Spacer size="xl" />
+          {/* Mirrors Figma's "Text" auto-layout frame (gap-16) */}
+          <View style={styles.textBlock}>
+            <Text style={styles.title}>Choose a role</Text>
+            <Text style={styles.subtitle}>
+              Choose How You Want to Be Part of the ServeSaathi Community
+            </Text>
+          </View>
 
-        <View style={styles.cardsContainer}>
-          {roles.map((role) => {
-            const isActive = selectedRole === role.id;
-            return (
-              <Pressable
-                key={role.id}
-                onPress={() => setSelectedRole(role.id)}
-                style={[
-                  styles.card,
-                  isActive ? styles.activeCard : styles.inactiveCard,
-                ]}
-              >
-                <Text style={styles.cardText}>{role.label}</Text>
-
-                <Checkbox
-                  checked={isActive}
+          <View style={styles.cardsContainer}>
+            {roles.map((role) => {
+              const isActive = selectedRole === role.id;
+              return (
+                <Pressable
+                  key={role.id}
                   onPress={() => setSelectedRole(role.id)}
-                  color="orange"
-                />
-              </Pressable>
-            );
-          })}
+                  style={[
+                    styles.card,
+                    isActive ? styles.activeCard : styles.inactiveCard,
+                  ]}
+                >
+                  <Text style={styles.cardText}>{role.label}</Text>
+
+                  <Checkbox
+                    checked={isActive}
+                    onPress={() => setSelectedRole(role.id)}
+                    color="orange"
+                  />
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
 
         {/* Pinned to the bottom like the Figma frame (button at y=720/800) */}
@@ -91,26 +89,31 @@ export const RoleSelectionScreen: React.FC = () => {
             style={styles.actionBtn}
           />
         </View>
-        <Spacer size="sm" />
       </View>
     </Screen>
   );
 };
 
 const styles = StyleSheet.create({
+  content: {
+    flex: 1,
+    paddingHorizontal: theme.spacing.xxl, // 24 — matches Figma's "Language" frame px-24
+    paddingTop: 100, // 32 — gap from header to illustration (was a negative pull-up hack)
+    paddingBottom: theme.spacing.xxl, // 24 — screen bottom padding, stacks with Screen's own insets.bottom
+    alignItems: 'center',
+  },
+  centerBody: {
+    width: '100%',
+    alignItems: 'center',
+    gap: theme.spacing.xxl, // 24 — Figma "Center Body" gap-24 (illustration → text → cards)
+  },
   graphicContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -theme.spacing.lg, // Pull up under header
   },
-  cloudBlob: {
-    width: scale(300),
-    height: scale(200),
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: theme.spacing.xl,
+  textBlock: {
     alignItems: 'center',
+    gap: theme.spacing.lg, // 16 — Figma "Text" gap-16 (title → subtitle)
   },
   title: {
     fontFamily: theme.typography.h2.fontFamily,
@@ -123,7 +126,7 @@ const styles = StyleSheet.create({
     color: theme.colors.neutral[700],
     textAlign: 'center',
     lineHeight: 24,
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: theme.spacing.xxxl,
   },
   cardsContainer: {
     width: '100%',
