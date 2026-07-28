@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, Pressable, Modal } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, View, Pressable, Modal, ScrollView, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
 import { RootNavigationProp } from '@/navigation/types';
@@ -10,7 +10,7 @@ import { TextInput, Checkbox } from '@/components/inputs';
 import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
 import { digitsOnly, isValidPinCode } from '@/utils/validation';
-import { customerService, careProfileService, getErrorMessage } from '@/api';
+import { customerService, careProfileService, pincodeService, toTitleCase, getErrorMessage, ApiError } from '@/api';
 import * as Location from 'expo-location';
 
 // "Profile Creation 2a/2b" (Figma 1248:44227 / 1248:44255) — step 2 of 6.
@@ -23,6 +23,10 @@ export const AddressScreen: React.FC = () => {
   const [state, setState] = useState('');
   const [pinCode, setPinCode] = useState('');
   const [landmark, setLandmark] = useState('');
+  const [states, setStates] = useState<string[]>([]);
+  const [showStatePicker, setShowStatePicker] = useState(false);
+  const [pinLookingUp, setPinLookingUp] = useState(false);
+  const [pinNotFound, setPinNotFound] = useState(false);
   const [detectLocation, setDetectLocation] = useState(false);
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -30,9 +34,59 @@ export const AddressScreen: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // States dropdown data ("KARNATAKA" → "Karnataka"). If the request fails the
+  // field silently falls back to free typing.
+  useEffect(() => {
+    pincodeService
+      .getStates()
+      .then((list) => setStates(list.map(toTitleCase)))
+      .catch(() => setStates([]));
+  }, []);
+
+  // A complete PIN auto-fills city/state from the postal directory. Like the
+  // geolocation prefill below, it never overwrites what the user already typed.
+  useEffect(() => {
+    if (!isValidPinCode(pinCode)) {
+      setPinNotFound(false);
+      return;
+    }
+    let cancelled = false;
+    setPinLookingUp(true);
+    setPinNotFound(false);
+    pincodeService
+      .lookup(pinCode)
+      .then((offices) => {
+        if (cancelled) return;
+        const office = offices[0];
+        if (!office) {
+          setPinNotFound(true);
+          return;
+        }
+        if (office.districtName) setCity((prev) => prev || toTitleCase(office.districtName));
+        if (office.stateName) setState((prev) => prev || toTitleCase(office.stateName));
+      })
+      .catch((err) => {
+        // Unknown pincodes come back as 404; anything else (network, 5xx) is
+        // best-effort — the form still works fully manually.
+        if (!cancelled && err instanceof ApiError && err.statusCode === 404) {
+          setPinNotFound(true);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setPinLookingUp(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pinCode]);
+
   const isPinValid = isValidPinCode(pinCode);
   const pinError =
-    pinCode.length === 6 && !isPinValid ? 'Enter a valid 6-digit PIN code' : undefined;
+    pinCode.length === 6 && !isPinValid
+      ? 'Enter a valid 6-digit PIN code'
+      : pinNotFound
+        ? 'We couldn’t find this PIN code — please double-check it.'
+        : undefined;
   // Landmark is optional; everything else is required
   const isFormValid =
     houseNo.trim().length > 0 &&
@@ -166,13 +220,27 @@ export const AddressScreen: React.FC = () => {
           value={city}
           onChangeText={setCity}
         />
-        <TextInput
-          label="State"
-          placeholder="Select your state"
-          value={state}
-          onChangeText={setState}
-          suffixIcon={<Chevron />}
-        />
+        {states.length > 0 ? (
+          <Pressable onPress={() => setShowStatePicker(true)} accessibilityRole="button" accessibilityLabel="Select your state">
+            <View pointerEvents="none">
+              <TextInput
+                label="State"
+                placeholder="Select your state"
+                value={state}
+                editable={false}
+                suffixIcon={<Chevron />}
+              />
+            </View>
+          </Pressable>
+        ) : (
+          <TextInput
+            label="State"
+            placeholder="Select your state"
+            value={state}
+            onChangeText={setState}
+            suffixIcon={<Chevron />}
+          />
+        )}
         <TextInput
           label="PIN Code"
           placeholder="6–digit postal code"
@@ -181,6 +249,7 @@ export const AddressScreen: React.FC = () => {
           value={pinCode}
           onChangeText={(v) => setPinCode(digitsOnly(v).slice(0, 6))}
           error={pinError}
+          suffixIcon={pinLookingUp ? <ActivityIndicator size="small" color={theme.colors.primary} /> : undefined}
         />
         <TextInput
           label="Landmark"
@@ -210,6 +279,37 @@ export const AddressScreen: React.FC = () => {
         />
         <Spacer size="xl" />
       </View>
+
+      <Modal
+        visible={showStatePicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowStatePicker(false)}
+      >
+        <Pressable style={styles.pickerOverlay} onPress={() => setShowStatePicker(false)}>
+          <Pressable style={styles.pickerCard} onPress={() => {}}>
+            <Text style={styles.pickerTitle}>Select your state</Text>
+            <ScrollView style={styles.pickerList}>
+              {states.map((item) => (
+                <Pressable
+                  key={item}
+                  style={[styles.pickerRow, state === item && styles.pickerRowActive]}
+                  onPress={() => {
+                    setState(item);
+                    setShowStatePicker(false);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: state === item }}
+                >
+                  <Text style={[styles.pickerRowText, state === item && styles.pickerRowTextActive]}>
+                    {item}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       <Modal
         visible={showLocationPrompt}
@@ -285,6 +385,45 @@ const styles = StyleSheet.create({
     color: theme.colors.status.error,
     textAlign: 'center',
     marginBottom: theme.spacing.md,
+  },
+  pickerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'center',
+    paddingHorizontal: theme.spacing.xl,
+  },
+  pickerCard: {
+    borderRadius: theme.radius.md,
+    backgroundColor: theme.colors.background.base,
+    paddingVertical: theme.spacing.lg,
+    maxHeight: '70%',
+  },
+  pickerTitle: {
+    fontFamily: theme.typography.h5.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.h5.fontSize),
+    color: theme.colors.neutral[900],
+    textAlign: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  pickerList: {
+    paddingHorizontal: theme.spacing.md,
+  },
+  pickerRow: {
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.radius.xs,
+  },
+  pickerRowActive: {
+    backgroundColor: theme.colors.background.orange,
+  },
+  pickerRowText: {
+    fontFamily: theme.typography.bodyLarge.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.bodyLarge.fontSize),
+    color: theme.colors.neutral[800],
+  },
+  pickerRowTextActive: {
+    color: theme.colors.tertiary,
+    fontFamily: theme.fonts.bold,
   },
   promptOverlay: {
     flex: 1,

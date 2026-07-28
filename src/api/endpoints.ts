@@ -26,6 +26,11 @@ export const ENDPOINTS = {
     list: '/services',
     details: (id: string) => `/services/${id}`,
   },
+  pincodes: {
+    cities: '/pincodes/cities',
+    states: '/pincodes/states',
+    lookup: (pincode: string) => `/pincodes/${pincode}`,
+  },
   masterData: {
     languages: '/languages',
     genders: '/genders',

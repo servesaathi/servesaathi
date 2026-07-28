@@ -4,6 +4,11 @@ import { NavigationContainer } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as SplashScreen from 'expo-splash-screen';
 import RootNavigator from './src/navigation/RootNavigator';
+import { installTextAccessibility } from './src/utils/textAccessibility';
+
+// Swap react-native's Text/TextInput for accessibility-aware wrappers before
+// anything renders, so the user's font-size and contrast settings apply app-wide.
+installTextAccessibility();
 
 SplashScreen.setOptions({
   duration: 0,

@@ -25,4 +25,6 @@ export type {
 export { customerService } from './services/customer.service';
 export type { Address, AddressPayload } from './services/customer.service';
 export { masterdataService, normalizeMasterDataResponse } from './services/masterdata.service';
+export { pincodeService, toTitleCase, normalizePlaceList } from './services/pincode.service';
+export type { PincodeOffice } from './services/pincode.service';
 export type { MasterDataOption } from './services/masterdata.service';

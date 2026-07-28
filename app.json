@@ -44,6 +44,13 @@
         {
           "locationWhenInUsePermission": "ServeSaathi uses your location to detect your address and connect you with nearby services."
         }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "ServeSaathi needs the microphone so you can control the app with voice commands.",
+          "speechRecognitionPermission": "ServeSaathi uses speech recognition so you can control the app with voice commands."
+        }
       ]
     ]
   }
