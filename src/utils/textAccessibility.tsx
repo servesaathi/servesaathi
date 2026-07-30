@@ -66,19 +66,34 @@ const useAccessibleTextStyle = (style: StyleProp<TextStyle>): StyleProp<TextStyl
 
 type AnyTextProps = { style?: StyleProp<TextStyle> } & Record<string, unknown>;
 
-const AccessibleText: React.FC<AnyTextProps> = ({ style, ...rest }) => {
-  return <OriginalText {...rest} style={useAccessibleTextStyle(style)} />;
-};
+// forwardRef is required: React Native's own focus/keyboard management (and
+// our TextInput component) grab a ref to the native input/text instance. A
+// plain function component silently drops that ref, leaving RN's internal
+// TextInputState registry pointing at nothing — the app then crashes with
+// "Cannot read property 'currentlyFocusedInput' of undefined" the moment any
+// screen with a TextInput mounts.
+const AccessibleText = React.forwardRef<unknown, AnyTextProps>(({ style, ...rest }, ref) => {
+  return <OriginalText ref={ref} {...rest} style={useAccessibleTextStyle(style as StyleProp<TextStyle>)} />;
+});
 
-const AccessibleTextInput: React.FC<AnyTextProps> = ({ style, ...rest }) => {
-  return <OriginalTextInput {...rest} style={useAccessibleTextStyle(style)} />;
-};
+const AccessibleTextInput = React.forwardRef<unknown, AnyTextProps>(({ style, ...rest }, ref) => {
+  return <OriginalTextInput ref={ref} {...rest} style={useAccessibleTextStyle(style as StyleProp<TextStyle>)} />;
+});
 
 let installed = false;
 
 export const installTextAccessibility = (): void => {
   if (installed) return;
   installed = true;
-  Object.defineProperty(RN, 'Text', { configurable: true, get: () => AccessibleText });
-  Object.defineProperty(RN, 'TextInput', { configurable: true, get: () => AccessibleTextInput });
+  // react-native's index.js exposes configurable getters, but react-native-web's
+  // transpiled exports are non-configurable — there defineProperty throws, so the
+  // patch (and with it in-app font scaling) is skipped rather than crashing web.
+  try {
+    Object.defineProperty(RN, 'Text', { configurable: true, get: () => AccessibleText });
+    Object.defineProperty(RN, 'TextInput', { configurable: true, get: () => AccessibleTextInput });
+  } catch {
+    if (__DEV__) {
+      console.warn('textAccessibility: could not patch Text/TextInput on this platform');
+    }
+  }
 };

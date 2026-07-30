@@ -1,11 +1,12 @@
 import React from 'react';
 import { View, StyleSheet, Pressable, Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Home, BookOpen, User, Settings, Phone } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/theme';
 import { responsiveFontSize } from '@/utils/responsive';
 import { Screen, Header } from '@/components/layouts';
+import { Icon } from '@/components/icons';
+import type { IconName } from '@/components/icons/iconNames.generated';
 import { ProfileScreen } from '@/features/profile/screens/ProfileScreen';
 import { SettingsScreen } from '@/features/settings/screens/SettingsScreen';
 import { HomeScreen as HomeTabScreen } from '@/features/home/screens/HomeScreen';
@@ -74,14 +75,17 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
           };
 
           const getIcon = () => {
-            const color = isFocused && !isHelpline ? theme.colors.neutral[700] : theme.colors.neutral[500];
-            const size = 24;
-
-            if (route.name === 'HomeTab') return <Home color={color} size={size} />;
-            if (route.name === 'ServiceTab') return <BookOpen color={color} size={size} />;
-            if (route.name === 'ProfileTab') return <User color={color} size={size} />;
-            if (route.name === 'SettingTab') return <Settings color={color} size={size} />;
-            return null;
+            const color = isFocused ? theme.colors.neutral[700] : theme.colors.neutral[500];
+            // Active tabs switch to the filled variant of the same glyph.
+            const variant = isFocused ? 'filled' : 'outline';
+            let name: IconName | null = null;
+            if (route.name === 'HomeTab') name = 'home';
+            if (route.name === 'ServiceTab') name = 'book';
+            if (route.name === 'ProfileTab') name = 'profile';
+            // Icon-set quirk: the outline glyph is named "setting", the filled one "settings".
+            if (route.name === 'SettingTab') name = isFocused ? 'settings' : 'setting';
+            if (!name) return null;
+            return <Icon name={name} variant={variant} size={24} color={color} />;
           };
 
           if (isHelpline) {
@@ -96,10 +100,15 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
                 onLongPress={onLongPress}
                 style={styles.floatingButtonContainer}
               >
-                <View style={styles.floatingButton}>
-                  <Phone color="#FFFFFF" size={28} />
-                </View>
-                <Text style={styles.floatingButtonLabel}>Helpline</Text>
+                {({ pressed }) => (
+                  <>
+                    <View style={[styles.floatingButton, pressed && styles.floatingButtonPressed]}>
+                      {/* Outline at rest; the filled glyph is the pressed state. */}
+                      <Icon name="phone" variant={pressed ? 'filled' : 'outline'} size={24} color="#FFFFFF" />
+                    </View>
+                    <Text style={styles.floatingButtonLabel}>Helpline</Text>
+                  </>
+                )}
               </Pressable>
             );
           }
@@ -113,13 +122,14 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
               testID={options.tabBarTestID}
               onPress={onPress}
               onLongPress={onLongPress}
-              style={styles.tabButton}
+              android_ripple={{ color: theme.colors.forestGreen[100], borderless: true }}
+              style={({ pressed }) => [styles.tabButton, pressed && styles.tabButtonPressed]}
             >
               {getIcon()}
               <Text
                 style={[
                   styles.tabLabel,
-                  { color: isFocused ? theme.colors.neutral[700] : theme.colors.neutral[500] },
+                  isFocused ? styles.tabLabelActive : styles.tabLabelInactive,
                 ]}
               >
                 {label}
@@ -167,8 +177,8 @@ const styles = StyleSheet.create({
   },
   tabBarContainer: {
     backgroundColor: '#FFFFFF',
-    borderTopWidth: 1.5,
-    borderTopColor: theme.colors.forestGreen[100],
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.forestGreen[100], // Figma "Background/G Line" #D5E5D6
     position: 'absolute',
     bottom: 0,
     left: 0,
@@ -182,44 +192,61 @@ const styles = StyleSheet.create({
   tabBarContent: {
     flexDirection: 'row',
     height: 64,
-    alignItems: 'center',
+    // Figma: the five 48px-tall items sit in the bottom of the 64px bar; the
+    // top 16px is the zone the helpline circle overlaps into.
+    alignItems: 'flex-end',
     justifyContent: 'space-around',
     paddingHorizontal: theme.spacing.lg,
   },
   tabButton: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-    paddingTop: 8,
+    justifyContent: 'flex-start',
+    height: 48, // icon 24 + 4 gap + label line-height 20
+    borderRadius: theme.radius.sm,
   },
+  tabButtonPressed: {
+    backgroundColor: theme.colors.forestGreen[50],
+  },
+  // Figma "Small Caption": Regular 400, 14/20 in every state — active changes
+  // color only (the filled icon is the highlight).
   tabLabel: {
     fontFamily: theme.typography.bodySmall.fontFamily,
     fontSize: responsiveFontSize(14),
     lineHeight: 20,
     marginTop: 4,
   },
+  tabLabelActive: {
+    color: theme.colors.neutral[700],
+  },
+  tabLabelInactive: {
+    color: theme.colors.neutral[500],
+  },
   floatingButtonContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'flex-start',
-    height: '100%',
-    marginTop: -32, // Float above the bar
+    height: 64, // full bar height; circle pokes 16px above via its own margin
   },
   floatingButton: {
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: 200, // Figma spec — fully round
+    marginTop: -16, // Figma: circle at y -16, so its bottom lands at bar y 40
     backgroundColor: theme.colors.tertiary, // Orange 500
     alignItems: 'center',
     justifyContent: 'center',
     ...theme.shadows.md,
-    borderWidth: 4,
-    borderColor: '#FFFFFF', // White stroke around it matching the design
+  },
+  floatingButtonPressed: {
+    backgroundColor: theme.colors.vividOrange[600],
   },
   floatingButtonLabel: {
-    fontFamily: theme.typography.caption.fontFamily,
-    fontSize: responsiveFontSize(11),
+    // Same "Small Caption" 14/20 as the other four tab labels (Figma uses one
+    // component for all five slots).
+    fontFamily: theme.typography.bodySmall.fontFamily,
+    fontSize: responsiveFontSize(14),
+    lineHeight: 20,
     color: theme.colors.neutral[500],
     marginTop: 4,
   },

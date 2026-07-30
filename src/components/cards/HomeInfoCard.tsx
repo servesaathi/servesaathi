@@ -1,5 +1,5 @@
-import React from 'react';
-import { StyleSheet, Text, View, Image, ImageBackground, Pressable, StyleProp, ViewStyle } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, Image, Pressable, StyleProp, ViewStyle, LayoutChangeEvent } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '@/theme';
 import { responsiveFontSize } from '@/utils/responsive';
@@ -58,12 +58,29 @@ export const HomeInfoCard: React.FC<HomeInfoCardProps> = ({
   const isWithCaption = status === 'withCaption';
   const showButton = ['quote', 'withCaption', 'withoutCaption'].includes(status);
 
+  // The dot-pattern asset must cover the card exactly, but the card's height is
+  // text-driven and percentage sizes inside ImageBackground don't resolve
+  // reliably against content-sized parents on iOS (the image ends up at its
+  // intrinsic 312×181, leaving part of the card uncovered). Measuring the card
+  // and sizing the image in absolute pixels is deterministic on every platform;
+  // the card's solid green base color backstops the first frame before layout.
+  const [bgSize, setBgSize] = useState<{ width: number; height: number } | null>(null);
+  const onCardLayout = (e: LayoutChangeEvent) => {
+    const { width, height } = e.nativeEvent.layout;
+    if (!bgSize || bgSize.width !== width || bgSize.height !== height) {
+      setBgSize({ width, height });
+    }
+  };
+
   return (
-    <ImageBackground
-      source={theme.images.homeInfoBg}
-      imageStyle={styles.cardImage}
-      style={[styles.card, style]}
-    >
+    <View style={[styles.card, style]} onLayout={onCardLayout}>
+      {bgSize && (
+        <Image
+          source={theme.images.homeInfoBg}
+          style={[styles.cardImage, bgSize]}
+          resizeMode="stretch"
+        />
+      )}
       <LinearGradient
         colors={[theme.colors.primary, theme.colors.primary, 'rgba(46, 125, 50, 0)']}
         locations={[0, 0.6262, 1]}
@@ -118,7 +135,7 @@ export const HomeInfoCard: React.FC<HomeInfoCardProps> = ({
           )}
         </>
       )}
-    </ImageBackground>
+    </View>
   );
 };
 
@@ -128,10 +145,15 @@ const styles = StyleSheet.create({
     padding: theme.spacing.lg,
     gap: theme.spacing.lg,
     overflow: 'hidden',
+    // Solid base so the card never shows the page through it, even before the
+    // measured background image is ready.
+    backgroundColor: theme.colors.primary,
   },
   cardImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
     borderRadius: theme.radius.sm,
-    resizeMode: 'cover',
   },
   textCol: {
     gap: theme.spacing.xs,
@@ -164,15 +186,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: theme.spacing.sm,
     backgroundColor: '#FFFFFF',
     borderWidth: 1.35,
     borderColor: theme.colors.forestGreen[200],
     borderRadius: theme.radius.sm,
-    height: 48,
+    // minHeight (not height): larger font settings scale the label, which must
+    // grow the button instead of overflowing it.
+    minHeight: 48,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.sm,
   },
   buttonText: {
+    flexShrink: 1,
     fontFamily: theme.typography.label.fontFamily,
     fontSize: responsiveFontSize(theme.typography.label.fontSize),
     color: theme.colors.neutral[700],
