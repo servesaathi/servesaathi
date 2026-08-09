@@ -19,6 +19,7 @@ import {
   type HealthProfile,
 } from '@/api';
 import { useUserStore } from '@/store/user.store';
+import { ageFromDob } from '@/utils/profile';
 import { ProfileEditSheet, type EditSection } from '../components/ProfileEditSheet';
 import { FamilyMemberSheet } from '../components/FamilyMemberSheet';
 
@@ -31,19 +32,6 @@ const formatDob = (iso?: string) => {
   if (!iso) return '—';
   const [year, month, day] = iso.split('T')[0].split('-');
   return year && month && day ? `${day}/${month}/${year}` : '—';
-};
-
-const ageFromDob = (iso?: string): number | null => {
-  if (!iso) return null;
-  const dob = new Date(iso);
-  if (Number.isNaN(dob.getTime())) return null;
-  const now = new Date();
-  let age = now.getFullYear() - dob.getFullYear();
-  const beforeBirthday =
-    now.getMonth() < dob.getMonth() ||
-    (now.getMonth() === dob.getMonth() && now.getDate() < dob.getDate());
-  if (beforeBirthday) age -= 1;
-  return age >= 0 ? age : null;
 };
 
 const InfoRow = ({ label, value }: { label: string; value: string }) => (

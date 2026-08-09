@@ -1,34 +1,45 @@
 import React from 'react';
-import { StyleSheet, Text, Pressable, StyleProp, ViewStyle } from 'react-native';
+import { StyleSheet, Text, View, Pressable, StyleProp, ViewStyle } from 'react-native';
 import { theme } from '@/theme';
 import { responsiveFontSize } from '@/utils/responsive';
+import { Icon } from '@/components/icons';
+
+export type SettingsMenuItemVariant = 'default' | 'danger' | 'safe';
 
 interface SettingsMenuItemProps {
   label: string;
   icon: React.ReactNode;
-  active?: boolean;
+  variant?: SettingsMenuItemVariant;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
 }
 
-// "Sidebar Base" from Figma Sidebar (node 168:6381) — icon + label menu row, adapted from
-// a fixed-width desktop sidebar item into a full-width mobile list row.
+const VARIANT_STYLES: Record<SettingsMenuItemVariant, { accent: string; iconBg: string }> = {
+  default: { accent: theme.colors.tertiary, iconBg: theme.colors.vividOrange[100] },
+  danger: { accent: theme.colors.status.error, iconBg: theme.colors.status.errorBorder },
+  safe: { accent: theme.colors.primary, iconBg: theme.colors.background.layout },
+};
+
+// "Field Card View" from Figma Settings (node 1432:38979) — icon-circle + label row with
+// a colored left accent border and a matching chevron, used throughout the Settings menu.
 export const SettingsMenuItem: React.FC<SettingsMenuItemProps> = ({
   label,
   icon,
-  active = false,
+  variant = 'default',
   onPress,
   style,
 }) => {
+  const { accent, iconBg } = VARIANT_STYLES[variant];
+
   return (
-    <Pressable
-      onPress={onPress}
-      style={[styles.row, active && styles.active, style]}
-    >
-      {icon}
-      <Text style={[styles.label, { color: active ? theme.colors.vividOrange[600] : theme.colors.neutral[500] }]}>
-        {label}
-      </Text>
+    <Pressable onPress={onPress} style={[styles.row, { borderLeftColor: accent }, style]}>
+      <View style={styles.left}>
+        <View style={[styles.iconCircle, { backgroundColor: iconBg }]}>{icon}</View>
+        <Text style={styles.label}>{label}</Text>
+      </View>
+      <View style={styles.chevronCircle}>
+        <Icon name="navigationRight" variant="outline" size={20} color={accent} />
+      </View>
     </Pressable>
   );
 };
@@ -37,16 +48,36 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
-    padding: theme.spacing.sm,
+    justifyContent: 'space-between',
+    width: '100%',
+    backgroundColor: theme.colors.background.base,
+    borderLeftWidth: 4,
     borderRadius: theme.radius.sm,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
+    overflow: 'hidden',
   },
-  active: {
-    backgroundColor: theme.colors.background.orange,
+  left: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  iconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chevronCircle: {
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   label: {
-    fontFamily: theme.typography.label.fontFamily,
-    fontSize: responsiveFontSize(theme.typography.label.fontSize),
-    lineHeight: theme.typography.label.lineHeight,
+    fontFamily: theme.typography.bodyLarge.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.bodyLarge.fontSize),
+    color: theme.colors.neutral[700],
   },
 });

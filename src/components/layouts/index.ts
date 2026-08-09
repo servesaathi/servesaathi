@@ -5,4 +5,5 @@ export { Divider } from './Divider';
 export { Section } from './Section';
 export { Header } from './Header';
 export { SettingsMenuItem } from './SettingsMenuItem';
+export type { SettingsMenuItemVariant } from './SettingsMenuItem';
 export { SegmentedTabs } from './SegmentedTabs';

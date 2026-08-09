@@ -11,6 +11,9 @@ export const ENDPOINTS = {
     forgotPassword: '/auth/forgot-password',
     resetPassword: '/auth/reset-password',
   },
+  users: {
+    me: '/users/me',
+  },
   customers: {
     me: '/customers/me',
     addresses: '/customers/me/addresses',

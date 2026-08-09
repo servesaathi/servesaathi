@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { IconButton } from '@/components/buttons';
+import { Icon } from '@/components/icons';
 import { theme } from '@/theme';
 import { responsiveFontSize } from '@/utils/responsive';
 import { BrandLogoSVG } from '@/components/BrandLogoSVG';
@@ -11,7 +12,7 @@ export type HeaderProps = {
   title?: string;
   showLogo?: boolean;
   leftIcon?: 'back' | 'close' | 'none';
-  rightIcon?: 'menu' | 'none';
+  rightIcon?: 'menu' | 'notification' | 'none';
   onLeftPress?: () => void;
   onRightPress?: () => void;
   stepper?: { current: number; total: number };
@@ -126,7 +127,16 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* RIGHT SECTION */}
       <View style={styles.sideRight}>
-        {rightIcon !== 'none' && (
+        {rightIcon === 'notification' && (
+          <IconButton
+            type="custom"
+            icon={<Icon name="notification" variant="outline" size={24} color="#FFFFFF" />}
+            accessibilityLabel="Notifications"
+            onPress={handleRightPress}
+            size={40}
+          />
+        )}
+        {rightIcon === 'menu' && (
           <IconButton
             type={rightIcon}
             accessibilityLabel="Menu"

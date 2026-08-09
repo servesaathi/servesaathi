@@ -7,6 +7,8 @@ export const images = {
   permissionBlob: require('../../assets/illustrations/permission_blob.png'),
   settingUpScribble: require('../../assets/illustrations/settingup_scribble.png'),
   homeInfoBg: require('../../assets/home-info-bg.png'),
+  helpline: require('../../assets/helpline.png'),
+  emResponder: require('../../assets/em-reponder.jpg'),
 };
 
 export type Images = typeof images;

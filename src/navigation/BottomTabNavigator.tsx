@@ -4,27 +4,16 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/theme';
 import { responsiveFontSize } from '@/utils/responsive';
-import { Screen, Header } from '@/components/layouts';
 import { Icon } from '@/components/icons';
 import type { IconName } from '@/components/icons/iconNames.generated';
 import { ProfileScreen } from '@/features/profile/screens/ProfileScreen';
-import { SettingsScreen } from '@/features/settings/screens/SettingsScreen';
 import { HomeScreen as HomeTabScreen } from '@/features/home/screens/HomeScreen';
 import { ServicesScreen } from '@/features/services/screens/ServicesScreen';
-
-const TabScreenLayout = ({ name, showLogo = false }: { name: string; showLogo?: boolean }) => (
-  <Screen safeAreaBottom={false} style={styles.screenContent}>
-    <Header title={showLogo ? undefined : name} showLogo={showLogo} leftIcon="none" />
-    <View style={styles.placeholderContainer}>
-      <Text style={styles.placeholderText}>{name} Screen (Coming Soon)</Text>
-    </View>
-  </Screen>
-);
+import { HelplineStackNavigator } from './HelplineStackNavigator';
+import { SettingsStackNavigator } from './SettingsStackNavigator';
 
 const HomeScreen = () => <HomeTabScreen />;
 const ServiceScreen = () => <ServicesScreen />;
-const HelplineScreen = () => <TabScreenLayout name="Helpline" />;
-const SettingScreen = () => <SettingsScreen />;
 
 export type BottomTabParamList = {
   HomeTab: undefined;
@@ -152,29 +141,14 @@ export const BottomTabNavigator = () => {
     >
       <Tab.Screen name="HomeTab" component={HomeScreen} options={{ tabBarLabel: 'Home' }} />
       <Tab.Screen name="ServiceTab" component={ServiceScreen} options={{ tabBarLabel: 'Service' }} />
-      <Tab.Screen name="HelplineTab" component={HelplineScreen} options={{ tabBarLabel: 'Helpline' }} />
+      <Tab.Screen name="HelplineTab" component={HelplineStackNavigator} options={{ tabBarLabel: 'Helpline' }} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ tabBarLabel: 'Profile' }} />
-      <Tab.Screen name="SettingTab" component={SettingScreen} options={{ tabBarLabel: 'Setting' }} />
+      <Tab.Screen name="SettingTab" component={SettingsStackNavigator} options={{ tabBarLabel: 'Setting' }} />
     </Tab.Navigator>
   );
 };
 
 const styles = StyleSheet.create({
-  screenContent: {
-    flex: 1,
-  },
-  placeholderContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.background.layout,
-    paddingBottom: 96, // Account for absolute bottom tab bar height + safe area padding
-  },
-  placeholderText: {
-    fontFamily: theme.typography.bodyLarge.fontFamily,
-    fontSize: responsiveFontSize(16),
-    color: theme.colors.neutral[500],
-  },
   tabBarContainer: {
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,

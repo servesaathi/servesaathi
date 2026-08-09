@@ -9,6 +9,10 @@ interface SnackbarProps {
   type?: 'success' | 'error' | 'info';
   onDismiss: () => void;
   duration?: number;
+  /** Distance from the screen bottom. Raise this on screens that sit under the
+   *  floating bottom tab bar (e.g. nested inside HelplineStackNavigator), which
+   *  otherwise covers the default offset. */
+  bottomOffset?: number;
 }
 
 export const Snackbar: React.FC<SnackbarProps> = ({
@@ -17,6 +21,7 @@ export const Snackbar: React.FC<SnackbarProps> = ({
   type = 'info',
   onDismiss,
   duration = 3000,
+  bottomOffset,
 }) => {
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
@@ -43,7 +48,13 @@ export const Snackbar: React.FC<SnackbarProps> = ({
   if (type === 'error') bg = theme.colors.status.error;
 
   return (
-    <Animated.View style={[styles.snackbar, { backgroundColor: bg, opacity: fadeAnim }]}>
+    <Animated.View
+      style={[
+        styles.snackbar,
+        { backgroundColor: bg, opacity: fadeAnim },
+        bottomOffset !== undefined && { bottom: bottomOffset },
+      ]}
+    >
       <Text style={styles.snackbarText}>{message}</Text>
       <Pressable onPress={handleDismiss} style={styles.dismissBtn}>
         <Text style={styles.dismissText}>✕</Text>

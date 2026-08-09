@@ -3,7 +3,7 @@ export { apiClient } from './axios';
 export { API_CONFIG, apiUrl } from './config';
 export { ENDPOINTS } from './endpoints';
 export { ApiError, getErrorMessage } from './types';
-export type { ApiEnvelope, ApiErrorBody, ApiRole } from './types';
+export type { ApiEnvelope, ApiErrorBody, ApiRole, User } from './types';
 export { authService } from './services/auth.service';
 export type {
   VerifyOtpData,
@@ -24,6 +24,8 @@ export type {
 } from './services/careprofile.service';
 export { customerService } from './services/customer.service';
 export type { Address, AddressPayload } from './services/customer.service';
+export { userService } from './services/user.service';
+export type { UpdateMePayload } from './services/user.service';
 export { masterdataService, normalizeMasterDataResponse } from './services/masterdata.service';
 export { pincodeService, toTitleCase, normalizePlaceList } from './services/pincode.service';
 export type { PincodeOffice } from './services/pincode.service';

@@ -31,6 +31,12 @@ export type RootStackParamList = {
   Comparison: { orgIds: string[] };
   RequestSetup: { orgId: string };
   RequestDetails: undefined;
+  HelplineList: undefined;
+  ShareLocation: undefined;
+  EMResponder: undefined;
+  SupportChat: undefined;
+  Notifications: undefined;
+  EditProfile: undefined;
 };
 
 export type RootNavigationProp<RouteName extends keyof RootStackParamList> = StackNavigationProp<

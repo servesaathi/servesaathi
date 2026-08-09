@@ -30,6 +30,7 @@ import { CaregiverDetailScreen } from '@/features/services/screens/CaregiverDeta
 import { ComparisonScreen } from '@/features/services/screens/ComparisonScreen';
 import { RequestSetupScreen } from '@/features/services/screens/RequestSetupScreen';
 import { RequestDetailsScreen } from '@/features/services/screens/RequestDetailsScreen';
+import { SupportChatScreen } from '@/features/emergency/screens/SupportChatScreen';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -71,6 +72,7 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen name="Comparison" component={ComparisonScreen} />
       <Stack.Screen name="RequestSetup" component={RequestSetupScreen} />
       <Stack.Screen name="RequestDetails" component={RequestDetailsScreen} />
+      <Stack.Screen name="SupportChat" component={SupportChatScreen} />
     </Stack.Navigator>
   );
 };
