@@ -10,6 +10,7 @@ import { Icon } from '@/components/icons';
 import type { IconName } from '@/components/icons';
 import { useUserStore } from '@/store/user.store';
 import { careProfileService, type CareProfile } from '@/api';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import ProfileCardBg from '../../../../assets/illustrations/settings_profile_card_bg.svg';
 
 interface MenuItemConfig {
@@ -26,6 +27,7 @@ const ICON_SIZE = 28; // Figma: 28px glyph inside the 36px circle
 // (matches the Figma frame, which reuses the same header chrome as every other screen).
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+  const colors = useThemeColors();
   const name = useUserStore((s) => s.profile?.name) ?? 'Kamala Sharma';
   const [careProfile, setCareProfile] = useState<CareProfile | null>(null);
   const [role, setRole] = useState<'myself' | 'parent'>('myself');
@@ -56,7 +58,11 @@ export const SettingsScreen: React.FC = () => {
       title: 'General',
       items: [
         { label: 'Language', icon: 'language' },
-        { label: 'Accessibility', icon: 'accessibility' },
+        {
+          label: 'Accessibility',
+          icon: 'accessibility',
+          onPress: () => navigation.navigate('ProfileAccessibility', { fromSettings: true }),
+        },
         { label: 'Privacy Data', icon: 'safety' },
         { label: 'Notification', icon: 'notification' },
       ],
@@ -102,7 +108,7 @@ export const SettingsScreen: React.FC = () => {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.sectionTitle}>Role</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text.muted }]}>Role</Text>
           <View style={styles.roleToggle}>
             <Pressable
               style={[styles.roleSegment, role === 'myself' && styles.roleSegmentActive]}
@@ -121,7 +127,7 @@ export const SettingsScreen: React.FC = () => {
 
         {groups.map((group) => (
           <View key={group.title} style={styles.field}>
-            <Text style={styles.sectionTitle}>{group.title}</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text.muted }]}>{group.title}</Text>
             <View style={styles.rowList}>
               {group.items.map((item) => (
                 <SettingsMenuItem

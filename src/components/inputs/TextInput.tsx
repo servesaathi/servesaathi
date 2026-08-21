@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { theme } from '@/theme';
 import { responsiveFontSize } from '@/utils/responsive';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 export interface TextInputProps extends RNTextInputProps {
   label?: string;
@@ -38,6 +39,7 @@ export const TextInput: React.FC<TextInputProps> = ({
   secureTextEntry,
   ...props
 }) => {
+  const colors = useThemeColors();
   const [isFocused, setIsFocused] = useState(false);
   const hasError = !!error;
 
@@ -60,8 +62,8 @@ export const TextInput: React.FC<TextInputProps> = ({
               color: hasError
                 ? theme.colors.status.error
                 : props.editable === false
-                ? theme.colors.neutral[500]
-                : theme.colors.neutral[900],
+                ? colors.text.muted
+                : colors.text.primary,
             },
           ]}
         >
@@ -74,13 +76,14 @@ export const TextInput: React.FC<TextInputProps> = ({
           styles.inputContainer,
           // computed theme-aware border/background
           {
+            backgroundColor: colors.background.base,
             borderColor: hasError
               ? theme.colors.status.error
               : isFocused
-              ? theme.colors.primary
+              ? colors.accentPrimary
               : props.editable === false
-              ? theme.colors.neutral[200]
-              : theme.colors.forestGreen[100],
+              ? colors.border.hairline
+              : colors.border.card,
             borderWidth: isFocused ? 1.35 : 1.5,
           },
           // allow callers to override the internal input container (e.g. transparent border)
@@ -89,9 +92,9 @@ export const TextInput: React.FC<TextInputProps> = ({
       >
         {prefixIcon && <View style={styles.prefixIcon}>{prefixIcon}</View>}
         <RNTextInput
-          placeholderTextColor={theme.colors.neutral[500]}
+          placeholderTextColor={colors.text.secondary}
           secureTextEntry={secureTextEntry}
-          style={[styles.input, inputStyle]}
+          style={[styles.input, { color: colors.text.primary }, inputStyle]}
           onFocus={handleFocus}
           onBlur={handleBlur}
           {...props}
@@ -100,7 +103,9 @@ export const TextInput: React.FC<TextInputProps> = ({
       </View>
 
       {hasError && <Text style={styles.errorText}>{error}</Text>}
-      {!hasError && helperText && <Text style={styles.helperText}>{helperText}</Text>}
+      {!hasError && helperText && (
+        <Text style={[styles.helperText, { color: colors.text.muted }]}>{helperText}</Text>
+      )}
     </View>
   );
 };

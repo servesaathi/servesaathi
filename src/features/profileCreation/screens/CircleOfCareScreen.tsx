@@ -18,6 +18,8 @@ import {
   type FamilyMember,
   type MasterDataOption,
 } from '@/api';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import type { ThemePalette } from '@/theme/palette';
 
 // "Profile Creation 5a/5b/5c/5d" (Figma 1248:44491 / 44283 / 44310 / 44544) — step 5 of 6.
 // Sharing toggles + emergency contacts list, with a full-screen "Emergency Contacts" form modal.
@@ -27,11 +29,12 @@ interface SharingToggleProps {
   label: string;
   value: boolean;
   onValueChange: (v: boolean) => void;
+  colors: ThemePalette;
 }
 
-const SharingToggle: React.FC<SharingToggleProps> = ({ label, value, onValueChange }) => (
+const SharingToggle: React.FC<SharingToggleProps> = ({ label, value, onValueChange, colors }) => (
   <View style={styles.toggleRow}>
-    <Text style={styles.toggleLabel}>{label}</Text>
+    <Text style={[styles.toggleLabel, { color: colors.text.strong }]}>{label}</Text>
     <ToggleSwitch value={value} onValueChange={onValueChange} color="orange" />
   </View>
 );
@@ -39,6 +42,7 @@ const SharingToggle: React.FC<SharingToggleProps> = ({ label, value, onValueChan
 export const CircleOfCareScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'ProfileCircle'>>();
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
   const [saveEvents, setSaveEvents] = useState(false);
   const [seeHealthNotes, setSeeHealthNotes] = useState(true);
   const [seeVisitReports, setSeeVisitReports] = useState(true);
@@ -140,22 +144,22 @@ export const CircleOfCareScreen: React.FC = () => {
 
   const CountryCodePrefix = () => (
     <View style={styles.countryCodeContainer}>
-      <Text style={styles.countryCodeText}>(+91)</Text>
+      <Text style={[styles.countryCodeText, { color: colors.text.primary }]}>(+91)</Text>
       <Svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={styles.chevron}>
         <Path
           d="M1 1L5 5L9 1"
-          stroke={theme.colors.neutral[700]}
+          stroke={colors.text.secondary}
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
       </Svg>
-      <View style={styles.countryCodeDivider} />
+      <View style={[styles.countryCodeDivider, { backgroundColor: colors.border.hairline }]} />
     </View>
   );
 
   return (
-    <Screen scrollable statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
+    <Screen scrollable statusBarBg={colors.background.layout}>
       <Header
         leftIcon="back"
         transparent
@@ -164,47 +168,50 @@ export const CircleOfCareScreen: React.FC = () => {
 
       <View style={styles.content}>
         <Spacer size="lg" />
-        <Text style={styles.title}>Your Circle of Care - Family</Text>
+        <Text style={[styles.title, { color: colors.text.primary }]}>Your Circle of Care - Family</Text>
         <Spacer size="xl" />
 
-        <SharingToggle label="Save my upcoming events" value={saveEvents} onValueChange={setSaveEvents} />
-        <SharingToggle label="See my health notes" value={seeHealthNotes} onValueChange={setSeeHealthNotes} />
-        <SharingToggle label="See Saathi visit reports" value={seeVisitReports} onValueChange={setSeeVisitReports} />
-        <SharingToggle label="Share my location" value={shareLocation} onValueChange={setShareLocation} />
+        <SharingToggle label="Save my upcoming events" value={saveEvents} onValueChange={setSaveEvents} colors={colors} />
+        <SharingToggle label="See my health notes" value={seeHealthNotes} onValueChange={setSeeHealthNotes} colors={colors} />
+        <SharingToggle label="See Saathi visit reports" value={seeVisitReports} onValueChange={setSeeVisitReports} colors={colors} />
+        <SharingToggle label="Share my location" value={shareLocation} onValueChange={setShareLocation} colors={colors} />
 
         <Spacer size="lg" />
-        <Text style={styles.sectionLabel}>Emergency Contacts</Text>
+        <Text style={[styles.sectionLabel, { color: colors.text.primary }]}>Emergency Contacts</Text>
         <Spacer size="sm" />
 
         {contacts.map((contact) => (
-          <View key={contact.id} style={styles.contactCard}>
+          <View key={contact.id} style={[styles.contactCard, { backgroundColor: colors.background.base }]}>
             <View style={styles.contactInfo}>
-              <Text style={styles.contactName}>
+              <Text style={[styles.contactName, { color: colors.text.primary }]}>
                 {contact.firstName} {contact.lastName}
               </Text>
               <View style={styles.contactMetaRow}>
-                <Text style={styles.contactMeta}>{relationshipName(contact)}</Text>
-                <View style={styles.metaDot} />
-                <Text style={styles.contactMeta}>{contact.phone}</Text>
+                <Text style={[styles.contactMeta, { color: colors.text.tertiary }]}>{relationshipName(contact)}</Text>
+                <View style={[styles.metaDot, { backgroundColor: colors.accentOrange }]} />
+                <Text style={[styles.contactMeta, { color: colors.text.tertiary }]}>{contact.phone}</Text>
               </View>
             </View>
             <StatusChip
               label={contact.status === 'accepted' ? 'Verified' : 'Waiting'}
               bgColor={
-                contact.status === 'accepted' ? theme.colors.primary : theme.colors.tertiary
+                contact.status === 'accepted' ? colors.accentPrimary : colors.accentOrange
               }
               textColor="#FFFFFF"
             />
           </View>
         ))}
 
-        <Pressable style={styles.addButton} onPress={() => setShowForm(true)}>
-          <Text style={styles.addButtonPlus}>+</Text>
-          <Text style={styles.addButtonText}>Add another family member</Text>
+        <Pressable
+          style={[styles.addButton, { backgroundColor: colors.background.base, borderColor: colors.border.card }]}
+          onPress={() => setShowForm(true)}
+        >
+          <Text style={[styles.addButtonPlus, { color: colors.accentPrimary }]}>+</Text>
+          <Text style={[styles.addButtonText, { color: colors.accentPrimary }]}>Add another family member</Text>
         </Pressable>
 
         <View style={styles.footer}>
-          <Text style={styles.footerNote}>
+          <Text style={[styles.footerNote, { color: colors.text.secondary }]}>
             You're always in control. Change these anytime in your profile settings
           </Text>
           <Spacer size="md" />
@@ -219,11 +226,17 @@ export const CircleOfCareScreen: React.FC = () => {
       {showForm && (
       <Modal visible animationType="slide" transparent onRequestClose={() => setShowForm(false)}>
         <View style={styles.modalRoot}>
-          <View style={[styles.modalSheet, { paddingTop: insets.top + theme.spacing.xxl }]}>
+          <View
+            style={[
+              styles.modalSheet,
+              { backgroundColor: colors.background.layout, paddingTop: insets.top + theme.spacing.xxl },
+            ]}
+          >
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Emergency Contacts</Text>
+              <Text style={[styles.modalTitle, { color: colors.text.primary }]}>Emergency Contacts</Text>
               <IconButton
                 type="close"
+                bg={colors.accentPrimary}
                 accessibilityLabel="Close"
                 onPress={() => setShowForm(false)}
                 size={40}
@@ -244,10 +257,10 @@ export const CircleOfCareScreen: React.FC = () => {
               onChangeText={setLastName}
             />
 
-            <Text style={styles.sectionLabel}>Family Relationship</Text>
+            <Text style={[styles.sectionLabel, { color: colors.text.primary }]}>Family Relationship</Text>
             <View style={styles.chipGrid}>
               {relationships.length === 0 ? (
-                <Text style={styles.contactMeta}>Loading relationships…</Text>
+                <Text style={[styles.contactMeta, { color: colors.text.tertiary }]}>Loading relationships…</Text>
               ) : (
                 relationships.map((item) => (
                   <SelectableChip
@@ -292,8 +305,8 @@ export const CircleOfCareScreen: React.FC = () => {
       {showSentPopup && lastSentContact && (
         <Modal visible transparent animationType="fade" onRequestClose={() => setShowSentPopup(false)}>
           <View style={styles.popupOverlay}>
-            <View style={styles.popupCard}>
-              <View style={styles.popupIconContainer}>
+            <View style={[styles.popupCard, { backgroundColor: colors.background.layout }]}>
+              <View style={[styles.popupIconContainer, { backgroundColor: colors.accentPrimary }]}>
                 <Svg width={36} height={36} viewBox="0 0 16 16" fill="none">
                   <Path
                     d="M13.7524 2.24923C13.6446 2.14149 13.51 2.06443 13.3625 2.026C13.215 1.98757 13.0599 1.98916 12.9133 2.0306H12.9052L2.61994 5.15144C2.45297 5.19956 2.30456 5.29729 2.19438 5.43166C2.0842 5.56604 2.01745 5.73072 2.00298 5.90389C1.98851 6.07706 2.027 6.25054 2.11335 6.40134C2.19971 6.55214 2.32984 6.67313 2.48652 6.7483L7.03703 8.96461L9.25012 13.5124C9.31896 13.6593 9.4284 13.7835 9.56551 13.8702C9.70262 13.9568 9.86168 14.0025 10.0239 14.0017C10.0486 14.0017 10.0732 14.0006 10.0979 13.9985C10.2709 13.9845 10.4355 13.9179 10.5696 13.8076C10.7037 13.6974 10.8008 13.5487 10.8481 13.3817L13.9668 3.09642C13.9668 3.09374 13.9668 3.09106 13.9668 3.08839C14.0087 2.94208 14.011 2.78723 13.9733 2.63975C13.9357 2.49228 13.8594 2.35749 13.7524 2.24923ZM10.0287 13.1363L10.026 13.1438V13.14L7.8794 8.72991L10.4515 6.15778C10.5285 6.07674 10.5708 5.96881 10.5694 5.85703C10.5679 5.74524 10.5229 5.63844 10.4439 5.55939C10.3648 5.48034 10.258 5.4353 10.1462 5.43386C10.0344 5.43243 9.92651 5.47473 9.84546 5.55173L7.27334 8.12385L2.86162 5.9772H2.85787H2.86537L13.1458 2.85582L10.0287 13.1363Z"
@@ -302,15 +315,15 @@ export const CircleOfCareScreen: React.FC = () => {
                 </Svg>
               </View>
               <View>
-                <Text style={styles.popupTitle}>Request Sent to</Text>
-                <Text style={styles.popupTitle}>Family Member</Text>
+                <Text style={[styles.popupTitle, { color: colors.text.primary }]}>Request Sent to</Text>
+                <Text style={[styles.popupTitle, { color: colors.text.primary }]}>Family Member</Text>
               </View>
-              <Text style={styles.popupBody}>
+              <Text style={[styles.popupBody, { color: colors.text.secondary }]}>
 
                 We’ve sent an approval link to{' '}
-                <Text style={styles.popupName}>{lastSentContact.name.replace(' ', '\u00A0')}</Text>
+                <Text style={[styles.popupName, { color: colors.accentPrimary }]}>{lastSentContact.name.replace(' ', '\u00A0')}</Text>
                 {' '}
-                <Text style={styles.popupName}>{`(${lastSentContact.relationship})`}</Text>
+                <Text style={[styles.popupName, { color: colors.accentPrimary }]}>{`(${lastSentContact.relationship})`}</Text>
                 . They just need to tap the link in their message to confirm they are your emergency contact. You’ll see a "Verified" badge on your profile once they’ve approved.
               </Text>
               <View style={styles.popupActions}>

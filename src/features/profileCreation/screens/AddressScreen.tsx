@@ -12,10 +12,12 @@ import { responsiveFontSize } from '@/utils/responsive';
 import { digitsOnly, isValidPinCode } from '@/utils/validation';
 import { customerService, careProfileService, pincodeService, toTitleCase, getErrorMessage, ApiError } from '@/api';
 import * as Location from 'expo-location';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 // "Profile Creation 2a/2b" (Figma 1248:44227 / 1248:44255) — step 2 of 6.
 export const AddressScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'ProfileAddress'>>();
+  const colors = useThemeColors();
   const [houseNo, setHouseNo] = useState('');
   const [street, setStreet] = useState('');
   const [area, setArea] = useState('');
@@ -179,7 +181,7 @@ export const AddressScreen: React.FC = () => {
     <Svg width="14" height="8" viewBox="0 0 14 8" fill="none">
       <Path
         d="M1 1L7 7L13 1"
-        stroke={theme.colors.neutral[700]}
+        stroke={colors.text.secondary}
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -188,12 +190,12 @@ export const AddressScreen: React.FC = () => {
   );
 
   return (
-    <Screen scrollable statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
+    <Screen scrollable statusBarBg={colors.background.layout}>
       <Header leftIcon="back" transparent stepper={{ current: 2, total: 6 }} />
 
       <View style={styles.content}>
         <Spacer size="lg" />
-        <Text style={styles.title}>Enter your residential address</Text>
+        <Text style={[styles.title, { color: colors.text.primary }]}>Enter your residential address</Text>
         <Spacer size="xl" />
 
         <TextInput
@@ -249,7 +251,7 @@ export const AddressScreen: React.FC = () => {
           value={pinCode}
           onChangeText={(v) => setPinCode(digitsOnly(v).slice(0, 6))}
           error={pinError}
-          suffixIcon={pinLookingUp ? <ActivityIndicator size="small" color={theme.colors.primary} /> : undefined}
+          suffixIcon={pinLookingUp ? <ActivityIndicator size="small" color={colors.accentPrimary} /> : undefined}
         />
         <TextInput
           label="Landmark"
@@ -264,7 +266,7 @@ export const AddressScreen: React.FC = () => {
             onPress={handleDetectLocationPress}
             color="orange"
           />
-          <Text style={styles.checkText}>
+          <Text style={[styles.checkText, { color: colors.text.primary }]}>
             {detecting ? 'Detecting your location…' : 'Enable access to detect where you are.'}
           </Text>
         </Pressable>
@@ -287,13 +289,13 @@ export const AddressScreen: React.FC = () => {
         onRequestClose={() => setShowStatePicker(false)}
       >
         <Pressable style={styles.pickerOverlay} onPress={() => setShowStatePicker(false)}>
-          <Pressable style={styles.pickerCard} onPress={() => {}}>
-            <Text style={styles.pickerTitle}>Select your state</Text>
+          <Pressable style={[styles.pickerCard, { backgroundColor: colors.background.base }]} onPress={() => {}}>
+            <Text style={[styles.pickerTitle, { color: colors.text.primary }]}>Select your state</Text>
             <ScrollView style={styles.pickerList}>
               {states.map((item) => (
                 <Pressable
                   key={item}
-                  style={[styles.pickerRow, state === item && styles.pickerRowActive]}
+                  style={[styles.pickerRow, state === item && { backgroundColor: colors.background.orange }]}
                   onPress={() => {
                     setState(item);
                     setShowStatePicker(false);
@@ -301,7 +303,13 @@ export const AddressScreen: React.FC = () => {
                   accessibilityRole="button"
                   accessibilityState={{ selected: state === item }}
                 >
-                  <Text style={[styles.pickerRowText, state === item && styles.pickerRowTextActive]}>
+                  <Text
+                    style={[
+                      styles.pickerRowText,
+                      { color: state === item ? colors.accentOrange : colors.text.strong },
+                      state === item && { fontFamily: theme.fonts.bold },
+                    ]}
+                  >
                     {item}
                   </Text>
                 </Pressable>
@@ -318,13 +326,13 @@ export const AddressScreen: React.FC = () => {
         onRequestClose={() => setShowLocationPrompt(false)}
       >
         <View style={styles.promptOverlay}>
-          <View style={styles.promptCard}>
-            <Icon name="location" variant="filled" size={28} color={theme.colors.tertiary} />
+          <View style={[styles.promptCard, { backgroundColor: colors.background.base }]}>
+            <Icon name="location" variant="filled" size={28} color={colors.accentOrange} />
             <Spacer size="xl" />
             <Text style={styles.promptTitle}>
-              <Text style={styles.promptTitleRegular}>Allow </Text>
-              <Text style={styles.promptTitleBold}>ServeSaathi</Text>
-              <Text style={styles.promptTitleRegular}>
+              <Text style={[styles.promptTitleRegular, { color: colors.text.primary }]}>Allow </Text>
+              <Text style={[styles.promptTitleBold, { color: colors.text.primary }]}>ServeSaathi</Text>
+              <Text style={[styles.promptTitleRegular, { color: colors.text.primary }]}>
                 {' '}
                 to access this device’s precise location?
               </Text>
@@ -332,22 +340,22 @@ export const AddressScreen: React.FC = () => {
             <Spacer size="xl" />
             <View style={styles.promptButtons}>
               <Pressable
-                style={[styles.promptButton, styles.promptButtonTop]}
+                style={[styles.promptButton, styles.promptButtonTop, { backgroundColor: colors.border.hairline }]}
                 onPress={() => handleLocationChoice(true)}
               >
-                <Text style={styles.promptButtonText}>While using the app</Text>
+                <Text style={[styles.promptButtonText, { color: colors.text.primary }]}>While using the app</Text>
               </Pressable>
               <Pressable
-                style={styles.promptButton}
+                style={[styles.promptButton, { backgroundColor: colors.border.hairline }]}
                 onPress={() => handleLocationChoice(true)}
               >
-                <Text style={styles.promptButtonText}>Only this time</Text>
+                <Text style={[styles.promptButtonText, { color: colors.text.primary }]}>Only this time</Text>
               </Pressable>
               <Pressable
-                style={[styles.promptButton, styles.promptButtonBottom]}
+                style={[styles.promptButton, styles.promptButtonBottom, { backgroundColor: colors.border.hairline }]}
                 onPress={() => handleLocationChoice(false)}
               >
-                <Text style={styles.promptButtonText}>Don’t allow</Text>
+                <Text style={[styles.promptButtonText, { color: colors.text.primary }]}>Don’t allow</Text>
               </Pressable>
             </View>
           </View>

@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Pressable, StyleProp, ViewStyle } from 'react-native';
 import { theme } from '@/theme';
 import { Icon } from '@/components/icons';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface CheckboxProps {
   checked: boolean;
@@ -19,15 +20,16 @@ export const Checkbox: React.FC<CheckboxProps> = ({
   color = 'green',
   style,
 }) => {
-  const accent = color === 'orange' ? theme.colors.tertiary : theme.colors.primary;
+  const colors = useThemeColors();
+  const accent = color === 'orange' ? colors.accentOrange : colors.accentPrimary;
 
-  let backgroundColor = theme.colors.background.base;
+  let backgroundColor = colors.background.base;
   let borderColor = accent;
   if (checked) {
-    backgroundColor = disabled ? theme.colors.forestGreen[100] : accent;
+    backgroundColor = disabled ? colors.border.hairline : accent;
     borderColor = backgroundColor;
   } else if (disabled) {
-    borderColor = theme.colors.forestGreen[100];
+    borderColor = colors.border.hairline;
   }
 
   return (

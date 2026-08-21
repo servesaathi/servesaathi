@@ -8,6 +8,7 @@ import { Screen, Spacer, Header } from '@/components/layouts';
 import { PrimaryButton, SecondaryButton, TertiaryButton } from '@/components/buttons';
 import { BrandLogoSVG } from '@/components/BrandLogoSVG';
 import { responsiveFontSize, scale } from '@/utils/responsive';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 type NotificationStep = 'none' | 'device' | 'push';
 
@@ -26,6 +27,7 @@ const FitbitIcon = () => (
 // "Reach your goal with your notifications") before landing on Home.
 export const SettingUpScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'SettingUp'>>();
+  const colors = useThemeColors();
   const [notificationStep, setNotificationStep] = useState<NotificationStep>('none');
 
   useEffect(() => {
@@ -47,7 +49,7 @@ export const SettingUpScreen: React.FC = () => {
   };
 
   return (
-    <Screen statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
+    <Screen statusBarBg={colors.background.layout}>
       <Header leftIcon="back" transparent />
 
       <View style={styles.content}>
@@ -61,12 +63,12 @@ export const SettingUpScreen: React.FC = () => {
         />
 
         <Spacer size="xxl" />
-        <Text style={styles.message}>
+        <Text style={[styles.message, { color: colors.text.primary }]}>
           Wait a second, we are setting{'\n'}everything up for you
         </Text>
 
         <Spacer size="xxl" />
-        <ActivityIndicator size="large" color={theme.colors.tertiary} />
+        <ActivityIndicator size="large" color={colors.accentOrange} />
       </View>
 
       <Modal
@@ -76,10 +78,10 @@ export const SettingUpScreen: React.FC = () => {
         onRequestClose={handleDeviceDismiss}
       >
         <View style={styles.overlay}>
-          <View style={styles.card}>
+          <View style={[styles.card, { backgroundColor: colors.background.layout }]}>
             <View style={styles.textBlock}>
-              <Text style={styles.title}>Connect Your Device</Text>
-              <Text style={styles.subtitle}>
+              <Text style={[styles.title, { color: colors.text.primary }]}>Connect Your Device</Text>
+              <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
                 For instant safety alerts and complete daily health tracking
               </Text>
             </View>
@@ -88,14 +90,14 @@ export const SettingUpScreen: React.FC = () => {
                 label="Connect to Fitbit"
                 onPress={handleDeviceDismiss}
                 prefixIcon={<FitbitIcon />}
-                style={styles.lightButton}
-                labelStyle={styles.lightButtonText}
+                style={{ ...styles.lightButton, backgroundColor: colors.background.base, borderColor: colors.border.hairline }}
+                labelStyle={{ ...styles.lightButtonText, color: colors.text.primary }}
               />
               <TertiaryButton
                 label="Connect to Dr Ring"
                 onPress={handleDeviceDismiss}
-                style={styles.lightButton}
-                labelStyle={styles.lightButtonText}
+                style={{ ...styles.lightButton, backgroundColor: colors.background.base, borderColor: colors.border.hairline }}
+                labelStyle={{ ...styles.lightButtonText, color: colors.text.primary }}
               />
               <PrimaryButton label="Not NOW" onPress={handleDeviceDismiss} />
             </View>
@@ -110,10 +112,10 @@ export const SettingUpScreen: React.FC = () => {
         onRequestClose={handlePushDismiss}
       >
         <View style={styles.overlay}>
-          <View style={styles.card}>
+          <View style={[styles.card, { backgroundColor: colors.background.layout }]}>
             <View style={styles.textBlock}>
-              <Text style={styles.title}>Reach your goal with{'\n'}your notifications</Text>
-              <Text style={styles.subtitle}>
+              <Text style={[styles.title, { color: colors.text.primary }]}>Reach your goal with{'\n'}your notifications</Text>
+              <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
                 You can turn off any of the reminders at anytime in the setting
               </Text>
             </View>

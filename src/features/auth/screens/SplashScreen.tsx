@@ -5,7 +5,7 @@ import { useFonts } from 'expo-font';
 import * as ExpoSplashScreen from 'expo-splash-screen';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '@/theme';
-import { LogoSvg } from '@/components/LogoSvg';
+import SplashLogo from '../../../../assets/logos/serve-saathi-splash-lockup-white.svg';
 import { responsiveFontSize } from '@/utils/responsive';
 import { RootNavigationProp } from '@/navigation/types';
 import { useTranslation } from '@/utils/localization';
@@ -69,8 +69,11 @@ export const SplashScreen: React.FC = () => {
       />
 
       <View style={styles.centerContent}>
-        {/* Brand Wordmark (SVG) */}
-        <LogoSvg color="#FFFFFF" width={264} height={71} />
+        {/* Figma "Logo" (1247:24287) — the full icon + script wordmark lockup,
+            not just the wordmark (LogoSvg's asset). Natural aspect ratio
+            264×225.279, exported straight from Figma since no existing asset
+            has this taller stacked lockup. */}
+        <SplashLogo width={264} height={225.279} />
 
         {/* Slogan */}
         <Text style={[styles.subtitle, { fontFamily: subtitleFontFamily }]}>

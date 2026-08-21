@@ -7,6 +7,7 @@ import { theme } from '@/theme';
 import { responsiveFontSize } from '@/utils/responsive';
 import { BrandLogoSVG } from '@/components/BrandLogoSVG';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 export type HeaderProps = {
   title?: string;
@@ -31,6 +32,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
 
   const handleLeftPress = () => {
     if (onLeftPress) {
@@ -52,6 +54,7 @@ export const Header: React.FC<HeaderProps> = ({
       <View
         style={[
           styles.container,
+          !transparent && { backgroundColor: colors.background.layout },
           transparent && styles.transparent,
           { paddingTop: insets.top + theme.spacing.lg, paddingBottom: theme.spacing.sm, paddingHorizontal: theme.spacing.lg },
         ]}
@@ -61,6 +64,7 @@ export const Header: React.FC<HeaderProps> = ({
             {leftIcon !== 'none' && (
               <IconButton
                 type={leftIcon}
+                bg={colors.accentPrimary}
                 accessibilityLabel={leftIcon === 'back' ? 'Go back' : 'Close'}
                 onPress={handleLeftPress}
                 size={40}
@@ -74,7 +78,7 @@ export const Header: React.FC<HeaderProps> = ({
                 key={i}
                 style={[
                   styles.dash,
-                  i < stepper.current ? styles.dashActive : styles.dashInactive,
+                  { backgroundColor: i < stepper.current ? colors.accentOrange : colors.accentOrangeMuted },
                   i < stepper.total - 1 ? styles.dashSpacing : undefined,
                 ]}
               />
@@ -82,7 +86,7 @@ export const Header: React.FC<HeaderProps> = ({
           </View>
 
           <View style={styles.sideSmall}>
-            <Text style={[styles.stepperText, { textAlign: 'right', marginLeft: 0 }]}> 
+            <Text style={[styles.stepperText, { color: colors.accentPrimary, textAlign: 'right', marginLeft: 0 }]}>
               {stepper.current} of {stepper.total}
             </Text>
           </View>
@@ -95,6 +99,7 @@ export const Header: React.FC<HeaderProps> = ({
     <View
       style={[
         styles.container,
+        !transparent && { backgroundColor: colors.background.layout },
         transparent && styles.transparent,
         { paddingTop: insets.top + theme.spacing.lg, paddingBottom: theme.spacing.sm },
       ]}
@@ -104,6 +109,7 @@ export const Header: React.FC<HeaderProps> = ({
         {leftIcon !== 'none' && (
           <IconButton
             type={leftIcon}
+            bg={colors.accentPrimary}
             accessibilityLabel={leftIcon === 'back' ? 'Go back' : 'Close'}
             onPress={handleLeftPress}
             size={40}
@@ -119,7 +125,7 @@ export const Header: React.FC<HeaderProps> = ({
             height={32}
           />
         ) : title ? (
-          <Text style={styles.title} numberOfLines={1}>
+          <Text style={[styles.title, { color: colors.text.primary }]} numberOfLines={1}>
             {title}
           </Text>
         ) : null}
@@ -130,6 +136,7 @@ export const Header: React.FC<HeaderProps> = ({
         {rightIcon === 'notification' && (
           <IconButton
             type="custom"
+            bg={colors.accentPrimary}
             icon={<Icon name="notification" variant="outline" size={24} color="#FFFFFF" />}
             accessibilityLabel="Notifications"
             onPress={handleRightPress}
@@ -139,6 +146,7 @@ export const Header: React.FC<HeaderProps> = ({
         {rightIcon === 'menu' && (
           <IconButton
             type={rightIcon}
+            bg={colors.accentPrimary}
             accessibilityLabel="Menu"
             onPress={handleRightPress}
             size={40}
@@ -222,12 +230,6 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
   },
-  dashActive: {
-    backgroundColor: '#FF751F',
-  },
-  dashInactive: {
-    backgroundColor: '#FFC8A5',
-  },
   dashSpacing: {
     marginRight: theme.spacing.xs,
   },
@@ -236,6 +238,5 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.bodySmall.fontFamily,
     fontSize: responsiveFontSize(theme.typography.bodySmall.fontSize),
     lineHeight: theme.typography.bodySmall.lineHeight,
-    color: '#2E7D32',
   },
 });

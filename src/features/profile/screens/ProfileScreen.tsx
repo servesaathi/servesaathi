@@ -22,6 +22,8 @@ import { useUserStore } from '@/store/user.store';
 import { ageFromDob } from '@/utils/profile';
 import { ProfileEditSheet, type EditSection } from '../components/ProfileEditSheet';
 import { FamilyMemberSheet } from '../components/FamilyMemberSheet';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import type { ThemePalette } from '@/theme/palette';
 
 type ProfileScreenNavigationProp = BottomTabNavigationProp<BottomTabParamList, 'ProfileTab'>;
 
@@ -34,16 +36,24 @@ const formatDob = (iso?: string) => {
   return year && month && day ? `${day}/${month}/${year}` : '—';
 };
 
-const InfoRow = ({ label, value }: { label: string; value: string }) => (
+const InfoRow = ({ label, value, colors }: { label: string; value: string; colors: ThemePalette }) => (
   <View style={styles.infoRow}>
-    <Text style={styles.infoLabel}>{label}</Text>
-    <Text style={styles.infoValue}>{value}</Text>
+    <Text style={[styles.infoLabel, { color: colors.text.muted }]}>{label}</Text>
+    <Text style={[styles.infoValue, { color: colors.text.strong }]}>{value}</Text>
   </View>
 );
 
-const SectionHeader = ({ title, onEdit }: { title: string; onEdit: () => void }) => (
+const SectionHeader = ({
+  title,
+  onEdit,
+  colors,
+}: {
+  title: string;
+  onEdit: () => void;
+  colors: ThemePalette;
+}) => (
   <View style={styles.sectionHeader}>
-    <Text style={styles.sectionTitle}>{title}</Text>
+    <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>{title}</Text>
     <Pressable onPress={onEdit} style={styles.editButton}>
       <Text style={styles.editButtonText}>Edit</Text>
       <Svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={styles.editArrow}>
@@ -63,6 +73,7 @@ export const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const [activeTab, setActiveTab] = useState<'basic' | 'medical' | 'history'>('basic');
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
   const userProfile = useUserStore((s) => s.profile);
   const [careProfile, setCareProfile] = useState<CareProfile | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -136,7 +147,7 @@ export const ProfileScreen: React.FC = () => {
           size={40}
           onPress={() => navigation.navigate('HomeTab')}
         />
-        <Text style={styles.headerTitle}>Profile</Text>
+        <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Profile</Text>
         <IconButton
           type="custom"
           accessibilityLabel="Notifications"
@@ -219,23 +230,23 @@ export const ProfileScreen: React.FC = () => {
           <Spacer size="md" />
 
           {/* Personal Details */}
-          <SectionHeader title="Personal Details" onEdit={() => setEditSection('details')} />
-          <View style={styles.detailsBlock}>
-            <InfoRow label="Full Name" value={userProfile?.name || displayName} />
-            <InfoRow label="Preferred Name" value={careProfile?.preferredName || '—'} />
-            <InfoRow label="Date of Birth" value={formatDob(careProfile?.dateOfBirth)} />
-            <InfoRow label="Gender" value={careProfile?.gender?.name || '—'} />
-            <InfoRow label="Living Situation" value={careProfile?.livingSituation?.name || '—'} />
-            <InfoRow label="Dependency Level" value={careProfile?.dependencyLevel?.name || '—'} />
-            <InfoRow label="Phone number" value={userProfile?.phone || '—'} />
-            <InfoRow label="Email" value={userProfile?.email || '—'} />
+          <SectionHeader title="Personal Details" onEdit={() => setEditSection('details')} colors={colors} />
+          <View style={[styles.detailsBlock, { backgroundColor: colors.background.base }]}>
+            <InfoRow label="Full Name" value={userProfile?.name || displayName} colors={colors} />
+            <InfoRow label="Preferred Name" value={careProfile?.preferredName || '—'} colors={colors} />
+            <InfoRow label="Date of Birth" value={formatDob(careProfile?.dateOfBirth)} colors={colors} />
+            <InfoRow label="Gender" value={careProfile?.gender?.name || '—'} colors={colors} />
+            <InfoRow label="Living Situation" value={careProfile?.livingSituation?.name || '—'} colors={colors} />
+            <InfoRow label="Dependency Level" value={careProfile?.dependencyLevel?.name || '—'} colors={colors} />
+            <InfoRow label="Phone number" value={userProfile?.phone || '—'} colors={colors} />
+            <InfoRow label="Email" value={userProfile?.email || '—'} colors={colors} />
           </View>
 
           <Spacer size="md" />
 
           {/* Home Address */}
-          <SectionHeader title="Home Address" onEdit={() => setEditSection('address')} />
-          <View style={styles.detailsBlock}>
+          <SectionHeader title="Home Address" onEdit={() => setEditSection('address')} colors={colors} />
+          <View style={[styles.detailsBlock, { backgroundColor: colors.background.base }]}>
             <InfoRow
               label={homeAddress?.label || 'Home Address'}
               value={
@@ -243,23 +254,24 @@ export const ProfileScreen: React.FC = () => {
                   ? [homeAddress.line1, homeAddress.line2].filter(Boolean).join(', ')
                   : '—'
               }
+              colors={colors}
             />
-            <InfoRow label="City" value={homeAddress?.city || '—'} />
-            <InfoRow label="State" value={homeAddress?.state || '—'} />
-            <InfoRow label="PIN Code" value={homeAddress?.pincode || '—'} />
+            <InfoRow label="City" value={homeAddress?.city || '—'} colors={colors} />
+            <InfoRow label="State" value={homeAddress?.state || '—'} colors={colors} />
+            <InfoRow label="PIN Code" value={homeAddress?.pincode || '—'} colors={colors} />
           </View>
 
           <Spacer size="md" />
 
           {/* Interests of Events */}
-          <SectionHeader title="Interests of Events" onEdit={() => setEditSection('interests')} />
+          <SectionHeader title="Interests of Events" onEdit={() => setEditSection('interests')} colors={colors} />
           <View style={styles.interestsContainer}>
             {interests.length === 0 ? (
-              <Text style={styles.emptyText}>No interests added yet.</Text>
+              <Text style={[styles.emptyText, { color: colors.text.muted }]}>No interests added yet.</Text>
             ) : (
               interests.map((interest) => (
-                <View key={interest.id} style={styles.interestBadge}>
-                  <Text style={styles.interestText}>{interest.name}</Text>
+                <View key={interest.id} style={[styles.interestBadge, { backgroundColor: colors.background.base }]}>
+                  <Text style={[styles.interestText, { color: colors.text.secondary }]}>{interest.name}</Text>
                 </View>
               ))
             )}
@@ -269,7 +281,7 @@ export const ProfileScreen: React.FC = () => {
 
           {/* List Contacts — tap a card to edit, "+ Add" to create */}
           <View style={styles.contactHeaderContainer}>
-            <Text style={styles.sectionTitle}>List Contacts</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>List Contacts</Text>
             <Pressable onPress={openAddContact} style={styles.editButton}>
               <Text style={styles.editButtonText}>+ Add</Text>
             </Pressable>
@@ -278,12 +290,12 @@ export const ProfileScreen: React.FC = () => {
 
           <View style={styles.contactsContainer}>
             {familyMembers.length === 0 ? (
-              <Text style={styles.emptyText}>No contacts added yet.</Text>
+              <Text style={[styles.emptyText, { color: colors.text.muted }]}>No contacts added yet.</Text>
             ) : (
               familyMembers.map((member) => (
                 <Pressable
                   key={member.id}
-                  style={styles.contactCard}
+                  style={[styles.contactCard, { backgroundColor: colors.background.base }]}
                   onPress={() => openEditContact(member)}
                   accessibilityRole="button"
                   accessibilityLabel={`Edit contact ${member.firstName} ${member.lastName}`}
@@ -301,7 +313,7 @@ export const ProfileScreen: React.FC = () => {
                   />
                   <View style={styles.contactContent}>
                     <View style={styles.contactNameRow}>
-                      <Text style={styles.contactName}>
+                      <Text style={[styles.contactName, { color: colors.text.primary }]}>
                         {`${member.firstName} ${member.lastName}`.trim()}
                       </Text>
                       {member.status === 'accepted' && (
@@ -311,7 +323,7 @@ export const ProfileScreen: React.FC = () => {
                       )}
                     </View>
                     <Spacer size="xs" />
-                    <Text style={styles.contactDetails}>
+                    <Text style={[styles.contactDetails, { color: colors.text.tertiary }]}>
                       {member.relationship?.name ?? 'Family'}{' '}
                       <Text style={styles.bullet}>•</Text> {member.phone}
                     </Text>
@@ -328,16 +340,16 @@ export const ProfileScreen: React.FC = () => {
           {healthProfile ? (
             <>
               <View style={styles.contactHeaderContainer}>
-                <Text style={styles.sectionTitle}>Medical Conditions</Text>
+                <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Medical Conditions</Text>
               </View>
               <Spacer size="sm" />
               <View style={styles.interestsContainer}>
                 {healthProfile.medicalConditions.length === 0 ? (
-                  <Text style={styles.emptyText}>No conditions recorded.</Text>
+                  <Text style={[styles.emptyText, { color: colors.text.muted }]}>No conditions recorded.</Text>
                 ) : (
                   healthProfile.medicalConditions.map((condition) => (
-                    <View key={condition.id} style={styles.interestBadge}>
-                      <Text style={styles.interestText}>{condition.name}</Text>
+                    <View key={condition.id} style={[styles.interestBadge, { backgroundColor: colors.background.base }]}>
+                      <Text style={[styles.interestText, { color: colors.text.secondary }]}>{condition.name}</Text>
                     </View>
                   ))
                 )}
@@ -346,32 +358,35 @@ export const ProfileScreen: React.FC = () => {
               <Spacer size="md" />
 
               <View style={styles.contactHeaderContainer}>
-                <Text style={styles.sectionTitle}>Health Details</Text>
+                <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Health Details</Text>
               </View>
               <Spacer size="sm" />
-              <View style={styles.detailsBlock}>
+              <View style={[styles.detailsBlock, { backgroundColor: colors.background.base }]}>
                 <InfoRow
                   label="Mobility Support"
                   value={healthProfile.mobilitySupport?.name || '—'}
+                  colors={colors}
                 />
                 <InfoRow
                   label="Cognitive Condition"
                   value={healthProfile.cognitiveCondition?.name || '—'}
+                  colors={colors}
                 />
                 <InfoRow
                   label="Regular Medication"
                   value={healthProfile.medicationRequired ? 'Yes' : 'No'}
+                  colors={colors}
                 />
-                <InfoRow label="Notes" value={healthProfile.notes || '—'} />
+                <InfoRow label="Notes" value={healthProfile.notes || '—'} colors={colors} />
                 {healthProfile.otherConditionNote ? (
-                  <InfoRow label="Other Condition" value={healthProfile.otherConditionNote} />
+                  <InfoRow label="Other Condition" value={healthProfile.otherConditionNote} colors={colors} />
                 ) : null}
               </View>
             </>
           ) : (
             <View style={styles.tabContentPlaceholder}>
-              <Text style={styles.placeholderText}>No medical information yet</Text>
-              <Text style={styles.placeholderSubtext}>
+              <Text style={[styles.placeholderText, { color: colors.text.strong }]}>No medical information yet</Text>
+              <Text style={[styles.placeholderSubtext, { color: colors.text.muted }]}>
                 Complete the health step in profile setup to see it here.
               </Text>
             </View>
@@ -381,8 +396,8 @@ export const ProfileScreen: React.FC = () => {
 
       {activeTab === 'history' && (
         <View style={styles.tabContentPlaceholder}>
-          <Text style={styles.placeholderText}>History Screen</Text>
-          <Text style={styles.placeholderSubtext}>Coming Soon</Text>
+          <Text style={[styles.placeholderText, { color: colors.text.strong }]}>History Screen</Text>
+          <Text style={[styles.placeholderSubtext, { color: colors.text.muted }]}>Coming Soon</Text>
         </View>
       )}
 

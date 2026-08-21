@@ -12,6 +12,7 @@ import { Icon } from '@/components/icons';
 import { digitsOnly } from '@/utils/validation';
 import { useUserStore } from '@/store/user.store';
 import { userService, careProfileService, getErrorMessage, type CareProfile } from '@/api';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 const CountryCodePrefix = () => (
   <View style={styles.countryCodeContainer}>
@@ -36,6 +37,7 @@ const CountryCodePrefix = () => (
 // there's no avatar-upload endpoint yet to get a hosted URL from.
 export const EditProfileScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+  const colors = useThemeColors();
   const profile = useUserStore((s) => s.profile);
   const updateProfile = useUserStore((s) => s.updateProfile);
 
@@ -138,7 +140,7 @@ export const EditProfileScreen: React.FC = () => {
     : theme.images.onboarding1;
 
   return (
-    <Screen statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
+    <Screen statusBarBg={colors.background.layout}>
       <Header title="Edit Profile" leftIcon="back" transparent />
       <ScrollView
         contentContainerStyle={styles.content}

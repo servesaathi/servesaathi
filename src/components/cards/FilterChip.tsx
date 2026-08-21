@@ -48,7 +48,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
-    height: 32,
+    // minHeight, not height: the label scales with the accessibility
+    // font-size setting and must be able to grow the chip, not overflow it.
+    minHeight: 32,
     borderWidth: 1.5,
     borderColor: theme.colors.tertiary,
     borderRadius: theme.radius.md,

@@ -191,7 +191,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.xs,
-    height: 24,
+    // minHeight, not height: the rating text scales with the accessibility
+    // font-size setting and must be able to grow the chip, not overflow it.
+    minHeight: 24,
     paddingHorizontal: theme.spacing.sm,
     borderRadius: theme.radius.pill,
     backgroundColor: theme.colors.background.orange,
@@ -202,7 +204,9 @@ const styles = StyleSheet.create({
     color: theme.colors.vividOrange[600],
   },
   detailsButton: {
-    height: 32,
+    // minHeight, not height: the label scales with the accessibility
+    // font-size setting and must be able to grow the button, not overflow it.
+    minHeight: 32,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.sm,
     borderRadius: theme.radius.sm,

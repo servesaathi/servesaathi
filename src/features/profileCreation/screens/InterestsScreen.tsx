@@ -8,12 +8,14 @@ import { PrimaryButton } from '@/components/buttons';
 import { SelectableChip } from '@/components/inputs';
 import { responsiveFontSize } from '@/utils/responsive';
 import { masterdataService, careProfileService, getErrorMessage, type MasterDataOption } from '@/api';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 // "Profile Creation 4" (Figma 1248:44337) — step 4 of 6.
 // `selected` holds interest ids, PATCHed to /care-profiles/me as interestIds.
 
 export const InterestsScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'ProfileInterests'>>();
+  const colors = useThemeColors();
   const [selected, setSelected] = useState<string[]>([]);
   const [interests, setInterests] = useState<MasterDataOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,22 +61,22 @@ export const InterestsScreen: React.FC = () => {
   };
 
   return (
-    <Screen scrollable statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
+    <Screen scrollable statusBarBg={colors.background.layout}>
       <Header leftIcon="back" transparent stepper={{ current: 4, total: 6 }} />
 
       <View style={styles.content}>
         <Spacer size="lg" />
-        <Text style={styles.title}>Tell us your interests of Events</Text>
+        <Text style={[styles.title, { color: colors.text.primary }]}>Tell us your interests of Events</Text>
         <Spacer size="xs" />
-        <Text style={styles.subtitle}>
+        <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
           Choose at least 3 interests so we can tailor the best events for you.
         </Text>
         <Spacer size="xxl" />
 
         {isLoading ? (
-          <Text style={styles.helperText}>Loading interests…</Text>
+          <Text style={[styles.helperText, { color: colors.text.tertiary }]}>Loading interests…</Text>
         ) : error ? (
-          <Text style={styles.helperText}>{error}</Text>
+          <Text style={[styles.helperText, { color: colors.text.tertiary }]}>{error}</Text>
         ) : (
           <View style={styles.chipGrid}>
             {interests.map((item) => (
@@ -91,7 +93,7 @@ export const InterestsScreen: React.FC = () => {
 
         <Spacer size="xxl" />
         <View style={styles.footer}>
-          {submitError && <Text style={styles.helperText}>{submitError}</Text>}
+          {submitError && <Text style={[styles.helperText, { color: colors.text.tertiary }]}>{submitError}</Text>}
           <PrimaryButton
             label="Continue"
             onPress={handleContinue}

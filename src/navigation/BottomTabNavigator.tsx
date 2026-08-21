@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/theme';
 import { responsiveFontSize } from '@/utils/responsive';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { Icon } from '@/components/icons';
 import type { IconName } from '@/components/icons/iconNames.generated';
 import { ProfileScreen } from '@/features/profile/screens/ProfileScreen';
@@ -28,9 +29,15 @@ const Tab = createBottomTabNavigator<BottomTabParamList>();
 // Custom Tab Bar component to support floating action button style
 const CustomTabBar = ({ state, descriptors, navigation }: any) => {
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
 
   return (
-    <View style={[styles.tabBarContainer, { paddingBottom: insets.bottom }]}>
+    <View
+      style={[
+        styles.tabBarContainer,
+        { backgroundColor: colors.tabBar, borderTopColor: colors.border.hairline, paddingBottom: insets.bottom },
+      ]}
+    >
       <View style={styles.tabBarContent}>
         {state.routes.map((route: any, index: number) => {
           const { options } = descriptors[route.key];
@@ -64,7 +71,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
           };
 
           const getIcon = () => {
-            const color = isFocused ? theme.colors.neutral[700] : theme.colors.neutral[500];
+            const color = isFocused ? colors.text.secondary : colors.text.muted;
             // Active tabs switch to the filled variant of the same glyph.
             const variant = isFocused ? 'filled' : 'outline';
             let name: IconName | null = null;
@@ -95,7 +102,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
                       {/* Outline at rest; the filled glyph is the pressed state. */}
                       <Icon name="phone" variant={pressed ? 'filled' : 'outline'} size={24} color="#FFFFFF" />
                     </View>
-                    <Text style={styles.floatingButtonLabel}>Helpline</Text>
+                    <Text style={[styles.floatingButtonLabel, { color: colors.text.muted }]}>Helpline</Text>
                   </>
                 )}
               </Pressable>
@@ -118,7 +125,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
               <Text
                 style={[
                   styles.tabLabel,
-                  isFocused ? styles.tabLabelActive : styles.tabLabelInactive,
+                  { color: isFocused ? colors.text.secondary : colors.text.muted },
                 ]}
               >
                 {label}
@@ -165,9 +172,12 @@ const styles = StyleSheet.create({
   },
   tabBarContent: {
     flexDirection: 'row',
-    height: 64,
     // Figma: the five 48px-tall items sit in the bottom of the 64px bar; the
-    // top 16px is the zone the helpline circle overlaps into.
+    // top 16px is the zone the helpline circle overlaps into. minHeight (not
+    // height): at large accessibility font sizes the label wraps taller than
+    // 48px — a fixed height clipped it and pushed the tab icons/labels off
+    // the bottom of the screen instead of letting the bar grow to fit them.
+    minHeight: 64,
     alignItems: 'flex-end',
     justifyContent: 'space-around',
     paddingHorizontal: theme.spacing.lg,
@@ -176,7 +186,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'flex-start',
-    height: 48, // icon 24 + 4 gap + label line-height 20
+    minHeight: 48, // icon 24 + 4 gap + label line-height 20, grows for larger text
     borderRadius: theme.radius.sm,
   },
   tabButtonPressed: {
@@ -200,7 +210,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'flex-start',
-    height: 64, // full bar height; circle pokes 16px above via its own margin
+    minHeight: 64, // full bar height; circle pokes 16px above via its own margin
   },
   floatingButton: {
     width: 56,

@@ -9,7 +9,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { theme } from '@/theme';
+import { useThemeColors, useIsDarkMode } from '@/hooks/useThemeColors';
 
 interface ScreenProps {
   children: React.ReactNode;
@@ -28,12 +28,18 @@ export const Screen: React.FC<ScreenProps> = ({
   style,
   contentContainerStyle,
   statusBarBg = 'transparent',
-  statusBarStyle = 'dark-content',
+  statusBarStyle,
   statusBarTranslucent = true,
   safeAreaBottom = true,
 }) => {
   const insets = useSafeAreaInsets();
-  const backgroundStyle = { backgroundColor: theme.colors.background.layout };
+  const colors = useThemeColors();
+  const isDark = useIsDarkMode();
+  // Callers that care already pass an explicit statusBarStyle (e.g. to match a
+  // colored header); everyone else gets one that follows the OS theme instead
+  // of always defaulting to dark-content, which is unreadable on a dark canvas.
+  const effectiveStatusBarStyle = statusBarStyle ?? (isDark ? 'light-content' : 'dark-content');
+  const backgroundStyle = { backgroundColor: colors.background.layout };
   const containerStyle = [
     styles.screenContainer,
     backgroundStyle,
@@ -48,7 +54,7 @@ export const Screen: React.FC<ScreenProps> = ({
     <View style={styles.flex}>
       <StatusBar
         backgroundColor={statusBarBg}
-        barStyle={statusBarStyle}
+        barStyle={effectiveStatusBarStyle}
         translucent={statusBarTranslucent}
       />
       <KeyboardAvoidingView

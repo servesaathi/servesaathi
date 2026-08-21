@@ -3,6 +3,7 @@ import { StyleSheet, Text, Pressable, StyleProp, ViewStyle } from 'react-native'
 import { theme } from '@/theme';
 import { responsiveFontSize } from '@/utils/responsive';
 import { Checkbox } from './Checkbox';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface SelectableChipProps {
   label: string;
@@ -14,12 +15,20 @@ interface SelectableChipProps {
 // "Select Input" from Figma Inputs & Forms (node 103:289) — a label + embedded checkbox
 // chip button, orange accent (distinct from the icon-based `SelectCard` in cards/).
 export const SelectableChip: React.FC<SelectableChipProps> = ({ label, selected, onPress, style }) => {
+  const colors = useThemeColors();
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.chip, selected ? styles.selected : styles.unselected, style]}
+      style={[
+        styles.chip,
+        {
+          backgroundColor: selected ? colors.background.orange : colors.background.base,
+          borderColor: selected ? colors.accentOrange : colors.border.card,
+        },
+        style,
+      ]}
     >
-      <Text style={[styles.label, { color: selected ? theme.colors.neutral[700] : theme.colors.neutral[500] }]}>
+      <Text style={[styles.label, { color: selected ? colors.text.primary : colors.text.secondary }]}>
         {label}
       </Text>
       <Checkbox checked={selected} color="orange" onPress={onPress} />
@@ -40,14 +49,6 @@ const styles = StyleSheet.create({
     // at that padding (a rounding tie that wraps); 12px guarantees one line everywhere
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.md,
-  },
-  selected: {
-    backgroundColor: theme.colors.background.orange,
-    borderColor: theme.colors.tertiary,
-  },
-  unselected: {
-    backgroundColor: theme.colors.background.base,
-    borderColor: theme.colors.border.green,
   },
   label: {
     fontFamily: theme.typography.bodyLarge.fontFamily,

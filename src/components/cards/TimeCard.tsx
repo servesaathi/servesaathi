@@ -41,7 +41,9 @@ export const TimeCard: React.FC<TimeCardProps> = ({ time, status = 'default', on
 
 const styles = StyleSheet.create({
   card: {
-    height: 48,
+    // minHeight, not height: the time label scales with the accessibility
+    // font-size setting and must be able to grow the card, not overflow it.
+    minHeight: 48,
     borderWidth: 1.5,
     borderRadius: theme.radius.sm,
     justifyContent: 'center',

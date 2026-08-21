@@ -75,8 +75,11 @@ const styles = StyleSheet.create({
     borderTopRightRadius: theme.radius.sm,
   },
   dateBadge: {
-    width: 48,
-    height: 56,
+    // min, not fixed: the day/month text scales with the accessibility
+    // font-size setting and must be able to grow the badge instead of
+    // spilling outside its rounded background at large sizes.
+    minWidth: 48,
+    minHeight: 56,
     backgroundColor: theme.colors.primary,
     borderRadius: theme.radius.sm,
     justifyContent: 'center',

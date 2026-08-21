@@ -7,5 +7,6 @@ export { Checkbox } from './Checkbox';
 export { RadioButton } from './RadioButton';
 export { CheckCircle } from './CheckCircle';
 export { ToggleSwitch } from './ToggleSwitch';
+export { Slider } from './Slider';
 export { SelectableChip } from './SelectableChip';
 export { PlanSelectCard } from './PlanSelectCard';

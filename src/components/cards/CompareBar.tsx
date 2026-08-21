@@ -105,7 +105,9 @@ const styles = StyleSheet.create({
     color: theme.colors.neutral[700],
   },
   compareButton: {
-    height: 32,
+    // minHeight, not height: the label scales with the accessibility
+    // font-size setting and must be able to grow the button, not overflow it.
+    minHeight: 32,
     paddingVertical: theme.spacing.sm,
     paddingHorizontal: theme.spacing.lg,
     borderRadius: theme.radius.sm,

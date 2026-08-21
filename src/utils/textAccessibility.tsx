@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, type StyleProp, type TextStyle } from 'react-native';
-import { useAccessibilityStore, FONT_SCALE_MULTIPLIERS } from '../store/accessibility.store';
+import { useAccessibilityStore, FONT_SIZE_DEFAULT } from '../store/accessibility.store';
 
 // App-wide accessibility rendering: every screen builds its styles with
 // StyleSheet.create at module load, so the user's font-size / contrast choices
@@ -13,52 +13,45 @@ import { useAccessibilityStore, FONT_SCALE_MULTIPLIERS } from '../store/accessib
 // Text re-renders on store changes via the zustand subscription.
 
 const RN = require('react-native');
-const OriginalText = RN.Text;
-const OriginalTextInput = RN.TextInput;
+// Fast Refresh re-executes this module whenever a dependency (e.g. the
+// accessibility store) changes, but the Object.defineProperty patch below
+// persists on RN's shared module object across those re-runs. Capturing
+// `RN.Text` unconditionally would then grab the *already-wrapped* component
+// from the previous run instead of the native one, nesting a fresh wrapper
+// around it on every reload — AccessibleText -> AccessibleText -> ... —
+// until the tree recurses deep enough to blow the JS call stack. Unwrapping
+// via the tag below keeps every (re-)install pointing at the true native
+// component no matter how many times this module gets re-evaluated.
+const OriginalText = (RN.Text as any).__accessibleOriginal ?? RN.Text;
+const OriginalTextInput = (RN.TextInput as any).__accessibleOriginal ?? RN.TextInput;
 
-// Snap a hex color to pure black/white for high-contrast mode. Non-hex values
-// (rgba(), named colors) are left untouched.
-const highContrastColor = (color: unknown): string | undefined => {
-  if (typeof color !== 'string') return undefined;
-  const hex = color.trim();
-  const match = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex);
-  if (!match) return undefined;
-  let value = match[1];
-  if (value.length === 3) {
-    value = value
-      .split('')
-      .map((c) => c + c)
-      .join('');
-  }
-  const r = parseInt(value.slice(0, 2), 16);
-  const g = parseInt(value.slice(2, 4), 16);
-  const b = parseInt(value.slice(4, 6), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.55 ? '#FFFFFF' : '#000000';
-};
-
+// High contrast used to snap every hex text color to pure black/white by
+// luminance here — a blunt global stopgap for screens that hardcode static
+// colors and can't react to anything. Now that src/theme/palette.ts carries
+// the real Figma high-contrast palette (near-white/near-black body text, but
+// a distinct gray for secondary text and real green/orange accent colors for
+// interactive text), that blanket snap would actively fight the design: e.g.
+// the brand green used for "Edit your photo" (#58A35B) has luminance <0.55
+// and would get flattened to black-on-black. Color now comes solely from
+// each screen reading useThemeColors() (src/hooks/useThemeColors.ts) — this
+// module only handles font-size scaling, which every screen gets for free
+// without being theme-converted.
 const useAccessibleTextStyle = (style: StyleProp<TextStyle>): StyleProp<TextStyle> => {
-  const fontSizeLevel = useAccessibilityStore((s) => s.fontSizeLevel);
-  const highContrast = useAccessibilityStore((s) => s.highContrast);
-  const multiplier = FONT_SCALE_MULTIPLIERS[fontSizeLevel];
+  const fontSize = useAccessibilityStore((s) => s.fontSize);
+  const multiplier = fontSize / FONT_SIZE_DEFAULT;
 
-  if (multiplier === 1 && !highContrast) return style;
+  if (multiplier === 1) return style;
 
   const flat = StyleSheet.flatten(style) as TextStyle | undefined;
   const overrides: TextStyle = {};
 
   // Only scale explicit sizes — nested <Text> without fontSize inherits its
   // (already scaled) parent size natively, so touching it would double-scale.
-  if (multiplier !== 1 && typeof flat?.fontSize === 'number') {
+  if (typeof flat?.fontSize === 'number') {
     overrides.fontSize = Math.round(flat.fontSize * multiplier);
     if (typeof flat.lineHeight === 'number') {
       overrides.lineHeight = Math.round(flat.lineHeight * multiplier);
     }
-  }
-
-  if (highContrast) {
-    const snapped = highContrastColor(flat?.color);
-    if (snapped) overrides.color = snapped;
   }
 
   return Object.keys(overrides).length ? [style, overrides] : style;
@@ -75,10 +68,14 @@ type AnyTextProps = { style?: StyleProp<TextStyle> } & Record<string, unknown>;
 const AccessibleText = React.forwardRef<unknown, AnyTextProps>(({ style, ...rest }, ref) => {
   return <OriginalText ref={ref} {...rest} style={useAccessibleTextStyle(style as StyleProp<TextStyle>)} />;
 });
+// Tag with the native component it wraps so a future re-evaluation of this
+// module (see OriginalText above) can unwrap back to it instead of nesting.
+(AccessibleText as any).__accessibleOriginal = OriginalText;
 
 const AccessibleTextInput = React.forwardRef<unknown, AnyTextProps>(({ style, ...rest }, ref) => {
   return <OriginalTextInput ref={ref} {...rest} style={useAccessibleTextStyle(style as StyleProp<TextStyle>)} />;
 });
+(AccessibleTextInput as any).__accessibleOriginal = OriginalTextInput;
 
 let installed = false;
 

@@ -26,8 +26,11 @@ export const DateCard: React.FC<DateCardProps> = ({ date, week, selected = false
 
 const styles = StyleSheet.create({
   card: {
-    width: 60,
-    height: 72,
+    // min, not fixed: the day/weekday text scales with the accessibility
+    // font-size setting and must be able to grow the card instead of
+    // overflowing or squeezing it at large sizes.
+    minWidth: 60,
+    minHeight: 72,
     borderWidth: 1.5,
     borderRadius: theme.radius.sm,
     justifyContent: 'center',

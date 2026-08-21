@@ -11,6 +11,8 @@ import { SearchInput } from '@/components/inputs';
 import { OrganizationCard } from '@/components/cards';
 import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import type { ThemePalette } from '@/theme/palette';
 import { SERVICE_CATEGORIES, INFRASTRUCTURE_OPTIONS } from '../data';
 
 // "Our Service - My Services / All Services" (Figma 1255:26894 / 1255:26926)
@@ -20,11 +22,12 @@ interface SectionHeaderProps {
   title: string;
   right?: string;
   rightArrow?: boolean;
+  colors: ThemePalette;
 }
 
-const SectionHeader: React.FC<SectionHeaderProps> = ({ title, right, rightArrow }) => (
+const SectionHeader: React.FC<SectionHeaderProps> = ({ title, right, rightArrow, colors }) => (
   <View style={styles.sectionHeader}>
-    <Text style={styles.sectionTitle}>{title}</Text>
+    <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>{title}</Text>
     <View style={styles.sectionRight}>
       {right && <Text style={styles.sectionRightText}>{right}</Text>}
       {rightArrow && (
@@ -37,6 +40,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ title, right, rightArrow 
 export const ServicesScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'Home'>>();
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState(0); // 0 = My Services, 1 = All Services
   const [showInfrastructure, setShowInfrastructure] = useState(false);
@@ -52,7 +56,7 @@ export const ServicesScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: colors.background.layout }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + theme.spacing.lg }]}
@@ -66,7 +70,7 @@ export const ServicesScreen: React.FC = () => {
             onPress={() => navigation.navigate('Home')}
             size={40}
           />
-          <Text style={styles.headerTitle}>Our Service</Text>
+          <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Our Service</Text>
           <IconButton
             type="custom"
             icon={<Icon name="notification" variant="outline" size={22} color="#FFFFFF" />}
@@ -105,7 +109,7 @@ export const ServicesScreen: React.FC = () => {
 
         {tab === 0 ? (
           <>
-            <SectionHeader title="Upcoming Services" right="3 bookings" />
+            <SectionHeader title="Upcoming Services" right="3 bookings" colors={colors} />
             <Spacer size="md" />
             <OrganizationCard
               title="Yoga & Wellness"
@@ -118,7 +122,7 @@ export const ServicesScreen: React.FC = () => {
             />
 
             <Spacer size="xxl" />
-            <SectionHeader title="Saved Services" right="2 saved" />
+            <SectionHeader title="Saved Services" right="2 saved" colors={colors} />
             <Spacer size="md" />
             <OrganizationCard
               title="Nutrition Education Workshops"
@@ -131,7 +135,7 @@ export const ServicesScreen: React.FC = () => {
             />
 
             <Spacer size="xxl" />
-            <SectionHeader title="Past History" right="View All" rightArrow />
+            <SectionHeader title="Past History" right="View All" rightArrow colors={colors} />
             <Spacer size="md" />
             <OrganizationCard
               title="Caregiver: HelpAge India"
@@ -145,19 +149,19 @@ export const ServicesScreen: React.FC = () => {
           </>
         ) : (
           <>
-            <Text style={styles.gridTitle}>What do you need help with?</Text>
+            <Text style={[styles.gridTitle, { color: colors.text.primary }]}>What do you need help with?</Text>
             <Spacer size="lg" />
             <View style={styles.grid}>
               {SERVICE_CATEGORIES.map((cat) => (
                 <Pressable
                   key={cat.id}
-                  style={styles.categoryCard}
+                  style={[styles.categoryCard, { backgroundColor: colors.background.base }]}
                   onPress={() => handleCategoryPress(cat.id)}
                 >
                   <View style={styles.categoryArch}>
                     <Icon name={cat.icon} variant="outline" size={40} color={theme.colors.tertiary} />
                   </View>
-                  <Text style={styles.categoryLabel}>{cat.label}</Text>
+                  <Text style={[styles.categoryLabel, { color: colors.text.strong }]}>{cat.label}</Text>
                 </Pressable>
               ))}
             </View>
@@ -169,9 +173,14 @@ export const ServicesScreen: React.FC = () => {
       {showInfrastructure && (
         <Modal visible animationType="slide" transparent onRequestClose={() => setShowInfrastructure(false)}>
           <View style={styles.modalRoot}>
-            <View style={[styles.modalSheet, { paddingTop: insets.top + theme.spacing.xxl }]}>
+            <View
+              style={[
+                styles.modalSheet,
+                { backgroundColor: colors.background.layout, paddingTop: insets.top + theme.spacing.xxl },
+              ]}
+            >
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Infrastructure</Text>
+                <Text style={[styles.modalTitle, { color: colors.text.primary }]}>Infrastructure</Text>
                 <IconButton
                   type="close"
                   accessibilityLabel="Close"
@@ -180,23 +189,23 @@ export const ServicesScreen: React.FC = () => {
                 />
               </View>
               <Spacer size="xxl" />
-              <Text style={styles.modalQuestion}>Who needs care?</Text>
-              <Text style={styles.modalSubtitle}>Help us personalize your search</Text>
+              <Text style={[styles.modalQuestion, { color: colors.text.primary }]}>Who needs care?</Text>
+              <Text style={[styles.modalSubtitle, { color: colors.text.secondary }]}>Help us personalize your search</Text>
               <Spacer size="xl" />
 
               <View style={styles.optionList}>
                 {INFRASTRUCTURE_OPTIONS.map((opt) => (
                   <Pressable
                     key={opt.id}
-                    style={styles.optionCard}
+                    style={[styles.optionCard, { backgroundColor: colors.background.base }]}
                     onPress={() => handleInfrastructureOption(opt.label)}
                   >
                     <View style={styles.optionIcon}>
                       <Icon name={opt.icon} variant="outline" size={24} color={theme.colors.tertiary} />
                     </View>
                     <View>
-                      <Text style={styles.optionTitle}>{opt.label}</Text>
-                      <Text style={styles.optionCaption}>{opt.available} available</Text>
+                      <Text style={[styles.optionTitle, { color: colors.text.primary }]}>{opt.label}</Text>
+                      <Text style={[styles.optionCaption, { color: colors.text.tertiary }]}>{opt.available} available</Text>
                     </View>
                   </Pressable>
                 ))}

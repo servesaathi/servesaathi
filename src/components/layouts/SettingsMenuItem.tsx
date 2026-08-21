@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, Pressable, StyleProp, ViewStyle } from 'react-native';
 import { theme } from '@/theme';
 import { responsiveFontSize } from '@/utils/responsive';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { Icon } from '@/components/icons';
 
 export type SettingsMenuItemVariant = 'default' | 'danger' | 'safe';
@@ -30,12 +31,16 @@ export const SettingsMenuItem: React.FC<SettingsMenuItemProps> = ({
   style,
 }) => {
   const { accent, iconBg } = VARIANT_STYLES[variant];
+  const colors = useThemeColors();
 
   return (
-    <Pressable onPress={onPress} style={[styles.row, { borderLeftColor: accent }, style]}>
+    <Pressable
+      onPress={onPress}
+      style={[styles.row, { backgroundColor: colors.background.base, borderLeftColor: accent }, style]}
+    >
       <View style={styles.left}>
         <View style={[styles.iconCircle, { backgroundColor: iconBg }]}>{icon}</View>
-        <Text style={styles.label}>{label}</Text>
+        <Text style={[styles.label, { color: colors.text.secondary }]}>{label}</Text>
       </View>
       <View style={styles.chevronCircle}>
         <Icon name="navigationRight" variant="outline" size={20} color={accent} />

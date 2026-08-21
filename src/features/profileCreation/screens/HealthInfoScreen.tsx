@@ -8,12 +8,14 @@ import { PrimaryButton } from '@/components/buttons';
 import { TextInput, Checkbox, SelectableChip } from '@/components/inputs';
 import { responsiveFontSize } from '@/utils/responsive';
 import { masterdataService, careProfileService, getErrorMessage, type MasterDataOption } from '@/api';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 // "Profile Creation 3a" (Figma 1248:44732) — step 3 of 6.
 // Selections hold master-data option ids so they can be PATCHed to /care-profiles/me/health.
 
 export const HealthInfoScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'ProfileHealth'>>();
+  const colors = useThemeColors();
   const [conditions, setConditions] = useState<string[]>([]);
   const [mobility, setMobility] = useState<string | null>(null);
   const [cognitive, setCognitive] = useState<string | null>(null);
@@ -80,21 +82,21 @@ export const HealthInfoScreen: React.FC = () => {
   };
 
   return (
-    <Screen scrollable statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
+    <Screen scrollable statusBarBg={colors.background.layout}>
       <Header leftIcon="back" transparent stepper={{ current: 3, total: 6 }} />
 
       <View style={styles.content}>
         <Spacer size="lg" />
-        <Text style={styles.title}>Health &amp; Medical Information</Text>
+        <Text style={[styles.title, { color: colors.text.primary }]}>Health &amp; Medical Information</Text>
         <Spacer size="xl" />
 
-        <Text style={styles.sectionLabel}>
+        <Text style={[styles.sectionLabel, { color: colors.text.primary }]}>
           Existing Medical Conditions <Text style={styles.required}>*</Text>
         </Text>
         {isLoadingOptions ? (
-          <Text style={styles.helperText}>Loading options…</Text>
+          <Text style={[styles.helperText, { color: colors.text.tertiary }]}>Loading options…</Text>
         ) : optionsError ? (
-          <Text style={styles.helperText}>{optionsError}</Text>
+          <Text style={[styles.helperText, { color: colors.text.tertiary }]}>{optionsError}</Text>
         ) : (
           <View style={styles.chipGrid}>
             {medicalConditions.map((item) => (
@@ -109,13 +111,13 @@ export const HealthInfoScreen: React.FC = () => {
           </View>
         )}
 
-        <Text style={styles.sectionLabel}>
+        <Text style={[styles.sectionLabel, { color: colors.text.primary }]}>
           Mobility Support <Text style={styles.required}>*</Text>
         </Text>
         {isLoadingOptions ? (
-          <Text style={styles.helperText}>Loading options…</Text>
+          <Text style={[styles.helperText, { color: colors.text.tertiary }]}>Loading options…</Text>
         ) : optionsError ? (
-          <Text style={styles.helperText}>{optionsError}</Text>
+          <Text style={[styles.helperText, { color: colors.text.tertiary }]}>{optionsError}</Text>
         ) : (
           <View style={styles.chipGrid}>
             {mobilitySupports.map((item) => (
@@ -130,11 +132,11 @@ export const HealthInfoScreen: React.FC = () => {
           </View>
         )}
 
-        <Text style={styles.sectionLabel}>Cognitive Conditions</Text>
+        <Text style={[styles.sectionLabel, { color: colors.text.primary }]}>Cognitive Conditions</Text>
         {isLoadingOptions ? (
-          <Text style={styles.helperText}>Loading options…</Text>
+          <Text style={[styles.helperText, { color: colors.text.tertiary }]}>Loading options…</Text>
         ) : optionsError ? (
-          <Text style={styles.helperText}>{optionsError}</Text>
+          <Text style={[styles.helperText, { color: colors.text.tertiary }]}>{optionsError}</Text>
         ) : (
           <View style={styles.chipGrid}>
             {cognitiveConditions.map((item) => (
@@ -163,7 +165,7 @@ export const HealthInfoScreen: React.FC = () => {
             onPress={() => setRegularMedication((v) => !v)}
             color="orange"
           />
-          <Text style={styles.checkText}>Regular medication required.</Text>
+          <Text style={[styles.checkText, { color: colors.text.primary }]}>Regular medication required.</Text>
         </Pressable>
 
         <Spacer size="xxxl" />

@@ -10,6 +10,8 @@ import { Icon } from '@/components/icons';
 import { BrandLogoSVG } from '@/components/BrandLogoSVG';
 import { responsiveFontSize } from '@/utils/responsive';
 import { useUserStore } from '@/store/user.store';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import type { ThemePalette } from '@/theme/palette';
 
 // "Home" (Figma 1248:44660) — new-user landing state with empty task/request/event sections.
 
@@ -31,11 +33,12 @@ const formatToday = (): string =>
 interface SectionHeaderProps {
   title: string;
   onViewAll?: () => void;
+  colors: ThemePalette;
 }
 
-const SectionHeader: React.FC<SectionHeaderProps> = ({ title, onViewAll }) => (
+const SectionHeader: React.FC<SectionHeaderProps> = ({ title, onViewAll, colors }) => (
   <View style={styles.sectionHeader}>
-    <Text style={styles.sectionTitle}>{title}</Text>
+    <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>{title}</Text>
     <Pressable style={styles.viewAll} onPress={onViewAll}>
       <Text style={styles.viewAllText}>View All</Text>
       <Icon name="navigationRight" variant="outline" size={20} color={theme.colors.primary} />
@@ -47,9 +50,10 @@ export const HomeScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const [question, setQuestion] = useState('');
   const userName = useUserStore((s) => s.profile?.name) ?? 'Kamala';
+  const colors = useThemeColors();
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: colors.background.layout }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
@@ -68,8 +72,8 @@ export const HomeScreen: React.FC = () => {
         {/* Greeting */}
         <View style={styles.greetingRow}>
           <View style={styles.greetingText}>
-            <Text style={styles.greeting}>{getGreeting()} {userName},</Text>
-            <Text style={styles.date}>{formatToday()}</Text>
+            <Text style={[styles.greeting, { color: colors.text.primary }]}>{getGreeting()} {userName},</Text>
+            <Text style={[styles.date, { color: colors.text.secondary }]}>{formatToday()}</Text>
           </View>
           <View style={styles.avatar}>
             <Icon name="profile" variant="outline" size={28} color={theme.colors.primary} />
@@ -87,23 +91,23 @@ export const HomeScreen: React.FC = () => {
         <Spacer size={40} />
 
         {/* Today's Task */}
-        <SectionHeader title="Today’s Task" />
-        <Text style={styles.emptyText}>There are no tasks scheduled today.</Text>
+        <SectionHeader title="Today’s Task" colors={colors} />
+        <Text style={[styles.emptyText, { color: colors.text.tertiary }]}>There are no tasks scheduled today.</Text>
 
         <Spacer size={40} />
 
         {/* Track Requests */}
-        <SectionHeader title="Track Requests" />
-        <Text style={styles.emptyText}>There are no request today.</Text>
+        <SectionHeader title="Track Requests" colors={colors} />
+        <Text style={[styles.emptyText, { color: colors.text.tertiary }]}>There are no request today.</Text>
 
         <Spacer size={40} />
 
         {/* Upcoming events */}
-        <SectionHeader title="Upcoming events" />
+        <SectionHeader title="Upcoming events" colors={colors} />
         <View style={styles.eventsEmpty}>
           <Icon name="celebrate" variant="filled" size={72} />
           <Spacer size="md" />
-          <Text style={styles.emptyText}>There are no event scheduled.</Text>
+          <Text style={[styles.emptyText, { color: colors.text.tertiary }]}>There are no event scheduled.</Text>
           <Spacer size="lg" />
           <PrimaryButton label="Join your Social event" onPress={() => {}} style={styles.eventButton} />
         </View>

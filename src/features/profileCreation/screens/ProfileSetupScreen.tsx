@@ -12,6 +12,7 @@ import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
 import { digitsOnly, isValidName, isValidDateOfBirth } from '@/utils/validation';
 import { masterdataService, careProfileService, getErrorMessage, type MasterDataOption } from '@/api';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 // "Profile Creation 1a/1b" (Figma 1248:44068 / 1248:44150) — step 1 of 6.
 
@@ -32,6 +33,7 @@ const ImagePlaceholderIcon = ({ size = 40, color = '' }) => (
 
 export const ProfileSetupScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'ProfileSetup'>>();
+  const colors = useThemeColors();
   const [preferredName, setPreferredName] = useState('');
   const [dobDay, setDobDay] = useState('');
   const [dobMonth, setDobMonth] = useState('');
@@ -210,18 +212,18 @@ export const ProfileSetupScreen: React.FC = () => {
   };
 
   return (
-    <Screen scrollable statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
+    <Screen scrollable statusBarBg={colors.background.layout}>
       <Header leftIcon="back" transparent stepper={{ current: 1, total: 6 }} />
 
       <View style={styles.content}>
         <Spacer size="lg" />
-        <Text style={styles.title}>Hello! Let’s set up your profile</Text>
+        <Text style={[styles.title, { color: colors.text.primary }]}>Hello! Let’s set up your profile</Text>
         <Spacer size="xxxl" />
 
         {/* Profile photo picker */}
         <View style={styles.photoSection}>
           <Pressable
-            style={styles.photoCircle}
+            style={[styles.photoCircle, { backgroundColor: colors.border.hairline }]}
             onPress={handlePickPhoto}
             accessibilityRole="button"
             accessibilityLabel="Upload profile photo"
@@ -229,14 +231,14 @@ export const ProfileSetupScreen: React.FC = () => {
             {photoUri ? (
               <Image source={{ uri: photoUri }} style={styles.photoImage} />
             ) : (
-              <ImagePlaceholderIcon size={40} color={theme.colors.primary} />
+              <ImagePlaceholderIcon size={40} color={colors.accentPrimary} />
             )}
-            <View style={styles.editBadge}>
+            <View style={[styles.editBadge, { backgroundColor: colors.accentOrange }]}>
               <Icon name="edit" variant="outline" size={14} color="#FFFFFF" />
             </View>
           </Pressable>
           <Spacer size="sm" />
-          <Text style={styles.editPhotoText}>Edit your photo</Text>
+          <Text style={[styles.editPhotoText, { color: colors.accentPrimary }]}>Edit your photo</Text>
         </View>
 
         <Spacer size="lg" />
@@ -250,7 +252,7 @@ export const ProfileSetupScreen: React.FC = () => {
           error={nameError}
         />
 
-        <Text style={styles.sectionLabel}>Date of Birth</Text>
+        <Text style={[styles.sectionLabel, { color: colors.text.primary }]}>Date of Birth</Text>
         <View style={styles.dobRow}>
           <View style={styles.dobField}>
             <TextInput
@@ -263,7 +265,7 @@ export const ProfileSetupScreen: React.FC = () => {
               inputStyle={styles.dobInputText}
               suffixIcon={
                 <Pressable onPress={() => setActiveDobField('day')} style={{ padding: 6 }}>
-                  <Icon name="caretDown" variant="outline" size={14} color={theme.colors.neutral[700]} />
+                  <Icon name="caretDown" variant="outline" size={14} color={colors.text.secondary} />
                 </Pressable>
               }
             />
@@ -279,7 +281,7 @@ export const ProfileSetupScreen: React.FC = () => {
               inputStyle={styles.dobInputText}
               suffixIcon={
                 <Pressable onPress={() => setActiveDobField('month')} style={{ padding: 6 }}>
-                  <Icon name="caretDown" variant="outline" size={14} color={theme.colors.neutral[700]} />
+                  <Icon name="caretDown" variant="outline" size={14} color={colors.text.secondary} />
                 </Pressable>
               }
             />
@@ -295,7 +297,7 @@ export const ProfileSetupScreen: React.FC = () => {
               inputStyle={styles.dobInputText}
               suffixIcon={
                 <Pressable onPress={() => setActiveDobField('year')} style={{ padding: 6 }}>
-                  <Icon name="caretDown" variant="outline" size={14} color={theme.colors.neutral[700]} />
+                  <Icon name="caretDown" variant="outline" size={14} color={colors.text.secondary} />
                 </Pressable>
               }
             />
@@ -305,13 +307,13 @@ export const ProfileSetupScreen: React.FC = () => {
 
         <Modal visible={!!activeDobField} transparent animationType="slide" onRequestClose={() => setActiveDobField(null)}>
           <View style={styles.modalRoot}>
-            <View style={[styles.modalSheet, { paddingTop: theme.spacing.xl }]}> 
+            <View style={[styles.modalSheet, { backgroundColor: colors.background.base, paddingTop: theme.spacing.xl }]}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>
+                <Text style={[styles.modalTitle, { color: colors.text.primary }]}>
                   Select {activeDobField === 'day' ? 'Day' : activeDobField === 'month' ? 'Month' : 'Year'}
                 </Text>
                 <Pressable onPress={() => setActiveDobField(null)} style={styles.modalCloseButton}>
-                  <Text style={styles.modalCloseText}>Cancel</Text>
+                  <Text style={[styles.modalCloseText, { color: colors.accentPrimary }]}>Cancel</Text>
                 </Pressable>
               </View>
               <ScrollView style={styles.modalList} showsVerticalScrollIndicator={false}>
@@ -319,9 +321,9 @@ export const ProfileSetupScreen: React.FC = () => {
                   <Pressable
                     key={item.value}
                     onPress={() => handleSelectDobValue(item.value)}
-                    style={styles.modalItem}
+                    style={[styles.modalItem, { borderBottomColor: colors.border.hairline }]}
                   >
-                    <Text style={styles.modalItemText}>{item.label}</Text>
+                    <Text style={[styles.modalItemText, { color: colors.text.primary }]}>{item.label}</Text>
                   </Pressable>
                 ))}
               </ScrollView>
@@ -329,11 +331,11 @@ export const ProfileSetupScreen: React.FC = () => {
           </View>
         </Modal>
 
-        <Text style={styles.sectionLabel}>Gender</Text>
+        <Text style={[styles.sectionLabel, { color: colors.text.primary }]}>Gender</Text>
         {isLoadingOptions ? (
-          <Text style={styles.helperText}>Loading options…</Text>
+          <Text style={[styles.helperText, { color: colors.text.tertiary }]}>Loading options…</Text>
         ) : optionsError ? (
-          <Text style={styles.helperText}>{optionsError}</Text>
+          <Text style={[styles.helperText, { color: colors.text.tertiary }]}>{optionsError}</Text>
         ) : (
           <View style={styles.chipGrid}>
             {genders.map((item) => (
@@ -348,11 +350,11 @@ export const ProfileSetupScreen: React.FC = () => {
           </View>
         )}
 
-        <Text style={styles.sectionLabel}>Living Situation</Text>
+        <Text style={[styles.sectionLabel, { color: colors.text.primary }]}>Living Situation</Text>
         {isLoadingOptions ? (
-          <Text style={styles.helperText}>Loading options…</Text>
+          <Text style={[styles.helperText, { color: colors.text.tertiary }]}>Loading options…</Text>
         ) : optionsError ? (
-          <Text style={styles.helperText}>{optionsError}</Text>
+          <Text style={[styles.helperText, { color: colors.text.tertiary }]}>{optionsError}</Text>
         ) : (
           <View style={styles.chipGrid}>
             {livingSituations.map((item) => (
@@ -367,11 +369,11 @@ export const ProfileSetupScreen: React.FC = () => {
           </View>
         )}
 
-        <Text style={styles.sectionLabel}>Dependency Levels</Text>
+        <Text style={[styles.sectionLabel, { color: colors.text.primary }]}>Dependency Levels</Text>
         {isLoadingOptions ? (
-          <Text style={styles.helperText}>Loading options…</Text>
+          <Text style={[styles.helperText, { color: colors.text.tertiary }]}>Loading options…</Text>
         ) : optionsError ? (
-          <Text style={styles.helperText}>{optionsError}</Text>
+          <Text style={[styles.helperText, { color: colors.text.tertiary }]}>{optionsError}</Text>
         ) : (
           <View style={styles.chipGrid}>
             {dependencyLevels.map((item) => (
@@ -461,7 +463,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dobInputContainer: {
-    backgroundColor: theme.colors.background.base,
+    // backgroundColor intentionally omitted — TextInput already themes it via
+    // useThemeColors(); setting it here would win the style-array merge and
+    // pin these fields to the static light color regardless of theme.
     borderRadius: theme.radius.input,
     height: 48,
     justifyContent: 'center',

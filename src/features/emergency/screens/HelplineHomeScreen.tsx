@@ -6,11 +6,13 @@ import { theme } from '@/theme';
 import { Screen, Header, Spacer } from '@/components/layouts';
 import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { QUICK_ACTIONS, EMERGENCY_SOS_NUMBER } from '../data';
 
 // "Helpline" tab home (Figma 1317:8136) — Emergency SOS call + Quick Actions grid.
 export const HelplineHomeScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'Home'>>();
+  const colors = useThemeColors();
 
   const handleSOSPress = () => {
     Alert.alert(
@@ -35,7 +37,7 @@ export const HelplineHomeScreen: React.FC = () => {
   };
 
   return (
-    <Screen safeAreaBottom={false} statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
+    <Screen safeAreaBottom={false} statusBarBg={colors.background.layout}>
       <Header
         title="Helpline"
         leftIcon="none"
@@ -43,7 +45,7 @@ export const HelplineHomeScreen: React.FC = () => {
         onRightPress={() => navigation.navigate('Notifications')}
       />
       <ScrollView
-        style={styles.root}
+        style={[styles.root, { backgroundColor: colors.background.layout }]}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
@@ -61,13 +63,13 @@ export const HelplineHomeScreen: React.FC = () => {
 
         <Spacer size="xxxl" />
 
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Quick Actions</Text>
         <Spacer size="lg" />
         <View style={styles.grid}>
           {QUICK_ACTIONS.map((action) => (
             <Pressable
               key={action.id}
-              style={styles.actionCard}
+              style={[styles.actionCard, { backgroundColor: colors.background.base }]}
               onPress={() => handleQuickAction(action.id)}
               accessibilityRole="button"
               accessibilityLabel={action.label.replace('\n', ' ')}
@@ -75,7 +77,7 @@ export const HelplineHomeScreen: React.FC = () => {
               <View style={styles.actionArch}>
                 <Icon name={action.icon} variant="outline" size={32} color={theme.colors.tertiary} />
               </View>
-              <Text style={styles.actionLabel}>{action.label}</Text>
+              <Text style={[styles.actionLabel, { color: colors.text.secondary }]}>{action.label}</Text>
             </Pressable>
           ))}
         </View>
@@ -108,7 +110,10 @@ const styles = StyleSheet.create({
   },
   sosButton: {
     width: '100%',
-    height: 80,
+    // minHeight, not height: the label scales with the accessibility
+    // font-size setting (and can wrap to 2 lines) — it must be able to grow
+    // the button, not overflow it.
+    minHeight: 80,
     borderRadius: theme.radius.control,
     backgroundColor: theme.colors.status.error,
     justifyContent: 'center',

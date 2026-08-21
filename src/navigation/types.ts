@@ -20,7 +20,7 @@ export type RootStackParamList = {
   ProfileHealth: undefined;
   ProfileInterests: undefined;
   ProfileCircle: undefined;
-  ProfileAccessibility: undefined;
+  ProfileAccessibility: { fromSettings?: boolean } | undefined;
   Subscription: undefined;
   PaymentMethod: undefined;
   SettingUp: undefined;

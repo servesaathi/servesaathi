@@ -259,7 +259,9 @@ const styles = StyleSheet.create({
   },
   walletButton: {
     flex: 1,
-    height: 48,
+    // minHeight (not height): larger font settings must grow the button
+    // instead of overflowing it — same pattern as `button` above.
+    minHeight: 48,
     borderWidth: 1.35,
     borderColor: theme.colors.neutral[200],
     backgroundColor: theme.colors.neutral[100],

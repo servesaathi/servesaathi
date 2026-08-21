@@ -8,13 +8,19 @@ import {
 } from 'react-native';
 import { theme } from '@/theme';
 import { responsiveFontSize } from '@/utils/responsive';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { darken } from '@/utils/color';
 import { BaseButtonProps } from './types';
 
 /**
  * PrimaryButton
- * Default:  bg #2E7D32  (Forest Green 500)
- * Pressed:  bg #256428  (Forest Green 600)
- * Disabled: bg #ABCBAD  (Forest Green 200)
+ * Default/pressed/disabled bg all come from useThemeColors() so the button
+ * follows dark mode and high contrast (Figma high contrast: bg #58A35B,
+ * near-black label — see src/theme/palette.ts). In plain light mode these
+ * resolve to the original static values (#2E7D32 / #ABCBAD / white label).
+ * Pressed is computed by darkening the theme's accent (matching the original
+ * #2E7D32 -> #256428 pressed step) rather than a fixed swatch, since every
+ * theme has a different accent to darken.
  */
 export const PrimaryButton: React.FC<BaseButtonProps> = ({
   onPress,
@@ -27,10 +33,11 @@ export const PrimaryButton: React.FC<BaseButtonProps> = ({
   accessibilityLabel,
   prefixIcon,
 }) => {
-  const normalBg = theme.colors.forestGreen[500];
-  const pressedBg = theme.colors.forestGreen[600];
-  const disabledBg = theme.colors.forestGreen[200];
-  const textColor = disabled ? theme.colors.neutral[50] : '#FFFFFF';
+  const colors = useThemeColors();
+  const normalBg = colors.accentPrimary;
+  const pressedBg = darken(colors.accentPrimary, 0.14);
+  const disabledBg = colors.border.card;
+  const textColor = disabled ? theme.colors.neutral[50] : colors.textInverse;
 
   return (
     <Pressable
@@ -46,7 +53,7 @@ export const PrimaryButton: React.FC<BaseButtonProps> = ({
       ]}
     >
       {loading ? (
-        <ActivityIndicator size="small" color="#FFFFFF" />
+        <ActivityIndicator size="small" color={textColor} />
       ) : (
         <>
           {prefixIcon && prefixIcon}
