@@ -10,6 +10,7 @@ import { responsiveFontSize } from '@/utils/responsive';
 import { authService, getErrorMessage } from '@/api';
 import { useAuthStore } from '@/store/auth.store';
 import { useUserStore } from '@/store/user.store';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 const OTP_LENGTH = 4;
 const RESEND_SECONDS = 30;
@@ -25,6 +26,7 @@ const maskPhone = (phone: string) => {
 export const OTPScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'OTP'>>();
   const route = useRoute<RootRouteProp<'OTP'>>();
+  const colors = useThemeColors();
   const storedPhone = useAuthStore((s) => s.phone);
   const phone = route.params?.phone ?? storedPhone ?? '';
   const intent = route.params?.intent ?? 'signup';
@@ -97,16 +99,16 @@ export const OTPScreen: React.FC = () => {
   };
 
   return (
-    <Screen statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
+    <Screen statusBarBg={colors.background.layout}>
       <Header title={intent === 'login' ? 'Log in' : 'Create Account'} leftIcon="back" transparent />
 
       <View style={styles.content}>
         <Spacer size="xxxl" />
 
-        <Text style={styles.title}>Enter verification code</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, { color: colors.text.primary }]}>Enter verification code</Text>
+        <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
           The OTP has been sent to your verified mobile{' '}
-          <Text style={styles.highlightMobile}>{maskPhone(phone)}</Text>
+          <Text style={[styles.highlightMobile, { color: colors.text.primary }]}>{maskPhone(phone)}</Text>
         </Text>
 
         <Spacer size="xxl" />
@@ -138,16 +140,16 @@ export const OTPScreen: React.FC = () => {
         <Spacer size="lg" />
 
         {resendIn > 0 ? (
-          <Text style={styles.resendText}>
+          <Text style={[styles.resendText, { color: colors.text.secondary }]}>
             Didn't receive OTP?{' '}
-            <Text style={styles.resendTimer}>
+            <Text style={[styles.resendTimer, { color: colors.text.primary }]}>
               Resend in 00:{String(resendIn).padStart(2, '0')}
             </Text>
           </Text>
         ) : (
-          <Text style={styles.resendText}>
+          <Text style={[styles.resendText, { color: colors.text.secondary }]}>
             Didn't receive OTP?{' '}
-            <Text style={styles.resendLink} onPress={handleResend}>
+            <Text style={[styles.resendLink, { color: colors.accentPrimary }]} onPress={handleResend}>
               {resending ? 'Sending…' : 'Resend'}
             </Text>
           </Text>

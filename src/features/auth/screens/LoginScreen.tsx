@@ -11,8 +11,11 @@ import { scale, responsiveFontSize } from '@/utils/responsive';
 import { useTranslation } from '@/utils/localization';
 import { digitsOnly, isValidIndianMobile } from '@/utils/validation';
 import { BrandLogoSVG } from '@/components/BrandLogoSVG';
+import DarkThemeLogo from '../../../../assets/primary_logo_for_dark_theme.svg';
 import { authService, getErrorMessage } from '@/api';
 import { useAuthStore } from '@/store/auth.store';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { useAccessibilityStore } from '@/store/accessibility.store';
 
 // Google Colored Vector Icon
 const GoogleIcon = () => (
@@ -42,6 +45,8 @@ export const LoginScreen: React.FC = () => {
   const intent = route.params?.intent ?? 'signup';
   const isLogin = intent === 'login';
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const highContrast = useAccessibilityStore((s) => s.highContrast);
   const [mobile, setMobile] = useState('');
   const [mobileTouched, setMobileTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -90,22 +95,22 @@ export const LoginScreen: React.FC = () => {
   // Custom Country Code Prefix Selector component mimicking the design spec
   const CountryCodePrefix = () => (
     <View style={styles.countryCodeContainer}>
-      <Text style={styles.countryCodeText}>(+91)</Text>
+      <Text style={[styles.countryCodeText, { color: colors.text.primary }]}>(+91)</Text>
       <Svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={styles.chevron}>
         <Path
           d="M1 1L5 5L9 1"
-          stroke={theme.colors.neutral[700]}
+          stroke={colors.text.secondary}
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
       </Svg>
-      <View style={styles.countryCodeDivider} />
+      <View style={[styles.countryCodeDivider, { backgroundColor: colors.border.hairline }]} />
     </View>
   );
 
   return (
-    <Screen scrollable statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
+    <Screen scrollable statusBarBg={colors.background.layout}>
       <Header leftIcon="back" transparent />
 
       <View style={styles.content}>
@@ -113,11 +118,15 @@ export const LoginScreen: React.FC = () => {
         <View style={styles.formGroup}>
           {/* Mirrors Figma's "Logo - Welcome" auto-layout frame (gap-16) */}
           <View style={styles.brandingGroup}>
-            <Text style={styles.welcomeText}>Welcome to</Text>
-            <BrandLogoSVG width={240} height={64} />
+            <Text style={[styles.welcomeText, { color: colors.accentPrimary }]}>Welcome to</Text>
+            {highContrast ? (
+              <DarkThemeLogo width={240} height={240 * (53 / 200)} />
+            ) : (
+              <BrandLogoSVG width={240} height={64} />
+            )}
           </View>
 
-          <Text style={styles.subtitle}>
+          <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
             {isLogin
               ? 'Log in to check on the seniors you care\n about and continue their journey with us.'
               : 'Create profiles for the seniors you care\n about and begin their journey with us.'}
@@ -127,6 +136,7 @@ export const LoginScreen: React.FC = () => {
           <TextInput
             label="Mobile Number"
             placeholder="000-000-0000"
+            placeholderTextColor={colors.text.primary}
             keyboardType="number-pad"
             maxLength={10}
             value={mobile}
@@ -150,23 +160,23 @@ export const LoginScreen: React.FC = () => {
         {/* OR divider + social buttons all sit on Figma's shared gap-16 */}
         <View style={styles.dividerGroup}>
           <View style={styles.dividerContainer}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>OR</Text>
-            <View style={styles.dividerLine} />
+            <View style={[styles.dividerLine, { backgroundColor: colors.accentOrange }]} />
+            <Text style={[styles.dividerText, { color: colors.text.secondary }]}>OR</Text>
+            <View style={[styles.dividerLine, { backgroundColor: colors.accentOrange }]} />
           </View>
 
           <TertiaryButton
             label="Sign in with Google"
             onPress={handleGoogleLogin}
             prefixIcon={<GoogleIcon />}
-            style={styles.socialButton}
-            labelStyle={styles.socialButtonText}
+            style={{ ...styles.socialButton, backgroundColor: colors.background.base, borderColor: colors.border.card }}
+            labelStyle={{ ...styles.socialButtonText, color: colors.text.primary }}
           />
           <TertiaryButton
             label="Sign in with Email"
             onPress={handleEmailLogin}
-            style={styles.socialButton}
-            labelStyle={styles.socialButtonText}
+            style={{ ...styles.socialButton, backgroundColor: colors.background.base, borderColor: colors.border.card }}
+            labelStyle={{ ...styles.socialButtonText, color: colors.text.primary }}
           />
         </View>
 
@@ -177,16 +187,19 @@ export const LoginScreen: React.FC = () => {
           <View style={styles.footerRow}>
             {isLogin ? (
               <>
-                <Text style={styles.footerText}>Don't have an account yet? </Text>
-                <Text style={styles.loginLink} onPress={() => navigation.navigate('RoleSelection')}>
+                <Text style={[styles.footerText, { color: colors.text.secondary }]}>Don't have an account yet? </Text>
+                <Text
+                  style={[styles.loginLink, { color: colors.accentPrimary }]}
+                  onPress={() => navigation.navigate('RoleSelection')}
+                >
                   Sign up
                 </Text>
               </>
             ) : (
               <>
-                <Text style={styles.footerText}>Already have an account? </Text>
+                <Text style={[styles.footerText, { color: colors.text.secondary }]}>Already have an account? </Text>
                 <Text
-                  style={styles.loginLink}
+                  style={[styles.loginLink, { color: colors.accentPrimary }]}
                   onPress={() => navigation.replace('Login', { intent: 'login' })}
                 >
                   Log in

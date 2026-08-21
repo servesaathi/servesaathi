@@ -13,6 +13,7 @@ import { theme } from '@/theme';
 import { responsiveFontSize } from '@/utils/responsive';
 import { Icon } from '@/components/icons';
 import { Checkbox } from '@/components/inputs';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface ComparePopUpCardProps {
   title: string;
@@ -56,6 +57,7 @@ export const ComparePopUpCard: React.FC<ComparePopUpCardProps> = ({
   onSeeDetailsPress,
   style,
 }) => {
+  const colors = useThemeColors();
   const [frameWidth, setFrameWidth] = useState(0);
 
   const handleFrameLayout = (e: LayoutChangeEvent) => {
@@ -63,7 +65,7 @@ export const ComparePopUpCard: React.FC<ComparePopUpCardProps> = ({
   };
 
   return (
-    <View style={[styles.card, style]}>
+    <View style={[styles.card, { backgroundColor: colors.background.base }, style]}>
       <View style={styles.imageFrame} onLayout={handleFrameLayout}>
         <Image
           source={typeof imageUri === 'string' ? { uri: imageUri } : imageUri}
@@ -85,33 +87,33 @@ export const ComparePopUpCard: React.FC<ComparePopUpCardProps> = ({
       <View style={styles.field}>
         <View style={styles.info}>
           <View style={styles.titleRow}>
-            <Text style={styles.title}>{title}</Text>
-            {verified && <Icon name="verified" variant="filled" size={12} color={theme.colors.primary} />}
+            <Text style={[styles.title, { color: colors.text.strong }]}>{title}</Text>
+            {verified && <Icon name="verified" variant="filled" size={12} color={colors.accentPrimary} />}
           </View>
           <View style={styles.subRow}>
-            <Icon name="location" variant="outline" size={20} color={theme.colors.neutral[500]} />
-            <Text style={styles.subText}>{location}</Text>
+            <Icon name="location" variant="outline" size={20} color={colors.text.muted} />
+            <Text style={[styles.subText, { color: colors.text.muted }]}>{location}</Text>
             {distance && (
               <>
-                <Text style={[styles.subText, { color: theme.colors.forestGreen[600] }]}> · </Text>
-                <Text style={styles.subText}>{distance}</Text>
+                <Text style={[styles.subText, { color: colors.text.muted }]}> · </Text>
+                <Text style={[styles.subText, { color: colors.text.muted }]}>{distance}</Text>
               </>
             )}
           </View>
           {showCompare && (
             <View style={styles.compareRow}>
               <Checkbox checked={compareChecked} onPress={onCompareToggle} />
-              <Text style={styles.subText}>Compare</Text>
+              <Text style={[styles.subText, { color: colors.text.muted }]}>Compare</Text>
             </View>
           )}
         </View>
         <View style={styles.rightCol}>
-          <View style={styles.ratingChip}>
-            <Icon name="star" variant="filled" size={16} color={theme.colors.vividOrange[600]} />
-            <Text style={styles.ratingText}>{rating}</Text>
+          <View style={[styles.ratingChip, { backgroundColor: colors.background.orange }]}>
+            <Icon name="star" variant="filled" size={16} color={colors.accentOrange} />
+            <Text style={[styles.ratingText, { color: colors.accentOrange }]}>{rating}</Text>
           </View>
-          <Pressable onPress={onSeeDetailsPress} style={styles.detailsButton}>
-            <Text style={styles.detailsButtonText}>See details</Text>
+          <Pressable onPress={onSeeDetailsPress} style={[styles.detailsButton, { backgroundColor: colors.accentPrimary }]}>
+            <Text style={[styles.detailsButtonText, { color: colors.textInverse }]}>See details</Text>
           </Pressable>
         </View>
       </View>

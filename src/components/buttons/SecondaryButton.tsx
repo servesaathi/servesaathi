@@ -8,13 +8,16 @@ import {
 } from 'react-native';
 import { theme } from '@/theme';
 import { responsiveFontSize } from '@/utils/responsive';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { darken } from '@/utils/color';
 import { BaseButtonProps } from './types';
 
 /**
  * SecondaryButton
- * Default:  bg #123214  (Forest Green 800)
- * Pressed:  bg #09190A  (Forest Green 900)
- * Disabled: bg #ABCBAD  (Forest Green 200)
+ * bg/label come from useThemeColors(): light resolves to the original
+ * #123214/white, but high contrast redefines this fill to a pale mint
+ * (#D5EBD6) with a near-black label — not just a darker shade — per the
+ * Figma high-contrast spec (see palette.ts's secondarySurface).
  */
 export const SecondaryButton: React.FC<BaseButtonProps> = ({
   onPress,
@@ -27,10 +30,11 @@ export const SecondaryButton: React.FC<BaseButtonProps> = ({
   accessibilityLabel,
   prefixIcon,
 }) => {
-  const normalBg = theme.colors.forestGreen[800];
-  const pressedBg = theme.colors.forestGreen[900];
-  const disabledBg = theme.colors.forestGreen[200];
-  const textColor = '#FFFFFF';
+  const colors = useThemeColors();
+  const normalBg = colors.secondarySurface;
+  const pressedBg = darken(colors.secondarySurface, 0.14);
+  const disabledBg = colors.border.card;
+  const textColor = colors.textInverse;
 
   return (
     <Pressable

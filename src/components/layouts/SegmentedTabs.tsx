@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, Pressable, StyleProp, ViewStyle } from 'react-native';
 import { theme } from '@/theme';
 import { responsiveFontSize } from '@/utils/responsive';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface SegmentedTabsProps {
   options: string[];
@@ -26,6 +27,8 @@ export const SegmentedTabs: React.FC<SegmentedTabsProps> = ({
   badge,
   style,
 }) => {
+  const colors = useThemeColors();
+
   if (variant === 'plain') {
     return (
       <View style={[styles.plainContainer, style]}>
@@ -37,7 +40,9 @@ export const SegmentedTabs: React.FC<SegmentedTabsProps> = ({
               onPress={() => onChange(index)}
               style={[styles.plainSegment, index > 0 && styles.plainDivider]}
             >
-              <Text style={[styles.plainLabel, isActive && styles.plainLabelActive]}>{label}</Text>
+              <Text style={[styles.plainLabel, { color: isActive ? colors.accentPrimary : colors.text.primary }]}>
+                {label}
+              </Text>
             </Pressable>
           );
         })}
@@ -46,19 +51,21 @@ export const SegmentedTabs: React.FC<SegmentedTabsProps> = ({
   }
 
   return (
-    <View style={[styles.filledContainer, style]}>
+    <View style={[styles.filledContainer, { backgroundColor: colors.accentOrange }, style]}>
       {options.map((label, index) => {
         const isActive = index === activeIndex;
         return (
           <View key={label} style={styles.filledSegmentWrapper}>
             <Pressable
               onPress={() => onChange(index)}
-              style={[styles.filledSegment, isActive && styles.filledSegmentActive]}
+              style={[styles.filledSegment, isActive && { backgroundColor: colors.background.base }]}
             >
-              <Text style={[styles.filledLabel, isActive && styles.filledLabelActive]}>{label}</Text>
+              <Text style={[styles.filledLabel, { color: isActive ? colors.accentOrange : '#FFFFFF' }]}>
+                {label}
+              </Text>
             </Pressable>
             {badge?.index === index && (
-              <View style={styles.badge}>
+              <View style={[styles.badge, { backgroundColor: colors.accentPrimary }]}>
                 <Text style={styles.badgeText}>{badge.label}</Text>
               </View>
             )}

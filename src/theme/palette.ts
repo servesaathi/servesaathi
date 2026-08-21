@@ -40,6 +40,11 @@ export interface ThemePalette {
   // better with a dark label per the Figma high-contrast spec, so this isn't
   // always the same as a hardcoded white.
   textInverse: string;
+  // SecondaryButton's fill (theme.colors.secondary / Forest Green 800 in the
+  // static palette). In high contrast this is NOT a darker shade — Figma
+  // redefines it to a pale mint (#D5EBD6) with a near-black label via
+  // textInverse, matching the onboarding "Log in" button.
+  secondarySurface: string;
 }
 
 export const lightPalette: ThemePalette = {
@@ -57,6 +62,7 @@ export const lightPalette: ThemePalette = {
   accentOrange: '#FF751F',
   accentOrangeMuted: '#FFC8A5',
   textInverse: '#FFFFFF',
+  secondarySurface: '#123214',
 };
 
 // Dark background per spec: #0D1F0E. Surface/orange tones are lifted just
@@ -77,6 +83,10 @@ export const darkPalette: ThemePalette = {
   accentOrange: '#FF9C62',
   accentOrangeMuted: '#994F24',
   textInverse: '#FFFFFF',
+  // A touch lighter than Forest Green 800 so it stays distinguishable
+  // against the #0D1F0E dark background (unlike high contrast, plain dark
+  // mode doesn't have a Figma-specified value for this).
+  secondarySurface: '#1C4B1E',
 };
 
 // High contrast — sourced directly from the Figma "Start an app - High
@@ -115,6 +125,10 @@ const highContrastFigma: ThemePalette = {
   // choice per the Figma spec (white-on-#58A35B doesn't read as "high
   // contrast" the way black-on-#58A35B does).
   textInverse: '#0F0F0F',
+  // Forest Green/800 resolves to a pale mint here, not a dark shade — the
+  // onboarding "Log in" button is a light pill with a near-black label
+  // (textInverse), not a darker-green fill like the other two themes.
+  secondarySurface: '#D5EBD6',
 };
 
 export const highContrastLight: ThemePalette = highContrastFigma;

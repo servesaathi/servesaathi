@@ -10,6 +10,7 @@ import { PrimaryButton, SecondaryButton, IconButton } from '@/components/buttons
 import { Icon } from '@/components/icons';
 import type { IconName } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 // "Request Details" (Figma 1256:24795) — confirmation, active request info and timeline.
 
@@ -30,63 +31,67 @@ interface InfoRowProps {
   directions?: boolean;
 }
 
-const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, caption, captionOrange, directions }) => (
-  <View style={styles.infoRow}>
-    <View style={styles.infoIcon}>
-      <Icon name={icon} variant="outline" size={22} color={theme.colors.primary} />
+const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, caption, captionOrange, directions }) => {
+  const colors = useThemeColors();
+  return (
+    <View style={styles.infoRow}>
+      <View style={[styles.infoIcon, { backgroundColor: colors.border.hairline }]}>
+        <Icon name={icon} variant="outline" size={22} color={colors.accentPrimary} />
+      </View>
+      <View style={styles.infoText}>
+        <Text style={[styles.infoLabel, { color: colors.text.primary }]}>{label}</Text>
+        <Text style={[styles.infoValue, { color: colors.text.strong }]}>{value}</Text>
+        {caption && <Text style={[styles.infoCaption, { color: colors.text.tertiary }]}>{caption}</Text>}
+        {captionOrange && <Text style={[styles.infoCaptionOrange, { color: colors.accentOrange }]}>{captionOrange}</Text>}
+        {directions && (
+          <Pressable style={styles.directionsRow}>
+            <Icon name="send" variant="outline" size={16} color={colors.accentOrange} />
+            <Text style={[styles.directionsText, { color: colors.accentOrange }]}>Get Directions</Text>
+          </Pressable>
+        )}
+      </View>
     </View>
-    <View style={styles.infoText}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
-      {caption && <Text style={styles.infoCaption}>{caption}</Text>}
-      {captionOrange && <Text style={styles.infoCaptionOrange}>{captionOrange}</Text>}
-      {directions && (
-        <Pressable style={styles.directionsRow}>
-          <Icon name="send" variant="outline" size={16} color={theme.colors.tertiary} />
-          <Text style={styles.directionsText}>Get Directions</Text>
-        </Pressable>
-      )}
-    </View>
-  </View>
-);
+  );
+};
 
 export const RequestDetailsScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'RequestDetails'>>();
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: colors.background.layout }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + theme.spacing.lg }]}
       >
         <View style={styles.headerRow}>
-          <IconButton type="back" accessibilityLabel="Go back" onPress={() => navigation.goBack()} size={40} />
-          <Text style={styles.headerTitle}>Request Details</Text>
+          <IconButton type="back" bg={colors.accentPrimary} accessibilityLabel="Go back" onPress={() => navigation.goBack()} size={40} />
+          <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Request Details</Text>
           <View style={{ width: 40 }} />
         </View>
 
         <Spacer size="lg" />
 
         {/* Confirmation card with category footer bar */}
-        <View style={styles.receivedCard}>
+        <View style={[styles.receivedCard, { backgroundColor: colors.background.base }]}>
           <View style={styles.receivedBody}>
-            <Text style={styles.receivedTitle}>Request Received</Text>
-            <Text style={styles.receivedText}>
+            <Text style={[styles.receivedTitle, { color: colors.text.primary }]}>Request Received</Text>
+            <Text style={[styles.receivedText, { color: colors.text.secondary }]}>
               We are working on connecting you with the right care.
             </Text>
           </View>
-          <View style={styles.receivedFooter}>
-            <Text style={styles.receivedFooterText}>Caregiver</Text>
+          <View style={[styles.receivedFooter, { backgroundColor: colors.accentPrimary }]}>
+            <Text style={[styles.receivedFooterText, { color: colors.textInverse }]}>Caregiver</Text>
           </View>
         </View>
 
         <Spacer size="xxl" />
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Active Requests</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Active Requests</Text>
           <Pressable style={styles.editRow}>
-            <Text style={styles.editText}>Edit</Text>
-            <Icon name="navigationRight" variant="outline" size={20} color={theme.colors.primary} />
+            <Text style={[styles.editText, { color: colors.accentPrimary }]}>Edit</Text>
+            <Icon name="navigationRight" variant="outline" size={20} color={colors.accentPrimary} />
           </Pressable>
         </View>
         <Spacer size="lg" />
@@ -104,27 +109,32 @@ export const RequestDetailsScreen: React.FC = () => {
         <InfoRow icon="time" label="Submitted" value="10:02 AM" />
 
         <Spacer size="xl" />
-        <Text style={styles.sectionTitle}>Request Timeline</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Request Timeline</Text>
         <Spacer size="lg" />
 
         <View>
           {TIMELINE.map((item, index) => (
             <View key={item.title} style={styles.timelineRow}>
               <View style={styles.timelineLeft}>
-                <View style={[styles.timelineDot, item.done && styles.timelineDotDone]}>
+                <View
+                  style={[
+                    styles.timelineDot,
+                    { backgroundColor: item.done ? colors.accentOrange : colors.border.hairline },
+                  ]}
+                >
                   {item.done ? (
                     <Svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                       <Path d="M4 12l5 5L20 6" stroke="#FFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                     </Svg>
                   ) : (
-                    <Icon name="time" variant="outline" size={16} color={theme.colors.primary} />
+                    <Icon name="time" variant="outline" size={16} color={colors.accentPrimary} />
                   )}
                 </View>
-                {index < TIMELINE.length - 1 && <View style={styles.timelineLine} />}
+                {index < TIMELINE.length - 1 && <View style={[styles.timelineLine, { backgroundColor: colors.border.hairline }]} />}
               </View>
               <View style={styles.timelineText}>
-                <Text style={styles.timelineTitle}>{item.title}</Text>
-                {item.caption && <Text style={styles.timelineCaption}>{item.caption}</Text>}
+                <Text style={[styles.timelineTitle, { color: colors.text.primary }]}>{item.title}</Text>
+                {item.caption && <Text style={[styles.timelineCaption, { color: colors.text.tertiary }]}>{item.caption}</Text>}
               </View>
             </View>
           ))}

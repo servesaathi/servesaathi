@@ -8,6 +8,7 @@ import { PrimaryButton } from '@/components/buttons';
 import { TextInput, Checkbox } from '@/components/inputs';
 import { responsiveFontSize } from '@/utils/responsive';
 import { digitsOnly, isValidName } from '@/utils/validation';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 // "Payment method" / "Payment 1a" (Figma 1248:44424 / 1248:44451).
 const PAYMENT_METHODS = [
@@ -37,6 +38,7 @@ const isValidExpiry = (value: string): boolean => {
 
 export const PaymentMethodScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'PaymentMethod'>>();
+  const colors = useThemeColors();
   const [method, setMethod] = useState('card');
   const [cardNumber, setCardNumber] = useState('');
   const [cardholderName, setCardholderName] = useState('');
@@ -67,12 +69,12 @@ export const PaymentMethodScreen: React.FC = () => {
   };
 
   return (
-    <Screen scrollable statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
+    <Screen scrollable statusBarBg={colors.background.layout}>
       <Header title="Payment method" leftIcon="back" transparent />
 
       <View style={styles.content}>
         <Spacer size="md" />
-        <Text style={styles.sectionLabel}>Select Payment</Text>
+        <Text style={[styles.sectionLabel, { color: colors.text.primary }]}>Select Payment</Text>
         <View style={styles.methods}>
           {PAYMENT_METHODS.map((item) => {
             const selected = method === item.id;
@@ -80,11 +82,16 @@ export const PaymentMethodScreen: React.FC = () => {
               <Pressable
                 key={item.id}
                 onPress={() => setMethod(item.id)}
-                style={[styles.methodCard, selected ? styles.methodSelected : styles.methodUnselected]}
+                style={[
+                  styles.methodCard,
+                  selected
+                    ? { backgroundColor: colors.background.orange, borderColor: colors.accentOrange }
+                    : { backgroundColor: colors.background.base, borderColor: colors.border.card },
+                ]}
               >
                 <View style={styles.methodInfo}>
-                  <Text style={styles.methodTitle}>{item.title}</Text>
-                  <Text style={styles.methodSubtitle}>{item.subtitle}</Text>
+                  <Text style={[styles.methodTitle, { color: colors.text.primary }]}>{item.title}</Text>
+                  <Text style={[styles.methodSubtitle, { color: colors.text.muted }]}>{item.subtitle}</Text>
                 </View>
                 <Checkbox checked={selected} color="orange" onPress={() => setMethod(item.id)} />
               </Pressable>
@@ -136,7 +143,7 @@ export const PaymentMethodScreen: React.FC = () => {
 
             <Pressable style={styles.checkRow} onPress={() => setSaveCard((v) => !v)}>
               <Checkbox checked={saveCard} onPress={() => setSaveCard((v) => !v)} color="orange" />
-              <Text style={styles.checkText}>This card will be saved to your account.</Text>
+              <Text style={[styles.checkText, { color: colors.text.primary }]}>This card will be saved to your account.</Text>
             </Pressable>
           </>
         )}

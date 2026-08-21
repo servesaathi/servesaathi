@@ -9,6 +9,7 @@ import { PasswordInput } from '@/components/inputs';
 import { responsiveFontSize } from '@/utils/responsive';
 import { isValidPassword, MIN_PASSWORD_LENGTH } from '@/utils/validation';
 import { authService, getErrorMessage } from '@/api';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 // "New Password" (Figma 1257:24462) — final reset-password step. `token` is the OTP code
 // collected on the previous screen; there's no separate verify call, it's sent together
@@ -17,6 +18,7 @@ export const NewPasswordScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'NewPassword'>>();
   const route = useRoute<RootRouteProp<'NewPassword'>>();
   const { token } = route.params;
+  const colors = useThemeColors();
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -48,8 +50,7 @@ export const NewPasswordScreen: React.FC = () => {
   return (
     <Screen
       scrollable
-      statusBarBg={theme.colors.background.layout}
-      statusBarStyle="dark-content"
+      statusBarBg={colors.background.layout}
       contentContainerStyle={styles.screenContent}
     >
       <Header leftIcon="back" showLogo transparent />
@@ -57,9 +58,9 @@ export const NewPasswordScreen: React.FC = () => {
       <View style={styles.content}>
         <View style={styles.formSection}>
           <Spacer size="xl" />
-          <Text style={styles.title}>Create new password</Text>
+          <Text style={[styles.title, { color: colors.text.primary }]}>Create new password</Text>
           <Spacer size="lg" />
-          <Text style={styles.subtitle}>
+          <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
             Enter your new password below to complete the reset process.
           </Text>
           <Spacer size="xl" />

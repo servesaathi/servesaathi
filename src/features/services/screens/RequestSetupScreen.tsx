@@ -12,6 +12,7 @@ import { StatusChip, FavoriteButton, DateCard, TimeCard } from '@/components/car
 import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
 import { getOrganization } from '../data';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 // "Request Set up" (Figma 1256:24696) — connect-method, schedule and reminder form.
 
@@ -41,8 +42,8 @@ const BackArrow = () => (
   </Svg>
 );
 
-const CheckBadge = () => (
-  <Svg width="16" height="16" viewBox="0 0 24 24" fill={theme.colors.primary}>
+const CheckBadge = ({ color }: { color: string }) => (
+  <Svg width="16" height="16" viewBox="0 0 24 24" fill={color}>
     <Path d="M12 1l2.4 2.1 3.1-.5 1.1 3 3 1.1-.5 3.1L23 12l-2.1 2.4.5 3.1-3 1.1-1.1 3-3.1-.5L12 23l-2.4-2.1-3.1.5-1.1-3-3-1.1.5-3.1L1 12l2.1-2.4-.5-3.1 3-1.1 1.1-3 3.1.5L12 1z" />
     <Path d="M8 12l3 3 5-6" stroke="#FFF" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
@@ -53,6 +54,7 @@ export const RequestSetupScreen: React.FC = () => {
   const route = useRoute<RootRouteProp<'RequestSetup'>>();
   const org = getOrganization(route.params?.orgId ?? 'agewell');
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
 
   const [fav, setFav] = useState(false);
   const [method, setMethod] = useState<string | null>(null);
@@ -70,32 +72,32 @@ export const RequestSetupScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: colors.background.layout }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + theme.spacing.lg }]}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.headerRow}>
-          <IconButton type="back" accessibilityLabel="Go back" onPress={() => navigation.goBack()} size={40} />
-          <Text style={styles.headerTitle}>Request</Text>
+          <IconButton type="back" bg={colors.accentPrimary} accessibilityLabel="Go back" onPress={() => navigation.goBack()} size={40} />
+          <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Request</Text>
           <View style={{ width: 40 }} />
         </View>
 
         <Spacer size="lg" />
-        <StatusChip label="Verified Partner" variant="softGreen" icon={<CheckBadge />} style={styles.verifiedChip} />
+        <StatusChip label="Verified Partner" variant="softGreen" icon={<CheckBadge color={colors.accentPrimary} />} style={styles.verifiedChip} />
         <Spacer size="md" />
         <View style={styles.nameRow}>
-          <Text style={styles.orgName}>{org.name}</Text>
+          <Text style={[styles.orgName, { color: colors.text.primary }]}>{org.name}</Text>
           <FavoriteButton active={fav} onPress={() => setFav((v) => !v)} />
         </View>
 
         <Spacer size="lg" />
-        <Text style={styles.sectionTitle}>Complete Your Request</Text>
-        <Text style={styles.subtitle}>Choose how you’d like to connect</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Complete Your Request</Text>
+        <Text style={[styles.subtitle, { color: colors.text.secondary }]}>Choose how you’d like to connect</Text>
 
         <Spacer size="lg" />
-        <Text style={styles.groupLabel}>How would you like to proceed?</Text>
+        <Text style={[styles.groupLabel, { color: colors.text.primary }]}>How would you like to proceed?</Text>
         <View style={styles.chipCol}>
           {METHODS.map((m) => (
             <SelectableChip
@@ -110,10 +112,10 @@ export const RequestSetupScreen: React.FC = () => {
 
         <Spacer size="lg" />
         <View style={styles.scheduleHeader}>
-          <Text style={styles.groupLabel}>Schedule</Text>
+          <Text style={[styles.groupLabel, { color: colors.text.primary }]}>Schedule</Text>
           <Pressable style={styles.monthRow}>
-            <Text style={styles.monthText}>April</Text>
-            <Icon name="navigationRight" variant="outline" size={20} color={theme.colors.primary} />
+            <Text style={[styles.monthText, { color: colors.accentPrimary }]}>April</Text>
+            <Icon name="navigationRight" variant="outline" size={20} color={colors.accentPrimary} />
           </Pressable>
         </View>
         <Spacer size="sm" />
@@ -155,16 +157,16 @@ export const RequestSetupScreen: React.FC = () => {
 
         <Spacer size="xl" />
         <View style={styles.reminderRow}>
-          <Text style={styles.groupLabel}>Set up a reminder</Text>
+          <Text style={[styles.groupLabel, { color: colors.text.primary }]}>Set up a reminder</Text>
           <ToggleSwitch value={reminder} onValueChange={setReminder} color="orange" />
         </View>
         <Spacer size="md" />
         <View style={styles.reminderPickRow}>
-          <Text style={styles.reminderLabel}>Reminder</Text>
-          <Pressable style={styles.dropdown}>
-            <Text style={styles.dropdownText}>Before 1 hour</Text>
+          <Text style={[styles.reminderLabel, { color: colors.text.strong }]}>Reminder</Text>
+          <Pressable style={[styles.dropdown, { backgroundColor: colors.background.base, borderColor: colors.border.card }]}>
+            <Text style={[styles.dropdownText, { color: colors.text.strong }]}>Before 1 hour</Text>
             <Svg width="12" height="7" viewBox="0 0 12 7" fill="none">
-              <Path d="M1 1l5 5 5-5" stroke={theme.colors.neutral[700]} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <Path d="M1 1l5 5 5-5" stroke={colors.text.secondary} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </Svg>
           </Pressable>
         </View>

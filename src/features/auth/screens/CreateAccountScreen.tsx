@@ -12,11 +12,13 @@ import { isValidName, isValidEmail, isValidPassword, MIN_PASSWORD_LENGTH } from 
 import { authService, getErrorMessage } from '@/api';
 import { useAuthStore } from '@/store/auth.store';
 import { useUserStore } from '@/store/user.store';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 type Touched = Partial<Record<'firstName' | 'lastName' | 'email' | 'password' | 'confirmPassword', boolean>>;
 
 export const CreateAccountScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'CreateAccount'>>();
+  const colors = useThemeColors();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -77,8 +79,7 @@ export const CreateAccountScreen: React.FC = () => {
   return (
     <Screen
       scrollable
-      statusBarBg={theme.colors.background.layout}
-      statusBarStyle="dark-content"
+      statusBarBg={colors.background.layout}
       contentContainerStyle={styles.screenContent}
     >
       <Header title="Create Account" leftIcon="back" transparent />
@@ -128,10 +129,10 @@ export const CreateAccountScreen: React.FC = () => {
             error={touched.confirmPassword && confirmPassword.length > 0 ? errors.confirmPassword : undefined}
           />
 
-          <Text style={styles.terms}>
+          <Text style={[styles.terms, { color: colors.text.primary }]}>
             By continuing, you agree to ServeSaathi's{' '}
-            <Text style={styles.termsLink}>Terms &amp; Conditions</Text> and{' '}
-            <Text style={styles.termsLink}>Privacy Policy</Text>.
+            <Text style={[styles.termsLink, { color: colors.accentPrimary }]}>Terms &amp; Conditions</Text> and{' '}
+            <Text style={[styles.termsLink, { color: colors.accentPrimary }]}>Privacy Policy</Text>.
           </Text>
         </View>
 

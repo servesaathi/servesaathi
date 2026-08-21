@@ -8,6 +8,7 @@ import { PrimaryButton } from '@/components/buttons';
 import { OTPInput } from '@/components/inputs';
 import { responsiveFontSize } from '@/utils/responsive';
 import { authService, getErrorMessage } from '@/api';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 const OTP_LENGTH = 4;
 const RESEND_SECONDS = 30;
@@ -36,6 +37,7 @@ export const ResetOtpScreen: React.FC = () => {
   const route = useRoute<RootRouteProp<'ResetOtp'>>();
   const { channel, contact } = route.params;
   const isEmail = channel === 'email';
+  const colors = useThemeColors();
 
   const [otpValue, setOtpValue] = useState('');
   const [resending, setResending] = useState(false);
@@ -79,16 +81,16 @@ export const ResetOtpScreen: React.FC = () => {
   };
 
   return (
-    <Screen statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
+    <Screen statusBarBg={colors.background.layout}>
       <Header leftIcon="back" transparent />
 
       <View style={styles.content}>
         <Spacer size="xxl" />
 
-        <Text style={styles.title}>OTP code verification</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, { color: colors.text.primary }]}>OTP code verification</Text>
+        <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
           The OTP has been sent to your verified {isEmail ? 'email' : 'mobile'}{' '}
-          <Text style={styles.highlight}>{isEmail ? maskEmail(contact) : maskPhone(contact)}</Text>
+          <Text style={[styles.highlight, { color: colors.text.primary }]}>{isEmail ? maskEmail(contact) : maskPhone(contact)}</Text>
           . Enter the OTP code below to verify.
         </Text>
 
@@ -115,14 +117,14 @@ export const ResetOtpScreen: React.FC = () => {
         <Spacer size="lg" />
 
         {resendIn > 0 ? (
-          <Text style={styles.resendText}>
+          <Text style={[styles.resendText, { color: colors.text.secondary }]}>
             Didn't receive OTP?{' '}
-            <Text style={styles.resendTimer}>Resend in 00:{String(resendIn).padStart(2, '0')}</Text>
+            <Text style={[styles.resendTimer, { color: colors.text.primary }]}>Resend in 00:{String(resendIn).padStart(2, '0')}</Text>
           </Text>
         ) : (
-          <Text style={styles.resendText}>
+          <Text style={[styles.resendText, { color: colors.text.secondary }]}>
             Didn't receive OTP?{' '}
-            <Text style={styles.resendLink} onPress={handleResend}>
+            <Text style={[styles.resendLink, { color: colors.accentPrimary }]} onPress={handleResend}>
               {resending ? 'Sending…' : 'Resend'}
             </Text>
           </Text>

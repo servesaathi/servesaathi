@@ -2,6 +2,8 @@ import React from 'react';
 import { StyleSheet, Text, View, StyleProp, ViewStyle } from 'react-native';
 import { theme } from '@/theme';
 import { responsiveFontSize } from '@/utils/responsive';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import type { ThemePalette } from '@/theme/palette';
 
 export type StatusChipVariant = 'primary' | 'softOrange' | 'softGreen' | 'rating';
 
@@ -14,12 +16,14 @@ interface StatusChipProps {
   textColor?: string;
 }
 
-const VARIANT_STYLES: Record<StatusChipVariant, { bg: string; text: string }> = {
-  primary: { bg: theme.colors.forestGreen[500], text: '#FFFFFF' },
+// Computed per-render (not a module constant) so it reacts to dark mode/high
+// contrast via colors.
+const variantStyles = (colors: ThemePalette): Record<StatusChipVariant, { bg: string; text: string }> => ({
+  primary: { bg: colors.accentPrimary, text: colors.textInverse },
   softOrange: { bg: theme.colors.vividOrange[100], text: theme.colors.vividOrange[700] },
-  softGreen: { bg: theme.colors.background.layout, text: theme.colors.forestGreen[700] },
-  rating: { bg: theme.colors.background.orange, text: theme.colors.vividOrange[600] },
-};
+  softGreen: { bg: colors.background.layout, text: colors.accentPrimary },
+  rating: { bg: colors.background.orange, text: colors.accentOrange },
+});
 
 // "Pop-over Chip" from Figma Card Views (node 103:288) — small status pill used across
 // event/organization/profile cards (e.g. price, "Verified", "Due Soon", rating).
@@ -31,7 +35,8 @@ export const StatusChip: React.FC<StatusChipProps> = ({
   bgColor,
   textColor,
 }) => {
-  const { bg, text } = VARIANT_STYLES[variant];
+  const colors = useThemeColors();
+  const { bg, text } = variantStyles(colors)[variant];
 
   return (
     <View style={[styles.chip, { backgroundColor: bgColor ?? bg }, style]}>

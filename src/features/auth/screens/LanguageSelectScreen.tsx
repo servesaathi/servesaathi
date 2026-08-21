@@ -11,22 +11,25 @@ import { scale, responsiveFontSize } from '@/utils/responsive';
 import { RootNavigationProp } from '@/navigation/types';
 import { useAppStore } from '@/store/app.store';
 import { useTranslation } from '@/utils/localization';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 export const LanguageSelectScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'LanguageSelect'>>();
   const { language, setLanguage } = useAppStore();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
 
   const handleGetStarted = () => {
     navigation.navigate('Onboarding');
   };
 
   return (
-    <Screen safeAreaBottom={false} statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
+    <Screen safeAreaBottom={false} statusBarBg={colors.background.layout}>
       <View
         style={[
           styles.container,
+          { backgroundColor: colors.background.layout },
           {
             // Adaptive (insets.top + 118, Figma's 162px offset minus its 44px status
             // bar) but never less than 150 — on short-status-bar devices the illustrator
@@ -44,8 +47,8 @@ export const LanguageSelectScreen: React.FC = () => {
 
           {/* Mirrors Figma's "Text" auto-layout frame (gap-16) */}
           <View style={styles.textBlock}>
-            <Text style={styles.title}>{t('selectLanguage')}</Text>
-            <Text style={styles.subtitle}>
+            <Text style={[styles.title, { color: colors.text.primary }]}>{t('selectLanguage')}</Text>
+            <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
               {t('selectLanguageSubtitle')}
             </Text>
           </View>
@@ -57,10 +60,12 @@ export const LanguageSelectScreen: React.FC = () => {
               onPress={() => setLanguage('en')}
               style={[
                 styles.card,
-                language === 'en' ? styles.activeCard : styles.inactiveCard,
+                language === 'en'
+                  ? { borderColor: colors.accentOrange, backgroundColor: colors.background.orange }
+                  : { borderColor: colors.border.card, backgroundColor: colors.background.base },
               ]}
             >
-              <Text style={styles.cardText}>English</Text>
+              <Text style={[styles.cardText, { color: colors.text.primary }]}>English</Text>
               <Checkbox checked={language === 'en'} color="orange" onPress={() => setLanguage('en')} />
             </Pressable>
 
@@ -69,10 +74,12 @@ export const LanguageSelectScreen: React.FC = () => {
               onPress={() => setLanguage('hi')}
               style={[
                 styles.card,
-                language === 'hi' ? styles.activeCard : styles.inactiveCard,
+                language === 'hi'
+                  ? { borderColor: colors.accentOrange, backgroundColor: colors.background.orange }
+                  : { borderColor: colors.border.card, backgroundColor: colors.background.base },
               ]}
             >
-              <Text style={styles.cardText}>हिंदी</Text>
+              <Text style={[styles.cardText, { color: colors.text.primary }]}>हिंदी</Text>
               <Checkbox checked={language === 'hi'} color="orange" onPress={() => setLanguage('hi')} />
             </Pressable>
           </View>

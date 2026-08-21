@@ -6,15 +6,18 @@ import * as ExpoSplashScreen from 'expo-splash-screen';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '@/theme';
 import SplashLogo from '../../../../assets/logos/serve-saathi-splash-lockup-white.svg';
+import SplashLogoHighContrast from '../../../../assets/primary_logo_for_dark_theme.svg';
 import { responsiveFontSize } from '@/utils/responsive';
 import { RootNavigationProp } from '@/navigation/types';
 import { useTranslation } from '@/utils/localization';
+import { useAccessibilityStore } from '@/store/accessibility.store';
 
 const SPLASH_DISPLAY_MS = 3200;
 
 export const SplashScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'Splash'>>();
   const { t } = useTranslation();
+  const highContrast = useAccessibilityStore((s) => s.highContrast);
 
   // Load "Atkinson Hyperlegible Next" — the exact family used in the Figma design
   const [fontsLoaded] = useFonts({
@@ -69,11 +72,16 @@ export const SplashScreen: React.FC = () => {
       />
 
       <View style={styles.centerContent}>
-        {/* Figma "Logo" (1247:24287) — the full icon + script wordmark lockup,
-            not just the wordmark (LogoSvg's asset). Natural aspect ratio
-            264×225.279, exported straight from Figma since no existing asset
-            has this taller stacked lockup. */}
-        <SplashLogo width={264} height={225.279} />
+        {/* Figma splash node 1247:24283 uses the tall icon+wordmark lockup
+            (264×225.279); its high-contrast counterpart (1513:106262) keeps
+            the exact same gradient/background but swaps back to the shorter
+            wordmark-only mark — recolored near-white + orange for the dark
+            surface, per the primary_logo_for_dark_theme.svg asset. */}
+        {highContrast ? (
+          <SplashLogoHighContrast width={264} height={264 * (53 / 200)} />
+        ) : (
+          <SplashLogo width={264} height={225.279} />
+        )}
 
         {/* Slogan */}
         <Text style={[styles.subtitle, { fontFamily: subtitleFontFamily }]}>

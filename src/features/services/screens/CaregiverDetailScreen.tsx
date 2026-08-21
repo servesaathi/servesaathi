@@ -11,6 +11,7 @@ import { StatusChip, FavoriteButton } from '@/components/cards';
 import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
 import { getOrganization } from '../data';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 // "Caregivers - About / Reviews" (Figma 1256:24506 / 1256:24595).
 
@@ -58,14 +59,14 @@ const REVIEWS = [
   },
 ];
 
-const Star = ({ filled }: { filled: boolean }) => (
-  <Svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? '#E7A500' : theme.colors.neutral[200]}>
+const Star = ({ filled, mutedColor }: { filled: boolean; mutedColor: string }) => (
+  <Svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? '#E7A500' : mutedColor}>
     <Path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17l-6.1 3.6 1.4-6.8L2.2 9.1l6.9-.8L12 2z" />
   </Svg>
 );
 
-const CheckBadge = () => (
-  <Svg width="16" height="16" viewBox="0 0 24 24" fill={theme.colors.primary}>
+const CheckBadge = ({ color }: { color: string }) => (
+  <Svg width="16" height="16" viewBox="0 0 24 24" fill={color}>
     <Path d="M12 1l2.4 2.1 3.1-.5 1.1 3 3 1.1-.5 3.1L23 12l-2.1 2.4.5 3.1-3 1.1-1.1 3-3.1-.5L12 23l-2.4-2.1-3.1.5-1.1-3-3-1.1.5-3.1L1 12l2.1-2.4-.5-3.1 3-1.1 1.1-3 3.1.5L12 1z" />
     <Path d="M8 12l3 3 5-6" stroke="#FFF" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
@@ -76,24 +77,25 @@ export const CaregiverDetailScreen: React.FC = () => {
   const route = useRoute<RootRouteProp<'CaregiverDetail'>>();
   const org = getOrganization(route.params?.orgId ?? 'agewell');
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
   const [tab, setTab] = useState(0); // 0 About, 1 Review
   const [fav, setFav] = useState(false);
 
   const Pill = ({ text, half }: { text: string; half?: boolean }) => (
-    <View style={[styles.pill, half && styles.pillHalf]}>
-      <Text style={styles.pillText}>{text}</Text>
+    <View style={[styles.pill, { backgroundColor: colors.background.base }, half && styles.pillHalf]}>
+      <Text style={[styles.pillText, { color: colors.text.tertiary }]}>{text}</Text>
     </View>
   );
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: colors.background.layout }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + theme.spacing.lg }]}
       >
         <View style={styles.headerRow}>
-          <IconButton type="back" accessibilityLabel="Go back" onPress={() => navigation.goBack()} size={40} />
-          <Text style={styles.headerTitle}>Caregiver</Text>
+          <IconButton type="back" bg={colors.accentPrimary} accessibilityLabel="Go back" onPress={() => navigation.goBack()} size={40} />
+          <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Caregiver</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -104,7 +106,7 @@ export const CaregiverDetailScreen: React.FC = () => {
           {org.image ? (
             <Image source={org.image} style={styles.hero} resizeMode="cover" />
           ) : (
-            <View style={[styles.hero, { backgroundColor: theme.colors.neutral[200] }]} />
+            <View style={[styles.hero, { backgroundColor: colors.border.hairline }]} />
           )}
         </View>
 
@@ -113,43 +115,43 @@ export const CaregiverDetailScreen: React.FC = () => {
           <StatusChip
             label="Verified Partner"
             variant="softGreen"
-            icon={<CheckBadge />}
+            icon={<CheckBadge color={colors.accentPrimary} />}
             style={styles.verifiedChip}
           />
 
           <Spacer size="md" />
           <View style={styles.nameRow}>
-            <Text style={styles.orgName}>{org.name}</Text>
+            <Text style={[styles.orgName, { color: colors.text.primary }]}>{org.name}</Text>
             <FavoriteButton active={fav} onPress={() => setFav((v) => !v)} />
           </View>
 
           <Spacer size="sm" />
-          <Text style={styles.address}>
+          <Text style={[styles.address, { color: colors.text.secondary }]}>
             Second Floor, M8A, Vinoba Puri, Block M, Part II, Lajpat Nagar, New Delhi, Delhi 110024, India
           </Text>
 
           <Spacer size="sm" />
           <Pressable style={styles.directionsRow}>
-            <Icon name="send" variant="outline" size={18} color={theme.colors.tertiary} />
-            <Text style={styles.directionsText}>Get Directions</Text>
+            <Icon name="send" variant="outline" size={18} color={colors.accentOrange} />
+            <Text style={[styles.directionsText, { color: colors.accentOrange }]}>Get Directions</Text>
           </Pressable>
 
           <Spacer size="lg" />
           {/* Stats */}
-          <View style={styles.statsRow}>
+          <View style={[styles.statsRow, { backgroundColor: colors.background.base }]}>
             <View style={styles.statCell}>
-              <Text style={styles.statValue}>{org.rating ?? '-'}</Text>
-              <Text style={styles.statLabel}>Ratings</Text>
+              <Text style={[styles.statValue, { color: colors.text.primary }]}>{org.rating ?? '-'}</Text>
+              <Text style={[styles.statLabel, { color: colors.text.tertiary }]}>Ratings</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: colors.border.hairline }]} />
             <View style={styles.statCell}>
-              <Text style={styles.statValue}>27+ yrs</Text>
-              <Text style={styles.statLabel}>Experience</Text>
+              <Text style={[styles.statValue, { color: colors.text.primary }]}>27+ yrs</Text>
+              <Text style={[styles.statLabel, { color: colors.text.tertiary }]}>Experience</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: colors.border.hairline }]} />
             <View style={styles.statCell}>
-              <Text style={styles.statValue}>25,000+</Text>
-              <Text style={styles.statLabel}>Visits done</Text>
+              <Text style={[styles.statValue, { color: colors.text.primary }]}>25,000+</Text>
+              <Text style={[styles.statLabel, { color: colors.text.tertiary }]}>Visits done</Text>
             </View>
           </View>
 
@@ -159,83 +161,83 @@ export const CaregiverDetailScreen: React.FC = () => {
 
           {tab === 0 ? (
             <>
-              <Text style={styles.sectionTitle}>About the facility</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>About the facility</Text>
               <Spacer size="sm" />
-              <Text style={styles.bodyText}>{ABOUT_TEXT}</Text>
+              <Text style={[styles.bodyText, { color: colors.text.secondary }]}>{ABOUT_TEXT}</Text>
 
               <Spacer size="lg" />
-              <Text style={styles.keyFacts}>Key facts:</Text>
+              <Text style={[styles.keyFacts, { color: colors.text.primary }]}>Key facts:</Text>
               {KEY_FACTS.map((fact) => (
                 <View key={fact} style={styles.bulletRow}>
-                  <Text style={styles.bullet}>•</Text>
-                  <Text style={styles.bodyText}>{fact}</Text>
+                  <Text style={[styles.bullet, { color: colors.text.secondary }]}>•</Text>
+                  <Text style={[styles.bodyText, { color: colors.text.secondary }]}>{fact}</Text>
                 </View>
               ))}
 
               <Spacer size="xxl" />
-              <Text style={styles.sectionTitle}>Programs &amp; Initiatives</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Programs &amp; Initiatives</Text>
               <Spacer size="md" />
               <View style={styles.pillCol}>
                 {PROGRAMS.map((p) => <Pill key={p} text={p} />)}
               </View>
 
               <Spacer size="xxl" />
-              <Text style={styles.sectionTitle}>Services Provided</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Services Provided</Text>
               <Spacer size="md" />
               <View style={styles.pillGrid}>
                 {SERVICES_PROVIDED.map((s, i) => <Pill key={`${s}-${i}`} text={s} half />)}
               </View>
 
               <Spacer size="xxl" />
-              <Text style={styles.sectionTitle}>Recognitions &amp; Accreditations</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Recognitions &amp; Accreditations</Text>
               <Spacer size="md" />
               <View style={styles.pillCol}>
                 {RECOGNITIONS.map((r) => <Pill key={r} text={r} />)}
               </View>
 
               <Spacer size="xxl" />
-              <Text style={styles.sectionTitle}>Pricing</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Pricing</Text>
               <Spacer size="md" />
               <Pill text="FREE (government-supported helpline), Training programs subsidized" />
             </>
           ) : (
             <>
-              <Text style={styles.sectionTitle}>Availability this week</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Availability this week</Text>
               <Spacer size="md" />
               {AVAILABILITY.map((slot) => (
                 <View key={slot.day} style={styles.dayRow}>
-                  <Text style={styles.dayName}>{slot.day}</Text>
-                  <Text style={[styles.dayHours, slot.off && styles.dayOff]}>{slot.hours}</Text>
+                  <Text style={[styles.dayName, { color: colors.text.strong }]}>{slot.day}</Text>
+                  <Text style={[styles.dayHours, { color: slot.off ? colors.accentOrange : colors.text.tertiary }]}>{slot.hours}</Text>
                 </View>
               ))}
 
               <Spacer size="xl" />
               <View style={styles.feedbackHeader}>
-                <Text style={styles.sectionTitle}>Recent Feedback</Text>
+                <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Recent Feedback</Text>
                 <Pressable style={styles.viewAll}>
-                  <Text style={styles.viewAllText}>View All</Text>
-                  <Icon name="navigationRight" variant="outline" size={20} color={theme.colors.primary} />
+                  <Text style={[styles.viewAllText, { color: colors.accentPrimary }]}>View All</Text>
+                  <Icon name="navigationRight" variant="outline" size={20} color={colors.accentPrimary} />
                 </Pressable>
               </View>
               <Spacer size="md" />
               {REVIEWS.map((review) => (
-                <View key={review.name} style={styles.reviewCard}>
+                <View key={review.name} style={[styles.reviewCard, { backgroundColor: colors.background.base }]}>
                   <View style={styles.reviewHeader}>
-                    <View style={styles.reviewAvatar}>
-                      <Icon name="profile" variant="outline" size={20} color={theme.colors.primary} />
+                    <View style={[styles.reviewAvatar, { backgroundColor: colors.border.hairline }]}>
+                      <Icon name="profile" variant="outline" size={20} color={colors.accentPrimary} />
                     </View>
                     <View style={styles.reviewHeadText}>
-                      <Text style={styles.reviewName}>{review.name}</Text>
+                      <Text style={[styles.reviewName, { color: colors.text.primary }]}>{review.name}</Text>
                       <View style={styles.starsRow}>
                         {Array.from({ length: 5 }).map((_, i) => (
-                          <Star key={i} filled={i < review.stars} />
+                          <Star key={i} filled={i < review.stars} mutedColor={colors.border.card} />
                         ))}
                       </View>
                     </View>
-                    <Text style={styles.reviewDate}>{review.date}</Text>
+                    <Text style={[styles.reviewDate, { color: colors.text.tertiary }]}>{review.date}</Text>
                   </View>
                   <Spacer size="sm" />
-                  <Text style={styles.bodyText}>{review.text}</Text>
+                  <Text style={[styles.bodyText, { color: colors.text.secondary }]}>{review.text}</Text>
                 </View>
               ))}
             </>

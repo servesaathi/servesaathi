@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, Pressable, StyleProp, ViewStyle } from 'react-native';
 import { theme } from '@/theme';
 import { responsiveFontSize } from '@/utils/responsive';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface DateCardProps {
   date: string; // e.g. "16"
@@ -13,13 +14,20 @@ interface DateCardProps {
 
 // "Date Card" from Figma Card Views (node 103:288) — date-picker chip for booking flows.
 export const DateCard: React.FC<DateCardProps> = ({ date, week, selected = false, onPress, style }) => {
+  const colors = useThemeColors();
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.card, selected ? styles.selected : styles.unselected, style]}
+      style={[
+        styles.card,
+        selected
+          ? { backgroundColor: colors.background.orange, borderColor: colors.accentOrange }
+          : { backgroundColor: colors.background.base, borderColor: colors.border.card },
+        style,
+      ]}
     >
-      <Text style={[styles.date, selected ? styles.selectedText : styles.unselectedText]}>{date}</Text>
-      <Text style={[styles.week, selected ? styles.selectedText : styles.unselectedText]}>{week}</Text>
+      <Text style={[styles.date, { color: selected ? colors.text.strong : colors.text.muted }]}>{date}</Text>
+      <Text style={[styles.week, { color: selected ? colors.text.strong : colors.text.muted }]}>{week}</Text>
     </Pressable>
   );
 };
@@ -37,20 +45,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.sm,
-  },
-  selected: {
-    backgroundColor: theme.colors.background.orange,
-    borderColor: theme.colors.tertiary,
-  },
-  unselected: {
-    backgroundColor: theme.colors.background.base,
-    borderColor: theme.colors.border.green,
-  },
-  selectedText: {
-    color: theme.colors.neutral[700],
-  },
-  unselectedText: {
-    color: theme.colors.neutral[500],
   },
   date: {
     fontFamily: theme.typography.h3.fontFamily,

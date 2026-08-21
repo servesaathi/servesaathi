@@ -10,13 +10,14 @@ import { PrimaryButton, IconButton } from '@/components/buttons';
 import { SearchInput } from '@/components/inputs';
 import { responsiveFontSize } from '@/utils/responsive';
 import { ORGANIZATIONS, Organization } from '../data';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 // "Comparsion" (Figma 1256:24299) — side-by-side comparison table, horizontally scrollable.
 
 const COL_WIDTH = 150;
 
-const Star = ({ filled }: { filled: boolean }) => (
-  <Svg width="14" height="14" viewBox="0 0 24 24" fill={filled ? '#E7A500' : theme.colors.neutral[200]}>
+const Star = ({ filled, mutedColor }: { filled: boolean; mutedColor: string }) => (
+  <Svg width="14" height="14" viewBox="0 0 24 24" fill={filled ? '#E7A500' : mutedColor}>
     <Path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17l-6.1 3.6 1.4-6.8L2.2 9.1l6.9-.8L12 2z" />
   </Svg>
 );
@@ -25,6 +26,7 @@ export const ComparisonScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'Comparison'>>();
   const route = useRoute<RootRouteProp<'Comparison'>>();
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
   const [search, setSearch] = useState('');
   const [ids, setIds] = useState<string[]>(route.params?.orgIds ?? []);
 
@@ -43,7 +45,13 @@ export const ComparisonScreen: React.FC = () => {
   const cellsRow = (render: (org: Organization) => React.ReactNode, shaded = false) => (
     <View style={styles.row}>
       {orgs.map((org) => (
-        <View key={org.id} style={[styles.cell, shaded && styles.cellShaded]}>
+        <View
+          key={org.id}
+          style={[
+            styles.cell,
+            { borderColor: colors.border.hairline, backgroundColor: shaded ? colors.background.orange : colors.background.base },
+          ]}
+        >
           {render(org)}
         </View>
       ))}
@@ -51,10 +59,10 @@ export const ComparisonScreen: React.FC = () => {
   );
 
   const labelRow = (label: string) =>
-    cellsRow(() => <Text style={styles.rowLabel}>{label}</Text>, true);
+    cellsRow(() => <Text style={[styles.rowLabel, { color: colors.text.primary }]}>{label}</Text>, true);
 
   const sectionHeader = (label: string) => (
-    <View style={[styles.sectionHeader, { width: orgs.length * COL_WIDTH }]}>
+    <View style={[styles.sectionHeader, { backgroundColor: colors.accentOrange, width: orgs.length * COL_WIDTH }]}>
       <Text style={styles.sectionHeaderText}>{label}</Text>
     </View>
   );
@@ -65,24 +73,24 @@ export const ComparisonScreen: React.FC = () => {
       <React.Fragment key={i}>
         {cellsRow((org) => {
           const value = pick(org)[i];
-          return value ? <Text style={styles.rowValue}>{value}</Text> : null;
+          return value ? <Text style={[styles.rowValue, { color: colors.text.secondary }]}>{value}</Text> : null;
         })}
       </React.Fragment>
     ));
   };
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: colors.background.layout }]}>
       <View style={[styles.top, { paddingTop: insets.top + theme.spacing.lg }]}>
         <View style={styles.headerRow}>
-          <IconButton type="back" accessibilityLabel="Go back" onPress={() => navigation.goBack()} size={40} />
-          <Text style={styles.headerTitle}>Caregiver</Text>
+          <IconButton type="back" bg={colors.accentPrimary} accessibilityLabel="Go back" onPress={() => navigation.goBack()} size={40} />
+          <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Caregiver</Text>
           <View style={{ width: 40 }} />
         </View>
         <Spacer size="lg" />
         <SearchInput placeholder="Search caregivers" value={search} onChangeText={setSearch} />
         <Spacer size="lg" />
-        <Text style={styles.pageTitle}>Compare Products</Text>
+        <Text style={[styles.pageTitle, { color: colors.text.primary }]}>Compare Products</Text>
         <Spacer size="md" />
       </View>
 
@@ -96,13 +104,13 @@ export const ComparisonScreen: React.FC = () => {
                   {org.image ? (
                     <Image source={org.image} style={styles.orgLogo} resizeMode="cover" />
                   ) : (
-                    <View style={[styles.orgLogo, { backgroundColor: theme.colors.neutral[200] }]} />
+                    <View style={[styles.orgLogo, { backgroundColor: colors.border.hairline }]} />
                   )}
-                  <Pressable style={styles.removeBtn} onPress={() => removeOrg(org.id)}>
-                    <Text style={styles.removeX}>×</Text>
+                  <Pressable style={[styles.removeBtn, { backgroundColor: colors.background.base, borderColor: colors.accentPrimary }]} onPress={() => removeOrg(org.id)}>
+                    <Text style={[styles.removeX, { color: colors.accentPrimary }]}>×</Text>
                   </Pressable>
                 </View>
-                <Text style={styles.orgName}>{org.name}</Text>
+                <Text style={[styles.orgName, { color: colors.accentPrimary }]}>{org.name}</Text>
                 <PrimaryButton
                   label="See details"
                   size="small"
@@ -113,13 +121,13 @@ export const ComparisonScreen: React.FC = () => {
           </View>
 
           {labelRow('Price')}
-          {cellsRow((org) => <Text style={styles.rowValue}>{org.price}</Text>)}
+          {cellsRow((org) => <Text style={[styles.rowValue, { color: colors.text.secondary }]}>{org.price}</Text>)}
 
           {sectionHeader('Identity & Mission')}
           {labelRow('Founded')}
-          {cellsRow((org) => <Text style={styles.rowValue}>{org.founded}</Text>)}
+          {cellsRow((org) => <Text style={[styles.rowValue, { color: colors.text.secondary }]}>{org.founded}</Text>)}
           {labelRow('Mission')}
-          {cellsRow((org) => <Text style={styles.rowValue}>{org.mission}</Text>)}
+          {cellsRow((org) => <Text style={[styles.rowValue, { color: colors.text.secondary }]}>{org.mission}</Text>)}
 
           {sectionHeader('Ratings and Review')}
           {labelRow('Ratings')}
@@ -127,10 +135,10 @@ export const ComparisonScreen: React.FC = () => {
             <View>
               <View style={styles.starsRow}>
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} filled={org.rating != null && i < Math.round(org.rating)} />
+                  <Star key={i} filled={org.rating != null && i < Math.round(org.rating)} mutedColor={colors.border.card} />
                 ))}
               </View>
-              <Text style={styles.ratingText}>
+              <Text style={[styles.ratingText, { color: colors.accentOrange }]}>
                 {org.rating ?? '-'} ({org.ratingCount})
               </Text>
             </View>

@@ -18,6 +18,7 @@ import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
 import { useUserStore } from '@/store/user.store';
 import { isSpeechRecognitionAvailable, startListening } from '@/services/voice';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import {
   ChatMessage,
   SUPPORT_CHAT_SUGGESTIONS,
@@ -63,6 +64,7 @@ const nextId = () => `msg_${Date.now()}_${idCounter++}`;
 // "Support Chat" (Figma 1376:19257 empty state / 1376:19328 conversation) — a single screen
 // that toggles between the two states; replies are canned mock text until the chat API exists.
 export const SupportChatScreen: React.FC = () => {
+  const colors = useThemeColors();
   const userName = useUserStore((s) => s.profile?.name) ?? 'Kamala';
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
@@ -180,7 +182,7 @@ export const SupportChatScreen: React.FC = () => {
   const hasConversation = messages.length > 0;
 
   return (
-    <Screen statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
+    <Screen statusBarBg={colors.background.layout}>
       <Header title="Support Chat" leftIcon="back" transparent />
 
       {hasConversation ? (
@@ -195,11 +197,18 @@ export const SupportChatScreen: React.FC = () => {
               key={m.id}
               style={[styles.bubbleRow, m.from === 'me' && styles.bubbleRowMe]}
             >
-              <View style={[styles.bubble, m.from === 'me' ? styles.bubbleMe : styles.bubbleBot]}>
+              <View
+                style={[
+                  styles.bubble,
+                  m.from === 'me'
+                    ? { backgroundColor: colors.accentPrimary, borderTopRightRadius: 4 }
+                    : { backgroundColor: colors.background.base, borderTopLeftRadius: 4 },
+                ]}
+              >
                 {m.imageUri ? (
                   <Image source={{ uri: m.imageUri }} style={styles.bubbleImage} />
                 ) : (
-                  <Text style={[styles.bubbleText, m.from === 'me' && styles.bubbleTextMe]}>
+                  <Text style={[styles.bubbleText, { color: m.from === 'me' ? colors.textInverse : colors.text.strong }]}>
                     {m.text}
                   </Text>
                 )}
@@ -209,19 +218,19 @@ export const SupportChatScreen: React.FC = () => {
         </ScrollView>
       ) : (
         <View style={styles.emptyState}>
-          <Text style={styles.greeting}>
-            Hello <Text style={styles.greetingName}>{userName}</Text>
+          <Text style={[styles.greeting, { color: colors.text.secondary }]}>
+            Hello <Text style={[styles.greetingName, { color: colors.accentOrange }]}>{userName}</Text>
           </Text>
-          <Text style={styles.subGreeting}>How can I help you today?</Text>
+          <Text style={[styles.subGreeting, { color: colors.text.secondary }]}>How can I help you today?</Text>
 
           <View style={styles.suggestionList}>
             {SUPPORT_CHAT_SUGGESTIONS.map((question) => (
               <Pressable
                 key={question}
-                style={styles.suggestionChip}
+                style={[styles.suggestionChip, { backgroundColor: colors.background.base }]}
                 onPress={() => sendMessage(question)}
               >
-                <Text style={styles.suggestionText} numberOfLines={2}>
+                <Text style={[styles.suggestionText, { color: colors.text.muted }]} numberOfLines={2}>
                   {question}
                 </Text>
               </Pressable>
@@ -231,13 +240,13 @@ export const SupportChatScreen: React.FC = () => {
       )}
 
       <View style={styles.composerRow}>
-        <View style={styles.messageField}>
+        <View style={[styles.messageField, { backgroundColor: colors.background.base }]}>
           <TextInput
             value={draft}
             onChangeText={setDraft}
             placeholder="Message"
-            placeholderTextColor={theme.colors.neutral[500]}
-            style={styles.messageInput}
+            placeholderTextColor={colors.text.muted}
+            style={[styles.messageInput, { color: colors.text.primary }]}
             onSubmitEditing={() => sendMessage(draft)}
             returnKeyType="send"
           />
@@ -248,7 +257,7 @@ export const SupportChatScreen: React.FC = () => {
               accessibilityRole="button"
               accessibilityLabel="Attach a photo from gallery"
             >
-              <AttachmentIcon size={22} color={theme.colors.neutral[500]} />
+              <AttachmentIcon size={22} color={colors.text.muted} />
             </Pressable>
             <Pressable
               onPress={handleCameraPress}
@@ -256,12 +265,12 @@ export const SupportChatScreen: React.FC = () => {
               accessibilityRole="button"
               accessibilityLabel="Take a photo"
             >
-              <Icon name="camera" variant="outline" size={22} color={theme.colors.neutral[500]} />
+              <Icon name="camera" variant="outline" size={22} color={colors.text.muted} />
             </Pressable>
           </View>
         </View>
         <Pressable
-          style={[styles.micButton, listening && styles.micButtonListening]}
+          style={[styles.micButton, { backgroundColor: colors.accentPrimary }, listening && styles.micButtonListening]}
           onPress={handleComposerButtonPress}
           accessibilityRole="button"
           accessibilityLabel={listening ? 'Stop voice input' : draft.trim() ? 'Send message' : 'Start voice input'}

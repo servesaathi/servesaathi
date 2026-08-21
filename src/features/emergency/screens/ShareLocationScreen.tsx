@@ -9,6 +9,7 @@ import { Icon } from '@/components/icons';
 import { Snackbar } from '@/components/feedback';
 import { responsiveFontSize } from '@/utils/responsive';
 import { SHARE_CONTACTS, MOCK_LOCATION } from '../data';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 type PermissionState = 'checking' | 'granted' | 'denied';
 
@@ -16,6 +17,7 @@ type PermissionState = 'checking' | 'granted' | 'denied';
 // reverse-geocoded like AddressScreen; contacts and the share action itself are mocked
 // until the emergency-share API exists.
 export const ShareLocationScreen: React.FC = () => {
+  const colors = useThemeColors();
   const [permission, setPermission] = useState<PermissionState>('checking');
   const [place, setPlace] = useState(MOCK_LOCATION.place);
   const [address, setAddress] = useState(MOCK_LOCATION.address);
@@ -69,16 +71,16 @@ export const ShareLocationScreen: React.FC = () => {
   };
 
   return (
-    <Screen statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
+    <Screen statusBarBg={colors.background.layout}>
       <Header title="Share Location" leftIcon="back" transparent />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {permission === 'denied' ? (
-          <View style={styles.permissionCard}>
-            <View style={styles.permissionIcon}>
-              <Icon name="placeLocation" variant="outline" size={32} color={theme.colors.tertiary} />
+          <View style={[styles.permissionCard, { backgroundColor: colors.background.base }]}>
+            <View style={[styles.permissionIcon, { backgroundColor: colors.background.orange }]}>
+              <Icon name="placeLocation" variant="outline" size={32} color={colors.accentOrange} />
             </View>
-            <Text style={styles.permissionTitle}>Location access needed</Text>
-            <Text style={styles.permissionBody}>
+            <Text style={[styles.permissionTitle, { color: colors.text.primary }]}>Location access needed</Text>
+            <Text style={[styles.permissionBody, { color: colors.text.muted }]}>
               ServeSaathi needs permission to access your device location so it can be shared with
               your emergency contacts.
             </Text>
@@ -86,18 +88,18 @@ export const ShareLocationScreen: React.FC = () => {
             <SecondaryButton label="Allow Location Access" onPress={requestLocation} />
           </View>
         ) : (
-          <View style={styles.locationCard}>
-            <View style={styles.mapPlaceholder}>
-              <Icon name="placeLocation" variant="filled" size={40} color={theme.colors.tertiary} />
+          <View style={[styles.locationCard, { backgroundColor: colors.background.base }]}>
+            <View style={[styles.mapPlaceholder, { backgroundColor: colors.background.orange }]}>
+              <Icon name="placeLocation" variant="filled" size={40} color={colors.accentOrange} />
             </View>
-            <Text style={styles.place}>{permission === 'checking' ? 'Locating you…' : place}</Text>
-            <Text style={styles.address}>{address}</Text>
+            <Text style={[styles.place, { color: colors.text.muted }]}>{permission === 'checking' ? 'Locating you…' : place}</Text>
+            <Text style={[styles.address, { color: colors.text.muted }]}>{address}</Text>
           </View>
         )}
 
         <Spacer size="xl" />
 
-        <Text style={styles.question}>Whom are you sharing location with?</Text>
+        <Text style={[styles.question, { color: colors.text.primary }]}>Whom are you sharing location with?</Text>
         <Spacer size="sm" />
         <View style={styles.chipList}>
           {SHARE_CONTACTS.map((contact) => (

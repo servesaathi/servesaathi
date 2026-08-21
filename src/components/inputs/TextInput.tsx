@@ -23,6 +23,9 @@ export interface TextInputProps extends RNTextInputProps {
   inputStyle?: StyleProp<TextStyle>;
   prefixIcon?: React.ReactNode;
   suffixIcon?: React.ReactNode;
+  /** Overrides the themed default (colors.text.secondary) — some Figma
+   * frames (e.g. the mobile-number field) specify a brighter placeholder. */
+  placeholderTextColor?: string;
 }
 
 export const TextInput: React.FC<TextInputProps> = ({
@@ -37,6 +40,7 @@ export const TextInput: React.FC<TextInputProps> = ({
   onFocus,
   onBlur,
   secureTextEntry,
+  placeholderTextColor,
   ...props
 }) => {
   const colors = useThemeColors();
@@ -92,7 +96,7 @@ export const TextInput: React.FC<TextInputProps> = ({
       >
         {prefixIcon && <View style={styles.prefixIcon}>{prefixIcon}</View>}
         <RNTextInput
-          placeholderTextColor={colors.text.secondary}
+          placeholderTextColor={placeholderTextColor ?? colors.text.secondary}
           secureTextEntry={secureTextEntry}
           style={[styles.input, { color: colors.text.primary }, inputStyle]}
           onFocus={handleFocus}

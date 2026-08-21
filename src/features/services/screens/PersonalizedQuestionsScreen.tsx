@@ -10,6 +10,7 @@ import { PrimaryButton, SecondaryButton, IconButton } from '@/components/buttons
 import { TextInput, SelectableChip } from '@/components/inputs';
 import { responsiveFontSize } from '@/utils/responsive';
 import { digitsOnly } from '@/utils/validation';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 // "Personalized Question 1–5" (Figma 1256:23745 / 23825 / 23785 / 23864 / 23918) —
 // a 5-step sheet-style questionnaire before showing matching organizations.
@@ -48,6 +49,7 @@ export const PersonalizedQuestionsScreen: React.FC = () => {
   const route = useRoute<RootRouteProp<'PersonalizedQuestions'>>();
   const serviceType = route.params?.serviceType ?? 'Caregiver';
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
 
   const [step, setStep] = useState(0); // 0..4
   const [who, setWho] = useState<string | null>(null);
@@ -91,7 +93,7 @@ export const PersonalizedQuestionsScreen: React.FC = () => {
   };
 
   const Label = ({ text, required }: { text: string; required?: boolean }) => (
-    <Text style={styles.groupLabel}>
+    <Text style={[styles.groupLabel, { color: colors.text.primary }]}>
       {text} {required && <Text style={styles.required}>*</Text>}
     </Text>
   );
@@ -126,12 +128,13 @@ export const PersonalizedQuestionsScreen: React.FC = () => {
 
   return (
     <View style={styles.root}>
-      <View style={[styles.sheet, { paddingTop: insets.top + theme.spacing.xxl }]}>
+      <View style={[styles.sheet, { backgroundColor: colors.background.layout, paddingTop: insets.top + theme.spacing.xxl }]}>
         {/* Sheet header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>{serviceType}</Text>
+          <Text style={[styles.headerTitle, { color: colors.text.primary }]}>{serviceType}</Text>
           <IconButton
             type="close"
+            bg={colors.accentPrimary}
             accessibilityLabel="Close"
             onPress={() => navigation.goBack()}
             size={40}
@@ -144,15 +147,18 @@ export const PersonalizedQuestionsScreen: React.FC = () => {
         <View style={styles.progressRow}>
           <View style={styles.dashes}>
             {Array.from({ length: 5 }).map((_, i) => (
-              <View key={i} style={[styles.dash, i <= step ? styles.dashActive : styles.dashInactive]} />
+              <View
+                key={i}
+                style={[styles.dash, { backgroundColor: i <= step ? colors.accentOrange : colors.accentOrangeMuted }]}
+              />
             ))}
           </View>
-          <Text style={styles.progressText}>{step + 1} of 5</Text>
+          <Text style={[styles.progressText, { color: colors.accentPrimary }]}>{step + 1} of 5</Text>
         </View>
 
         <Spacer size="lg" />
-        <Text style={styles.stepTitle}>{STEP_META[step].title}</Text>
-        <Text style={styles.stepSubtitle}>{STEP_META[step].subtitle}</Text>
+        <Text style={[styles.stepTitle, { color: colors.text.primary }]}>{STEP_META[step].title}</Text>
+        <Text style={[styles.stepSubtitle, { color: colors.text.secondary }]}>{STEP_META[step].subtitle}</Text>
         <Spacer size="lg" />
 
         <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={styles.body}>

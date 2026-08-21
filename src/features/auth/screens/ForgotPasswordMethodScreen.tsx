@@ -7,12 +7,14 @@ import { Screen, Spacer, Header } from '@/components/layouts';
 import { PrimaryButton } from '@/components/buttons';
 import { Checkbox } from '@/components/inputs';
 import { responsiveFontSize } from '@/utils/responsive';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 type Channel = 'sms' | 'email';
 
 // "Enter Email" / Reset method select (Figma 1257:23864) — choose how to receive the reset code.
 export const ForgotPasswordMethodScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'ForgotPasswordMethod'>>();
+  const colors = useThemeColors();
   const [channel, setChannel] = useState<Channel>('email');
 
   const options: { id: Channel; label: string }[] = [
@@ -25,14 +27,14 @@ export const ForgotPasswordMethodScreen: React.FC = () => {
   };
 
   return (
-    <Screen statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
+    <Screen statusBarBg={colors.background.layout}>
       <Header leftIcon="back" showLogo transparent />
 
       <View style={styles.content}>
         <Spacer size="xxl" />
-        <Text style={styles.title}>Reset your Password</Text>
+        <Text style={[styles.title, { color: colors.text.primary }]}>Reset your Password</Text>
         <Spacer size="lg" />
-        <Text style={styles.subtitle}>
+        <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
           Please select the following options to reset your password.
         </Text>
         <Spacer size="xl" />
@@ -44,9 +46,14 @@ export const ForgotPasswordMethodScreen: React.FC = () => {
               <Pressable
                 key={option.id}
                 onPress={() => setChannel(option.id)}
-                style={[styles.card, isActive ? styles.activeCard : styles.inactiveCard]}
+                style={[
+                  styles.card,
+                  isActive
+                    ? { borderColor: colors.accentOrange, backgroundColor: colors.background.orange }
+                    : { borderColor: colors.border.card, backgroundColor: colors.background.base },
+                ]}
               >
-                <Text style={styles.cardText}>{option.label}</Text>
+                <Text style={[styles.cardText, { color: colors.text.secondary }]}>{option.label}</Text>
                 <Checkbox checked={isActive} onPress={() => setChannel(option.id)} color="orange" />
               </Pressable>
             );

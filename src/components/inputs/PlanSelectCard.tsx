@@ -4,6 +4,7 @@ import { theme } from '@/theme';
 import { responsiveFontSize } from '@/utils/responsive';
 import { RadioButton } from './RadioButton';
 import { Icon } from '@/components/icons';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface PlanSelectCardProps {
   label: string;
@@ -24,16 +25,23 @@ export const PlanSelectCard: React.FC<PlanSelectCardProps> = ({
   onSeeBenefitsPress,
   style,
 }) => {
-  const linkColor = selected ? theme.colors.vividOrange[700] : theme.colors.primary;
+  const colors = useThemeColors();
+  const linkColor = selected ? colors.accentOrange : colors.accentPrimary;
 
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.card, selected ? styles.selected : styles.unselected, style]}
+      style={[
+        styles.card,
+        selected
+          ? { backgroundColor: colors.background.orange, borderColor: colors.accentOrange }
+          : { backgroundColor: colors.background.base, borderColor: colors.border.card },
+        style,
+      ]}
     >
       <View style={styles.info}>
-        <Text style={styles.label}>{label}</Text>
-        <Text style={styles.price}>{price}</Text>
+        <Text style={[styles.label, { color: colors.text.muted }]}>{label}</Text>
+        <Text style={[styles.price, { color: colors.text.secondary }]}>{price}</Text>
         <Pressable onPress={onSeeBenefitsPress} style={styles.benefitsRow}>
           <Text style={[styles.benefitsText, { color: linkColor }]}>See Benefits</Text>
           <Icon name="navigationRight" variant="outline" size={24} color={linkColor} />
@@ -54,26 +62,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.xxl,
     paddingVertical: theme.spacing.md,
   },
-  selected: {
-    backgroundColor: theme.colors.background.orange,
-    borderColor: theme.colors.tertiary,
-  },
-  unselected: {
-    backgroundColor: theme.colors.background.base,
-    borderColor: theme.colors.border.green,
-  },
   info: {
     gap: theme.spacing.xs,
   },
   label: {
     fontFamily: theme.typography.bodyLarge.fontFamily,
     fontSize: responsiveFontSize(theme.typography.bodyLarge.fontSize),
-    color: theme.colors.neutral[500],
   },
   price: {
     fontFamily: theme.typography.h2.fontFamily,
     fontSize: responsiveFontSize(theme.typography.h2.fontSize),
-    color: theme.colors.neutral[700],
   },
   benefitsRow: {
     flexDirection: 'row',

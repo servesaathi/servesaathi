@@ -9,13 +9,18 @@ import { TextInput, PasswordInput } from '@/components/inputs';
 import { responsiveFontSize } from '@/utils/responsive';
 import { isValidEmail } from '@/utils/validation';
 import { BrandLogoSVG } from '@/components/BrandLogoSVG';
+import DarkThemeLogo from '../../../../assets/primary_logo_for_dark_theme.svg';
 import { authService, getErrorMessage } from '@/api';
 import { useAuthStore } from '@/store/auth.store';
 import { useUserStore } from '@/store/user.store';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { useAccessibilityStore } from '@/store/accessibility.store';
 
 // "Enter Email" (Figma 1248:47008 / 1248:47021) — email/password login for existing users.
 export const EnterEmailScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'EnterEmail'>>();
+  const colors = useThemeColors();
+  const highContrast = useAccessibilityStore((s) => s.highContrast);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailTouched, setEmailTouched] = useState(false);
@@ -50,13 +55,17 @@ export const EnterEmailScreen: React.FC = () => {
   };
 
   return (
-    <Screen scrollable statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
+    <Screen scrollable statusBarBg={colors.background.layout}>
       <Header title="Log in" leftIcon="back" transparent />
 
       <View style={styles.content}>
         <View style={styles.branding}>
-          <Text style={styles.welcomeText}>Welcome to</Text>
-          <BrandLogoSVG width={240} height={64} style={styles.logoSvg} />
+          <Text style={[styles.welcomeText, { color: colors.accentPrimary }]}>Welcome to</Text>
+          {highContrast ? (
+            <DarkThemeLogo width={240} height={240 * (53 / 200)} style={styles.logoSvg} />
+          ) : (
+            <BrandLogoSVG width={240} height={64} style={styles.logoSvg} />
+          )}
         </View>
 
         <Spacer size={48} />
@@ -96,7 +105,10 @@ export const EnterEmailScreen: React.FC = () => {
 
         <Spacer size="lg" />
 
-        <Text style={styles.forgotLink} onPress={() => navigation.navigate('ForgotPasswordMethod')}>
+        <Text
+          style={[styles.forgotLink, { color: colors.accentPrimary }]}
+          onPress={() => navigation.navigate('ForgotPasswordMethod')}
+        >
           Forget Password?
         </Text>
 
@@ -104,8 +116,8 @@ export const EnterEmailScreen: React.FC = () => {
 
         <View style={styles.footer}>
           <View style={styles.footerRow}>
-            <Text style={styles.footerText}>Don't have an account yet? </Text>
-            <Text style={styles.signupLink} onPress={() => navigation.navigate('RoleSelection')}>
+            <Text style={[styles.footerText, { color: colors.text.secondary }]}>Don't have an account yet? </Text>
+            <Text style={[styles.signupLink, { color: colors.accentPrimary }]} onPress={() => navigation.navigate('RoleSelection')}>
               Sign up
             </Text>
           </View>

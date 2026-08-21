@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, Pressable, StyleProp, ViewStyle } from 'react-native';
 import { theme } from '@/theme';
 import { responsiveFontSize } from '@/utils/responsive';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 export type TimeCardStatus = 'selected' | 'default' | 'disabled';
 
@@ -14,6 +15,7 @@ interface TimeCardProps {
 
 // "Time Card" from Figma Card Views (node 103:288) — time-slot chip for booking flows.
 export const TimeCard: React.FC<TimeCardProps> = ({ time, status = 'default', onPress, style }) => {
+  const colors = useThemeColors();
   const isSelected = status === 'selected';
   const isDisabled = status === 'disabled';
   const Container = isDisabled ? View : Pressable;
@@ -23,14 +25,16 @@ export const TimeCard: React.FC<TimeCardProps> = ({ time, status = 'default', on
       onPress={isDisabled ? undefined : onPress}
       style={[
         styles.card,
-        isSelected ? styles.selected : styles.unselected,
+        isSelected
+          ? { backgroundColor: colors.background.orange, borderColor: colors.accentOrange }
+          : { backgroundColor: colors.background.base, borderColor: colors.border.card },
         style,
       ]}
     >
       <Text
         style={[
           styles.time,
-          isSelected ? styles.selectedText : isDisabled ? styles.disabledText : styles.defaultText,
+          { color: isSelected ? colors.text.strong : isDisabled ? colors.border.card : colors.text.muted },
         ]}
       >
         {time}
@@ -51,25 +55,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: theme.spacing.sm,
   },
-  selected: {
-    backgroundColor: theme.colors.background.orange,
-    borderColor: theme.colors.tertiary,
-  },
-  unselected: {
-    backgroundColor: theme.colors.background.base,
-    borderColor: theme.colors.border.green,
-  },
   time: {
     fontFamily: theme.typography.bodyLarge.fontFamily,
     fontSize: responsiveFontSize(theme.typography.bodyLarge.fontSize),
-  },
-  selectedText: {
-    color: theme.colors.neutral[700],
-  },
-  defaultText: {
-    color: theme.colors.neutral[500],
-  },
-  disabledText: {
-    color: theme.colors.neutral[200],
   },
 });

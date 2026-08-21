@@ -20,6 +20,8 @@ import { PrimaryButton, SecondaryButton } from '@/components/buttons';
 import { scale, responsiveFontSize, verticalScale } from '@/utils/responsive';
 import { RootNavigationProp } from '@/navigation/types';
 import { useTranslation, TranslationKeys } from '@/utils/localization';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { darken } from '@/utils/color';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -56,6 +58,7 @@ export const OnboardingScreen: React.FC = () => {
   const [activeSlide, setActiveSlide] = useState(0);
   const { t } = useTranslation();
   const flatListRef = useRef<FlatList>(null);
+  const colors = useThemeColors();
 
   const handleNext = () => {
     if (activeSlide < SLIDES_DATA.length - 1) {
@@ -98,8 +101,8 @@ export const OnboardingScreen: React.FC = () => {
   });
 
   return (
-    <Screen safeAreaBottom={false} statusBarBg="transparent" statusBarStyle="dark-content">
-      <View style={styles.container}>
+    <Screen safeAreaBottom={false} statusBarBg="transparent">
+      <View style={[styles.container, { backgroundColor: colors.background.layout }]}>
 
         {/* Horizontal Paging FlatList for touch-swipe gesture support */}
         <FlatList
@@ -115,7 +118,7 @@ export const OnboardingScreen: React.FC = () => {
           renderItem={({ item }) => (
             <View style={styles.slideItem}>
               {/* Top visual image section (approx 48% height) */}
-              <View style={styles.imageContainer}>
+              <View style={[styles.imageContainer, { backgroundColor: colors.background.layout }]}>
                 <Image
                   source={item.image}
                   style={styles.image}
@@ -123,7 +126,7 @@ export const OnboardingScreen: React.FC = () => {
                 />
                 {/* Beautiful smooth LinearGradient overlay blending into background */}
                 <LinearGradient
-                  colors={['transparent', theme.colors.background.layout]}
+                  colors={['transparent', colors.background.layout]}
                   style={styles.gradientOverlay}
                 />
               </View>
@@ -131,14 +134,14 @@ export const OnboardingScreen: React.FC = () => {
               {/* Content Section (Title, Subtitle, Dots) */}
               <View style={styles.contentContainer}>
                 {/* Heading */}
-                <Text style={styles.title}>
+                <Text style={[styles.title, { color: colors.text.primary }]}>
                   {t(item.titleKey)}
                 </Text>
 
                 <Spacer size="md" />
 
                 {/* Description */}
-                <Text style={styles.description}>
+                <Text style={[styles.description, { color: colors.text.secondary }]}>
                   {t(item.descKey)}
                 </Text>
 
@@ -153,7 +156,7 @@ export const OnboardingScreen: React.FC = () => {
                         key={index}
                         style={[
                           styles.dot,
-                          isActive ? styles.activeDot : styles.inactiveDot,
+                          { backgroundColor: isActive ? colors.accentOrange : colors.accentOrangeMuted },
                         ]}
                       />
                     );
@@ -177,10 +180,11 @@ export const OnboardingScreen: React.FC = () => {
                   accessibilityLabel="Skip onboarding"
                   style={({ pressed }) => [
                     styles.skipButton,
+                    { backgroundColor: colors.secondarySurface },
                     pressed && styles.pressed,
                   ]}
                 >
-                  <Text style={styles.skipButtonText}>{t('skip')}</Text>
+                  <Text style={[styles.skipButtonText, { color: colors.textInverse }]}>{t('skip')}</Text>
                 </Pressable>
 
                 <Pressable
@@ -189,17 +193,13 @@ export const OnboardingScreen: React.FC = () => {
                   accessibilityLabel="Next slide"
                   style={({ pressed }) => [
                     styles.nextCircleButton,
-                    {
-                      backgroundColor: pressed
-                        ? theme.colors.forestGreen[700]
-                        : theme.colors.primary,
-                    },
+                    { backgroundColor: pressed ? darken(colors.accentPrimary, 0.14) : colors.accentPrimary },
                   ]}
                 >
                   <Svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                     <Path
                       d="M5 12H19M19 12L12 5M19 12L12 19"
-                      stroke="#FFFFFF"
+                      stroke={colors.textInverse}
                       strokeWidth="2.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"

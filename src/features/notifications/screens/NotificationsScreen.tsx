@@ -6,11 +6,13 @@ import { Snackbar } from '@/components/feedback';
 import { responsiveFontSize } from '@/utils/responsive';
 import { NOTIFICATION_GROUPS, NotificationAction } from '../data';
 import NoNotificationIllustration from '../../../../assets/illustrations/no_notification.svg';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 // "Notification" (Figma 1445:12356 empty state / 1445:12601 populated) — a single screen
 // that renders the empty illustration when there's nothing to show, or the grouped feed
 // otherwise; accept/view actions are mocked until the notifications API exists.
 export const NotificationsScreen: React.FC = () => {
+  const colors = useThemeColors();
   const [toast, setToast] = useState<{ visible: boolean; message: string }>({
     visible: false,
     message: '',
@@ -27,26 +29,26 @@ export const NotificationsScreen: React.FC = () => {
   const hasNotifications = NOTIFICATION_GROUPS.some((group) => group.items.length > 0);
 
   return (
-    <Screen statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
+    <Screen statusBarBg={colors.background.layout}>
       <Header title="Notification" leftIcon="back" rightIcon="notification" transparent />
 
       {hasNotifications ? (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {NOTIFICATION_GROUPS.map((group) => (
             <View key={group.id} style={styles.group}>
-              <Text style={styles.groupLabel}>{group.label}</Text>
+              <Text style={[styles.groupLabel, { color: colors.accentOrange }]}>{group.label}</Text>
               <View style={styles.itemList}>
                 {group.items.map((item) => (
                   <View key={item.id} style={styles.item}>
                     <View style={styles.itemRow}>
                       <View style={styles.itemTextGroup}>
-                        <View style={styles.avatar} />
+                        <View style={[styles.avatar, { backgroundColor: colors.border.hairline }]} />
                         <Text style={styles.itemText}>
-                          <Text style={styles.itemName}>{item.name}</Text>
-                          <Text style={styles.itemMessage}> {item.message}</Text>
+                          <Text style={[styles.itemName, { color: colors.accentPrimary }]}>{item.name}</Text>
+                          <Text style={[styles.itemMessage, { color: colors.text.secondary }]}> {item.message}</Text>
                         </Text>
                       </View>
-                      <Text style={styles.timestamp}>{item.timestamp}</Text>
+                      <Text style={[styles.timestamp, { color: colors.text.muted }]}>{item.timestamp}</Text>
                     </View>
                     {item.actions && (
                       <View style={styles.actionsRow}>
@@ -55,13 +57,21 @@ export const NotificationsScreen: React.FC = () => {
                             key={action.label}
                             style={[
                               styles.actionButton,
-                              action.variant === 'primary'
-                                ? styles.actionPrimary
-                                : styles.actionSecondary,
+                              {
+                                backgroundColor:
+                                  action.variant === 'primary' ? colors.accentPrimary : colors.secondarySurface,
+                              },
                             ]}
                             onPress={() => handleAction(item.name, action)}
                           >
-                            <Text style={styles.actionLabel}>{action.label}</Text>
+                            <Text
+                              style={[
+                                styles.actionLabel,
+                                { color: action.variant === 'primary' ? colors.textInverse : colors.textInverse },
+                              ]}
+                            >
+                              {action.label}
+                            </Text>
                           </Pressable>
                         ))}
                       </View>
@@ -78,8 +88,8 @@ export const NotificationsScreen: React.FC = () => {
           <NoNotificationIllustration width={283} height={255} />
           <Spacer size="xl" />
           <View style={styles.emptyTextGroup}>
-            <Text style={styles.emptyTitle}>No Notification!</Text>
-            <Text style={styles.emptyBody}>
+            <Text style={[styles.emptyTitle, { color: colors.text.primary }]}>No Notification!</Text>
+            <Text style={[styles.emptyBody, { color: colors.text.secondary }]}>
               You will be notified about requesting, and other informations.
             </Text>
           </View>

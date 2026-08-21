@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors, useIsDarkMode } from '@/hooks/useThemeColors';
+import { useAccessibilityStore } from '@/store/accessibility.store';
 
 interface ScreenProps {
   children: React.ReactNode;
@@ -35,10 +36,13 @@ export const Screen: React.FC<ScreenProps> = ({
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const isDark = useIsDarkMode();
+  const highContrast = useAccessibilityStore((s) => s.highContrast);
   // Callers that care already pass an explicit statusBarStyle (e.g. to match a
   // colored header); everyone else gets one that follows the OS theme instead
   // of always defaulting to dark-content, which is unreadable on a dark canvas.
-  const effectiveStatusBarStyle = statusBarStyle ?? (isDark ? 'light-content' : 'dark-content');
+  // High contrast always renders a dark surface (see palette.ts) regardless
+  // of the OS scheme, so it needs the same light-content status bar too.
+  const effectiveStatusBarStyle = statusBarStyle ?? (isDark || highContrast ? 'light-content' : 'dark-content');
   const backgroundStyle = { backgroundColor: colors.background.layout };
   const containerStyle = [
     styles.screenContainer,

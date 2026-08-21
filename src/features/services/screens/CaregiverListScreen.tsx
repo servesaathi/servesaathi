@@ -12,6 +12,8 @@ import { StatusChip } from '@/components/cards';
 import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
 import { ORGANIZATIONS } from '../data';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import type { ThemePalette } from '@/theme/palette';
 
 // "Caregiver training" list + "Compare Close" (Figma 1256:24028 / 1256:24118),
 // with the "Filter by" (1256:23970) and "Sort by" (1256:24175) sheets.
@@ -23,14 +25,14 @@ const FILTER_URGENCY = ['Today', 'Just exploring', 'This week'];
 const FILTER_TYPES = ['24/7 Care', 'Day Care', 'On-demand', 'Part time'];
 const FILTER_LANGUAGES = ['Hindi', 'English'];
 
-const Star = ({ color = theme.colors.tertiary }: { color?: string }) => (
+const Star = ({ color }: { color: string }) => (
   <Svg width="12" height="12" viewBox="0 0 24 24" fill={color}>
     <Path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17l-6.1 3.6 1.4-6.8L2.2 9.1l6.9-.8L12 2z" />
   </Svg>
 );
 
-const VerifiedDot = () => (
-  <Svg width="14" height="14" viewBox="0 0 24 24" fill={theme.colors.primary}>
+const VerifiedDot = ({ color }: { color: string }) => (
+  <Svg width="14" height="14" viewBox="0 0 24 24" fill={color}>
     <Path d="M12 1l2.4 2.1 3.1-.5 1.1 3 3 1.1-.5 3.1L23 12l-2.1 2.4.5 3.1-3 1.1-1.1 3-3.1-.5L12 23l-2.4-2.1-3.1.5-1.1-3-3-1.1.5-3.1L1 12l2.1-2.4-.5-3.1 3-1.1 1.1-3 3.1.5L12 1z" />
     <Path d="M8 12l3 3 5-6" stroke="#FFF" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
@@ -41,17 +43,18 @@ interface SheetProps {
   onClose: () => void;
   children: React.ReactNode;
   onSave: () => void;
+  colors: ThemePalette;
 }
 
-const Sheet: React.FC<SheetProps> = ({ title, onClose, children, onSave }) => {
+const Sheet: React.FC<SheetProps> = ({ title, onClose, children, onSave, colors }) => {
   const insets = useSafeAreaInsets();
   return (
     <Modal visible animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.modalRoot}>
-        <View style={[styles.modalSheet, { paddingTop: insets.top + theme.spacing.xxl }]}>
+        <View style={[styles.modalSheet, { backgroundColor: colors.background.layout, paddingTop: insets.top + theme.spacing.xxl }]}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{title}</Text>
-            <IconButton type="close" accessibilityLabel="Close" onPress={onClose} size={40} />
+            <Text style={[styles.modalTitle, { color: colors.text.primary }]}>{title}</Text>
+            <IconButton type="close" bg={colors.accentPrimary} accessibilityLabel="Close" onPress={onClose} size={40} />
           </View>
           <Spacer size="xl" />
           <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
@@ -71,6 +74,7 @@ export const CaregiverListScreen: React.FC = () => {
   const route = useRoute<RootRouteProp<'CaregiverList'>>();
   const serviceType = route.params?.serviceType ?? 'Caregiver';
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
 
   const [search, setSearch] = useState('');
   const [compare, setCompare] = useState<string[]>([]);
@@ -95,7 +99,7 @@ export const CaregiverListScreen: React.FC = () => {
   };
 
   const Label = ({ text }: { text: string }) => (
-    <Text style={styles.groupLabel}>
+    <Text style={[styles.groupLabel, { color: colors.text.primary }]}>
       {text} <Text style={styles.required}>*</Text>
     </Text>
   );
@@ -115,15 +119,15 @@ export const CaregiverListScreen: React.FC = () => {
   );
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: colors.background.layout }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + theme.spacing.lg }]}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.headerRow}>
-          <IconButton type="back" accessibilityLabel="Go back" onPress={() => navigation.goBack()} size={40} />
-          <Text style={styles.headerTitle}>{serviceType}</Text>
+          <IconButton type="back" bg={colors.accentPrimary} accessibilityLabel="Go back" onPress={() => navigation.goBack()} size={40} />
+          <Text style={[styles.headerTitle, { color: colors.text.primary }]}>{serviceType}</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -132,30 +136,30 @@ export const CaregiverListScreen: React.FC = () => {
         <Spacer size="lg" />
 
         {/* FILTER BY | SORT BY */}
-        <View style={styles.filterRow}>
+        <View style={[styles.filterRow, { borderColor: colors.border.hairline }]}>
           <Pressable style={styles.filterCell} onPress={() => setShowFilter(true)}>
-            <Text style={styles.filterText}>FILTER BY</Text>
+            <Text style={[styles.filterText, { color: colors.text.primary }]}>FILTER BY</Text>
           </Pressable>
-          <View style={styles.filterDivider} />
+          <View style={[styles.filterDivider, { backgroundColor: colors.border.hairline }]} />
           <Pressable style={styles.filterCell} onPress={() => setShowSort(true)}>
-            <Text style={styles.filterText}>SORT BY</Text>
+            <Text style={[styles.filterText, { color: colors.text.primary }]}>SORT BY</Text>
           </Pressable>
         </View>
 
         <Spacer size="lg" />
-        <Text style={styles.countText}>{ORGANIZATIONS.length} organizations</Text>
+        <Text style={[styles.countText, { color: colors.text.secondary }]}>{ORGANIZATIONS.length} organizations</Text>
         <Spacer size="md" />
 
         {ORGANIZATIONS.map((org) => (
-          <View key={org.id} style={styles.orgCard}>
+          <View key={org.id} style={[styles.orgCard, { backgroundColor: colors.background.base }]}>
             <View style={styles.orgImageWrap}>
               {org.image ? (
                 <Image source={org.image} style={styles.orgImage} resizeMode="cover" />
               ) : (
-                <View style={[styles.orgImage, styles.orgImagePlaceholder]} />
+                <View style={[styles.orgImage, { backgroundColor: colors.border.hairline }]} />
               )}
               {org.featured && (
-                <View style={styles.ribbon}>
+                <View style={[styles.ribbon, { backgroundColor: colors.accentOrange }]}>
                   <Star color="#FFD700" />
                 </View>
               )}
@@ -163,24 +167,24 @@ export const CaregiverListScreen: React.FC = () => {
             <View style={styles.orgBody}>
               <View style={styles.orgTitleRow}>
                 <View style={styles.orgNameWrap}>
-                  <Text style={styles.orgName}>
-                    {org.name} <VerifiedDot />
+                  <Text style={[styles.orgName, { color: colors.text.primary }]}>
+                    {org.name} <VerifiedDot color={colors.accentPrimary} />
                   </Text>
                 </View>
                 <StatusChip
                   label={org.rating != null ? String(org.rating) : '-'}
                   variant="rating"
-                  icon={<Star />}
+                  icon={<Star color={colors.accentOrange} />}
                 />
               </View>
               <View style={styles.orgMetaRow}>
-                <Icon name="location" variant="outline" size={16} color={theme.colors.primary} />
-                <Text style={styles.orgMeta}>{org.city} • {org.distanceKm} km</Text>
+                <Icon name="location" variant="outline" size={16} color={colors.accentPrimary} />
+                <Text style={[styles.orgMeta, { color: colors.text.secondary }]}>{org.city} • {org.distanceKm} km</Text>
               </View>
               <View style={styles.orgActionsRow}>
                 <Pressable style={styles.compareRow} onPress={() => toggleCompare(org.id)}>
                   <Checkbox checked={compare.includes(org.id)} onPress={() => toggleCompare(org.id)} />
-                  <Text style={styles.compareText}>Compare</Text>
+                  <Text style={[styles.compareText, { color: colors.text.strong }]}>Compare</Text>
                 </Pressable>
                 <PrimaryButton
                   label="See details"
@@ -196,21 +200,24 @@ export const CaregiverListScreen: React.FC = () => {
 
       {/* Compare drawer (Figma "Compare Close") */}
       {compare.length > 0 && (
-        <View style={[styles.compareBar, { paddingBottom: insets.bottom + theme.spacing.md }]}>
+        <View style={[styles.compareBar, { backgroundColor: colors.background.base, paddingBottom: insets.bottom + theme.spacing.md }]}>
           <View style={styles.compareBarHandleWrap}>
-            <View style={styles.compareBarHandle}>
-              <Icon name="navigationRight" variant="outline" size={16} color={theme.colors.tertiary} />
+            <View style={[styles.compareBarHandle, { backgroundColor: colors.background.orange }]}>
+              <Icon name="navigationRight" variant="outline" size={16} color={colors.accentOrange} />
             </View>
           </View>
           <View style={styles.compareBarRow}>
-            <Text style={styles.compareBarText}>
+            <Text style={[styles.compareBarText, { color: colors.text.primary }]}>
               {compare.length < 2 ? 'Add more items' : `${compare.length} items selected`}
             </Text>
             <Pressable
-              style={[styles.compareBtn, compare.length < 2 && styles.compareBtnDisabled]}
+              style={[
+                styles.compareBtn,
+                { backgroundColor: compare.length < 2 ? colors.border.card : colors.secondarySurface },
+              ]}
               onPress={() => compare.length >= 2 && navigation.navigate('Comparison', { orgIds: compare })}
             >
-              <Text style={styles.compareBtnText}>Compare</Text>
+              <Text style={[styles.compareBtnText, { color: colors.textInverse }]}>Compare</Text>
             </Pressable>
           </View>
         </View>
@@ -218,7 +225,7 @@ export const CaregiverListScreen: React.FC = () => {
 
       {/* Filter by sheet */}
       {showFilter && (
-        <Sheet title="Filter by" onClose={() => setShowFilter(false)} onSave={() => setShowFilter(false)}>
+        <Sheet title="Filter by" onClose={() => setShowFilter(false)} onSave={() => setShowFilter(false)} colors={colors}>
           <Label text="Ratings" />
           {chipGrid(FILTER_RATINGS, fRatings, (i) => toggle(fRatings, setFRatings, i))}
           <Spacer size="md" />
@@ -238,7 +245,7 @@ export const CaregiverListScreen: React.FC = () => {
 
       {/* Sort by sheet */}
       {showSort && (
-        <Sheet title="Sort by" onClose={() => setShowSort(false)} onSave={() => setShowSort(false)}>
+        <Sheet title="Sort by" onClose={() => setShowSort(false)} onSave={() => setShowSort(false)} colors={colors}>
           {chipGrid(SORT_OPTIONS, sortBy, setSortBy, true)}
         </Sheet>
       )}

@@ -10,6 +10,7 @@ import { TextInput } from '@/components/inputs';
 import { responsiveFontSize } from '@/utils/responsive';
 import { digitsOnly, isValidIndianMobile, isValidEmail } from '@/utils/validation';
 import { authService, getErrorMessage } from '@/api';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 // "Enter Mobile Phone" / "Enter Email" (Figma 1257:24191 / 1257:24311) — reset-password contact
 // step. One screen parameterized by channel since the two frames are otherwise identical.
@@ -18,6 +19,7 @@ export const ForgotPasswordContactScreen: React.FC = () => {
   const route = useRoute<RootRouteProp<'ForgotPasswordContact'>>();
   const { channel } = route.params;
   const isEmail = channel === 'email';
+  const colors = useThemeColors();
 
   const [mobile, setMobile] = useState('');
   const [email, setEmail] = useState('');
@@ -38,17 +40,17 @@ export const ForgotPasswordContactScreen: React.FC = () => {
 
   const CountryCodePrefix = () => (
     <View style={styles.countryCodeContainer}>
-      <Text style={styles.countryCodeText}>(+91)</Text>
+      <Text style={[styles.countryCodeText, { color: colors.text.primary }]}>(+91)</Text>
       <Svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={styles.chevron}>
         <Path
           d="M1 1L5 5L9 1"
-          stroke={theme.colors.neutral[700]}
+          stroke={colors.text.secondary}
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
       </Svg>
-      <View style={styles.countryCodeDivider} />
+      <View style={[styles.countryCodeDivider, { backgroundColor: colors.border.hairline }]} />
     </View>
   );
 
@@ -74,14 +76,14 @@ export const ForgotPasswordContactScreen: React.FC = () => {
   };
 
   return (
-    <Screen scrollable statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
+    <Screen scrollable statusBarBg={colors.background.layout}>
       <Header leftIcon="back" showLogo transparent />
 
       <View style={styles.content}>
         <Spacer size="xxl" />
-        <Text style={styles.title}>Reset your Password</Text>
+        <Text style={[styles.title, { color: colors.text.primary }]}>Reset your Password</Text>
         <Spacer size="lg" />
-        <Text style={styles.subtitle}>
+        <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
           {isEmail
             ? 'Please enter your email address and we will send an OTP code in the next step to reset your password.'
             : 'Please enter your mobile phone number and we will send an OTP code in the next step to reset your password.'}
@@ -133,9 +135,9 @@ export const ForgotPasswordContactScreen: React.FC = () => {
 
         <Spacer size="xl" />
 
-        <Text style={styles.supportText}>
+        <Text style={[styles.supportText, { color: colors.text.secondary }]}>
           Don't remember your {isEmail ? 'email address' : 'phone number'}?{'\n'}
-          Contact us at <Text style={styles.supportLink}>hello@servesaathi.com</Text>
+          Contact us at <Text style={[styles.supportLink, { color: colors.accentPrimary }]}>hello@servesaathi.com</Text>
         </Text>
       </View>
     </Screen>

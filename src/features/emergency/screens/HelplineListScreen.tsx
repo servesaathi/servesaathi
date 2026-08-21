@@ -4,12 +4,14 @@ import { theme } from '@/theme';
 import { Screen, Header, Spacer } from '@/components/layouts';
 import { ComparePopUpCard } from '@/components/cards';
 import { HELPLINE_ORGS } from '../data';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 // "Helpline" organization list (Figma 1376:16867) — reached from the Helpline quick action.
 // Org detail pages aren't part of this section's Figma flow yet, so "See details" is a stub.
 export const HelplineListScreen: React.FC = () => {
+  const colors = useThemeColors();
   return (
-    <Screen statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
+    <Screen statusBarBg={colors.background.layout}>
       <Header title="Helpline" leftIcon="back" transparent />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.list}>

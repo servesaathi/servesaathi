@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Pressable, StyleProp, ViewStyle } from 'react-native';
 import { theme } from '@/theme';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface RadioButtonProps {
   selected: boolean;
@@ -18,20 +19,21 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
   color = 'green',
   style,
 }) => {
-  const accent = color === 'orange' ? theme.colors.tertiary : theme.colors.primary;
-  const borderColor = disabled ? theme.colors.forestGreen[100] : accent;
+  const colors = useThemeColors();
+  const accent = color === 'orange' ? colors.accentOrange : colors.accentPrimary;
+  const borderColor = disabled ? colors.border.hairline : accent;
 
   return (
     <Pressable
       onPress={disabled ? undefined : onPress}
       disabled={disabled}
-      style={[styles.circle, { borderColor }, style]}
+      style={[styles.circle, { backgroundColor: colors.background.base, borderColor }, style]}
     >
       {selected && (
         <View
           style={[
             styles.dot,
-            { backgroundColor: disabled ? theme.colors.forestGreen[100] : accent },
+            { backgroundColor: disabled ? colors.border.hairline : accent },
           ]}
         />
       )}
@@ -45,7 +47,6 @@ const styles = StyleSheet.create({
     height: 16,
     borderRadius: 8,
     borderWidth: 1.5,
-    backgroundColor: theme.colors.background.base,
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/inputs';
 import { responsiveFontSize, scale } from '@/utils/responsive';
 import { useAuthStore } from '@/store/auth.store';
 import { ApiRole } from '@/api/types';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 // Maps the Figma role cards onto the roles the API understands.
 const API_ROLE_BY_ID: Record<string, ApiRole> = {
@@ -23,6 +24,7 @@ export const RoleSelectionScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'RoleSelection'>>();
   const [selectedRole, setSelectedRole] = useState<string>('senior');
   const setRole = useAuthStore((s) => s.setRole);
+  const colors = useThemeColors();
 
   const handleCreateAccount = () => {
     setRole(API_ROLE_BY_ID[selectedRole] ?? 'customer');
@@ -38,10 +40,10 @@ export const RoleSelectionScreen: React.FC = () => {
   ];
 
   return (
-    <Screen statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content" scrollable>
+    <Screen statusBarBg={colors.background.layout} scrollable>
       <Header transparent />
 
-      <View style={styles.content}>
+      <View style={[styles.content, { backgroundColor: colors.background.layout }]}>
         {/* Mirrors Figma's "Center Body" auto-layout frame (gap-24) */}
         <View style={styles.centerBody}>
           <View style={styles.graphicContainer}>
@@ -50,8 +52,8 @@ export const RoleSelectionScreen: React.FC = () => {
 
           {/* Mirrors Figma's "Text" auto-layout frame (gap-16) */}
           <View style={styles.textBlock}>
-            <Text style={styles.title}>Choose a role</Text>
-            <Text style={styles.subtitle}>
+            <Text style={[styles.title, { color: colors.text.primary }]}>Choose a role</Text>
+            <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
               Choose How You Want to Be Part of the ServeSaathi Community
             </Text>
           </View>
@@ -65,10 +67,12 @@ export const RoleSelectionScreen: React.FC = () => {
                   onPress={() => setSelectedRole(role.id)}
                   style={[
                     styles.card,
-                    isActive ? styles.activeCard : styles.inactiveCard,
+                    isActive
+                      ? { borderColor: colors.accentOrange, backgroundColor: colors.background.orange }
+                      : { borderColor: colors.border.card, backgroundColor: colors.background.base },
                   ]}
                 >
-                  <Text style={styles.cardText}>{role.label}</Text>
+                  <Text style={[styles.cardText, { color: colors.text.secondary }]}>{role.label}</Text>
 
                   <Checkbox
                     checked={isActive}

@@ -6,8 +6,10 @@ import { Icon } from '@/components/icons';
 import { theme } from '@/theme';
 import { responsiveFontSize } from '@/utils/responsive';
 import { BrandLogoSVG } from '@/components/BrandLogoSVG';
+import DarkThemeLogo from '../../../assets/primary_logo_for_dark_theme.svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useAccessibilityStore } from '@/store/accessibility.store';
 
 export type HeaderProps = {
   title?: string;
@@ -33,6 +35,7 @@ export const Header: React.FC<HeaderProps> = ({
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
+  const highContrast = useAccessibilityStore((s) => s.highContrast);
 
   const handleLeftPress = () => {
     if (onLeftPress) {
@@ -120,10 +123,14 @@ export const Header: React.FC<HeaderProps> = ({
       {/* CENTER SECTION */}
       <View style={styles.center}>
         {showLogo ? (
-          <BrandLogoSVG
-            width={120}
-            height={32}
-          />
+          highContrast ? (
+            // High-contrast palette puts a dark surface behind the header
+            // (see palette.ts) — the brand-green wordmark loses contrast
+            // there, so swap to the dedicated dark-theme lockup instead.
+            <DarkThemeLogo width={120} height={120 * (53 / 200)} />
+          ) : (
+            <BrandLogoSVG width={120} height={32} />
+          )
         ) : title ? (
           <Text style={[styles.title, { color: colors.text.primary }]} numberOfLines={1}>
             {title}

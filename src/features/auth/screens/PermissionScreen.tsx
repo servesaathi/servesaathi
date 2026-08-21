@@ -7,9 +7,11 @@ import { Screen, Spacer, Header } from '@/components/layouts';
 import { PrimaryButton } from '@/components/buttons';
 import { Checkbox } from '@/components/inputs';
 import { responsiveFontSize, scale } from '@/utils/responsive';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 export const PermissionScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'Permission'>>();
+  const colors = useThemeColors();
   const [agreed, setAgreed] = useState(false);
 
   const handleProceed = () => {
@@ -18,7 +20,7 @@ export const PermissionScreen: React.FC = () => {
   };
 
   return (
-    <Screen statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
+    <Screen statusBarBg={colors.background.layout}>
       <Header title="Create Account" leftIcon="back" transparent />
 
       <View style={styles.content}>
@@ -30,15 +32,16 @@ export const PermissionScreen: React.FC = () => {
           />
 
           <View style={styles.textGroup}>
-            <Text style={styles.privacyText}>
+            <Text style={[styles.privacyText, { color: colors.text.secondary }]}>
               To protect your privacy, your activity on ServeSaathi app is not linked to your identity,
               and your personal information is never shared with advertisers.
             </Text>
 
             <Pressable style={styles.checkRow} onPress={() => setAgreed((v) => !v)}>
               <Checkbox checked={agreed} onPress={() => setAgreed((v) => !v)} color="orange" />
-              <Text style={styles.agreeText}>
-                I agree to ServeSaathi's <Text style={styles.agreeLink}>Terms & Conditions</Text>
+              <Text style={[styles.agreeText, { color: colors.text.primary }]}>
+                I agree to ServeSaathi's{' '}
+                <Text style={[styles.agreeLink, { color: colors.accentPrimary }]}>Terms & Conditions</Text>
               </Text>
             </Pressable>
           </View>

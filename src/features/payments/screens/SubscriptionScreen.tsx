@@ -7,6 +7,7 @@ import { Screen, Spacer, Header, SegmentedTabs } from '@/components/layouts';
 import { PrimaryButton } from '@/components/buttons';
 import { PlanSelectCard } from '@/components/inputs';
 import { responsiveFontSize } from '@/utils/responsive';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 // "Subscription" (Figma 1248:44406) — plan picker after the Profile Creation wizard.
 const MONTHLY_PLANS = [
@@ -24,6 +25,7 @@ const ANNUAL_PLANS = [
 
 export const SubscriptionScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'Subscription'>>();
+  const colors = useThemeColors();
   const [billing, setBilling] = useState(0); // 0 = monthly, 1 = annually
   const [selectedPlan, setSelectedPlan] = useState('essential');
 
@@ -34,12 +36,12 @@ export const SubscriptionScreen: React.FC = () => {
   };
 
   return (
-    <Screen scrollable statusBarBg={theme.colors.background.layout} statusBarStyle="dark-content">
+    <Screen scrollable statusBarBg={colors.background.layout}>
       <Header title="Subscription" leftIcon="back" transparent />
 
       <View style={styles.content}>
         <Spacer size="md" />
-        <Text style={styles.subtitle}>
+        <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
           Upgrade your plan to unlock premium features designed for seamless care coordination,
           enhanced or organization, and secure data management
         </Text>

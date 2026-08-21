@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { StyleSheet, View, TextInput as RNTextInput } from 'react-native';
 import { theme } from '@/theme';
 import { scale, responsiveFontSize } from '@/utils/responsive';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface OTPInputProps {
   length?: number;
@@ -16,6 +17,7 @@ export const OTPInput: React.FC<OTPInputProps> = ({
   onChange,
   error = false,
 }) => {
+  const colors = useThemeColors();
   const inputRefs = useRef<RNTextInput[]>([]);
   const otpArray = value.split('').concat(Array(length).fill('')).slice(0, length);
 
@@ -49,9 +51,9 @@ export const OTPInput: React.FC<OTPInputProps> = ({
               borderColor: error
                 ? theme.colors.status.error
                 : digit
-                ? theme.colors.primary
-                : theme.colors.forestGreen[100],
-              backgroundColor: error ? theme.colors.status.errorBg : theme.colors.neutral[50],
+                ? colors.accentPrimary
+                : colors.border.hairline,
+              backgroundColor: error ? theme.colors.status.errorBg : colors.background.base,
             },
           ]}
         >
@@ -64,7 +66,7 @@ export const OTPInput: React.FC<OTPInputProps> = ({
             value={digit}
             onChangeText={(text) => handleTextChange(text, index)}
             onKeyPress={(e) => handleKeyPress(e, index)}
-            style={styles.otpText}
+            style={[styles.otpText, { color: colors.text.primary }]}
             selectTextOnFocus
             textAlign="center"
           />
