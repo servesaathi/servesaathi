@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
@@ -13,7 +13,8 @@ import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import type { ThemePalette } from '@/theme/palette';
-import { SERVICE_CATEGORIES, INFRASTRUCTURE_OPTIONS } from '../data';
+import { SERVICE_CATEGORIES, INFRASTRUCTURE_OPTIONS, toServiceCategories, type ServiceCategory } from '../data';
+import { categoryService } from '@/api';
 
 // "Our Service - My Services / All Services" (Figma 1255:26894 / 1255:26926)
 // plus the "Infrastructure" picker sheet (1256:23704).
@@ -44,6 +45,26 @@ export const ServicesScreen: React.FC = () => {
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState(0); // 0 = My Services, 1 = All Services
   const [showInfrastructure, setShowInfrastructure] = useState(false);
+  // Falls back to the static Figma mock until the live API has categories
+  // seeded (as of 2026-08-25 GET /categories returns an empty list on the
+  // staging backend) — see toServiceCategories in ../data.ts.
+  const [categories, setCategories] = useState<ServiceCategory[]>(SERVICE_CATEGORIES);
+
+  useEffect(() => {
+    let cancelled = false;
+    categoryService
+      .getCategories({ isActive: true, sortBy: 'sortOrder', sortOrder: 'ASC', limit: 100 })
+      .then(({ items }) => {
+        if (cancelled || items.length === 0) return;
+        setCategories(toServiceCategories(items));
+      })
+      .catch(() => {
+        // Network/API failure — keep showing the static mock rather than an empty grid.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleCategoryPress = (categoryId: string) => {
     // Only Infrastructure has a designed flow so far
@@ -152,14 +173,14 @@ export const ServicesScreen: React.FC = () => {
             <Text style={[styles.gridTitle, { color: colors.text.primary }]}>What do you need help with?</Text>
             <Spacer size="lg" />
             <View style={styles.grid}>
-              {SERVICE_CATEGORIES.map((cat) => (
+              {categories.map((cat) => (
                 <Pressable
                   key={cat.id}
                   style={[styles.categoryCard, { backgroundColor: colors.background.base }]}
                   onPress={() => handleCategoryPress(cat.id)}
                 >
-                  <View style={styles.categoryArch}>
-                    <Icon name={cat.icon} variant="outline" size={40} color={theme.colors.tertiary} />
+                  <View style={[styles.categoryArch, { backgroundColor: colors.background.orange }]}>
+                    <Icon name={cat.icon} variant="outline" size={40} color={colors.accentOrange} />
                   </View>
                   <Text style={[styles.categoryLabel, { color: colors.text.strong }]}>{cat.label}</Text>
                 </Pressable>

@@ -1,7 +1,9 @@
 import { theme } from '@/theme';
 import type { IconName } from '@/components/icons';
+import type { Category } from '@/api';
 
-// Mock content matching the Figma "Services" section frames; replaced by API data later.
+// Mock content matching the Figma "Services" section frames; used as a fallback
+// when the live /categories API has nothing seeded yet (see ServicesScreen.tsx).
 
 export interface ServiceCategory {
   id: string;
@@ -21,6 +23,36 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
   { id: 'travel', label: 'Travel', icon: 'passport' },
   { id: 'usp', label: 'USP', icon: 'usp' },
 ];
+
+// The /categories API (see api/services/category.service.ts) has no iconUrl
+// asset pipeline wired up yet, so a live category is matched to one of the
+// app's own vector icons by slug — keeping the exact Figma icon set even
+// once real categories replace this file's mock ones. Extend this map as
+// new category slugs get added on the backend; unrecognized slugs fall back
+// to a generic icon rather than rendering nothing.
+const CATEGORY_ICON_BY_SLUG: Record<string, IconName> = {
+  infrastructure: 'group',
+  courses: 'book',
+  experts: 'experts',
+  events: 'events',
+  social: 'socialEvents',
+  'social-events': 'socialEvents',
+  products: 'products',
+  services: 'service',
+  travel: 'passport',
+  usp: 'usp',
+};
+const DEFAULT_CATEGORY_ICON: IconName = 'service';
+
+export const iconForCategorySlug = (slug: string): IconName =>
+  CATEGORY_ICON_BY_SLUG[slug] ?? DEFAULT_CATEGORY_ICON;
+
+/** Maps live API categories onto the grid's shape, sorted the way the backend already
+ * orders them (by sortOrder — see CategoriesQuery.sortBy in category.service.ts). */
+export const toServiceCategories = (categories: Category[]): ServiceCategory[] =>
+  categories
+    .filter((c) => c.isActive)
+    .map((c) => ({ id: c.slug, label: c.name, icon: iconForCategorySlug(c.slug) }));
 
 // "Who needs care?" options (Figma 1256:23704)
 export const INFRASTRUCTURE_OPTIONS = [

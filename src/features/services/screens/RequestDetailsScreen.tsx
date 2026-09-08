@@ -1,9 +1,9 @@
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, Pressable } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { RootNavigationProp } from '@/navigation/types';
+import { RootNavigationProp, RootRouteProp } from '@/navigation/types';
 import { theme } from '@/theme';
 import { Spacer } from '@/components/layouts';
 import { PrimaryButton, SecondaryButton, IconButton } from '@/components/buttons';
@@ -56,8 +56,11 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, caption, captionO
 
 export const RequestDetailsScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'RequestDetails'>>();
+  const route = useRoute<RootRouteProp<'RequestDetails'>>();
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
+  const isBooking = route.params?.isBooking ?? false;
+  const orgId = route.params?.orgId;
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background.layout }]}>
@@ -143,7 +146,15 @@ export const RequestDetailsScreen: React.FC = () => {
         <Spacer size="xl" />
         <View style={styles.footerRow}>
           <SecondaryButton label="Reschedule" onPress={() => navigation.goBack()} style={styles.footerBtn} />
-          <PrimaryButton label="Home" onPress={() => navigation.navigate('Home')} style={styles.footerBtn} />
+          {isBooking ? (
+            <PrimaryButton
+              label="Proceed to Payment"
+              onPress={() => navigation.navigate('BookDetails', { orgId: orgId ?? 'agewell' })}
+              style={styles.footerBtn}
+            />
+          ) : (
+            <PrimaryButton label="Home" onPress={() => navigation.navigate('Home')} style={styles.footerBtn} />
+          )}
         </View>
         <Spacer size="xl" />
       </ScrollView>

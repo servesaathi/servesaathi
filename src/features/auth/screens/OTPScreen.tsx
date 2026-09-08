@@ -50,12 +50,12 @@ export const OTPScreen: React.FC = () => {
     if (error) setError(null);
   };
 
-  const handleContinue = async () => {
-    if (!isOtpComplete || verifying) return;
+  const handleContinue = async (code: string = otpValue) => {
+    if (code.length !== OTP_LENGTH || verifying) return;
     setVerifying(true);
     setError(null);
     try {
-      const data = await authService.verifyOtp({ phone, code: otpValue });
+      const data = await authService.verifyOtp({ phone, code });
       useAuthStore.getState().setPhoneVerification(data);
       if (data.isNewUser) {
         // New phone: carry the phoneVerificationToken into the Create Account form,
@@ -117,6 +117,7 @@ export const OTPScreen: React.FC = () => {
           length={OTP_LENGTH}
           value={otpValue}
           onChange={handleOtpChange}
+          onComplete={(code) => handleContinue(code)}
           error={!!error}
         />
 
@@ -131,7 +132,7 @@ export const OTPScreen: React.FC = () => {
 
         <PrimaryButton
           label="Continue"
-          onPress={handleContinue}
+          onPress={() => handleContinue()}
           style={styles.button}
           disabled={!isOtpComplete}
           loading={verifying}

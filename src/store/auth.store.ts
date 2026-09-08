@@ -6,6 +6,9 @@ import { ApiRole } from '../api/types';
 interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
+  /** True while the user is browsing without an account (Onboarding → "Get Started").
+   *  Cleared once they authenticate for real or log out. */
+  isGuest: boolean;
   /** Role chosen on the Join screen, sent with OTP requests. */
   role: ApiRole;
   /** E.164 phone the OTP was sent to, e.g. "+919777729450". */
@@ -14,6 +17,7 @@ interface AuthState {
   phoneVerificationToken: string | null;
   isNewUser: boolean | null;
   setToken: (token: string | null) => void;
+  setGuest: (isGuest: boolean) => void;
   setRole: (role: ApiRole) => void;
   setPhone: (phone: string | null) => void;
   setPhoneVerification: (data: { phoneVerificationToken?: string; isNewUser: boolean }) => void;
@@ -31,11 +35,14 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       token: null,
       isAuthenticated: false,
+      isGuest: false,
       role: 'customer',
       phone: null,
       phoneVerificationToken: null,
       isNewUser: null,
-      setToken: (token) => set({ token, isAuthenticated: !!token }),
+      // A real token always wins over guest mode.
+      setToken: (token) => set(token ? { token, isAuthenticated: true, isGuest: false } : { token: null, isAuthenticated: false }),
+      setGuest: (isGuest) => set({ isGuest }),
       setRole: (role) => set({ role }),
       setPhone: (phone) => set({ phone }),
       setPhoneVerification: ({ phoneVerificationToken, isNewUser }) =>
@@ -44,6 +51,7 @@ export const useAuthStore = create<AuthState>()(
         set({
           token: null,
           isAuthenticated: false,
+          isGuest: false,
           phone: null,
           phoneVerificationToken: null,
           isNewUser: null,

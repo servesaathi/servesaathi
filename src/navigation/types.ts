@@ -4,7 +4,7 @@ import { RouteProp } from '@react-navigation/native';
 export type RootStackParamList = {
   Splash: undefined;
   LanguageSelect: undefined;
-  Onboarding: undefined;
+  Onboarding: { startAtEnd?: boolean } | undefined;
   Login: { intent?: 'signup' | 'login' } | undefined;
   OTP: { phone: string; intent?: 'signup' | 'login' };
   EnterEmail: undefined;
@@ -14,6 +14,8 @@ export type RootStackParamList = {
   NewPassword: { token: string };
   RoleSelection: undefined;
   CreateAccount: undefined;
+  /** Guest browsing entry — Onboarding "Get Started" lands here (no account). */
+  GuestBrowse: undefined;
   Permission: undefined;
   ProfileSetup: undefined;
   ProfileAddress: undefined;
@@ -29,8 +31,9 @@ export type RootStackParamList = {
   CaregiverList: { serviceType: string };
   CaregiverDetail: { orgId: string };
   Comparison: { orgIds: string[] };
-  RequestSetup: { orgId: string };
-  RequestDetails: undefined;
+  RequestSetup: { orgId: string; isBooking?: boolean };
+  RequestDetails: { orgId?: string; isBooking?: boolean } | undefined;
+  BookDetails: { orgId: string };
   HelplineList: undefined;
   ShareLocation: undefined;
   EMResponder: undefined;

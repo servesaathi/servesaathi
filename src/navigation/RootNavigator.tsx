@@ -24,12 +24,14 @@ import { SettingUpScreen } from '@/features/profileCreation/screens/SettingUpScr
 import { SubscriptionScreen } from '@/features/payments/screens/SubscriptionScreen';
 import { PaymentMethodScreen } from '@/features/payments/screens/PaymentMethodScreen';
 import { BottomTabNavigator } from '@/navigation/BottomTabNavigator';
+import { GuestBrowseServicesScreen } from '@/features/services/screens/GuestBrowseServicesScreen';
 import { PersonalizedQuestionsScreen } from '@/features/services/screens/PersonalizedQuestionsScreen';
 import { CaregiverListScreen } from '@/features/services/screens/CaregiverListScreen';
 import { CaregiverDetailScreen } from '@/features/services/screens/CaregiverDetailScreen';
 import { ComparisonScreen } from '@/features/services/screens/ComparisonScreen';
 import { RequestSetupScreen } from '@/features/services/screens/RequestSetupScreen';
 import { RequestDetailsScreen } from '@/features/services/screens/RequestDetailsScreen';
+import { BookDetailsScreen } from '@/features/services/screens/BookDetailsScreen';
 import { SupportChatScreen } from '@/features/emergency/screens/SupportChatScreen';
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -55,6 +57,7 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen name="NewPassword" component={NewPasswordScreen} />
       <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
       <Stack.Screen name="CreateAccount" component={CreateAccountScreen} />
+      <Stack.Screen name="GuestBrowse" component={GuestBrowseServicesScreen} />
       <Stack.Screen name="Permission" component={PermissionScreen} />
       <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
       <Stack.Screen name="ProfileAddress" component={AddressScreen} />
@@ -72,6 +75,7 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen name="Comparison" component={ComparisonScreen} />
       <Stack.Screen name="RequestSetup" component={RequestSetupScreen} />
       <Stack.Screen name="RequestDetails" component={RequestDetailsScreen} />
+      <Stack.Screen name="BookDetails" component={BookDetailsScreen} />
       <Stack.Screen name="SupportChat" component={SupportChatScreen} />
     </Stack.Navigator>
   );

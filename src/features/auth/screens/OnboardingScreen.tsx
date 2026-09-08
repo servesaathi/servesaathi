@@ -11,16 +11,17 @@ import {
   type ImageStyle,
   type TextStyle,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '@/theme';
 import { Screen, Spacer } from '@/components/layouts';
 import { PrimaryButton, SecondaryButton } from '@/components/buttons';
 import { scale, responsiveFontSize, verticalScale } from '@/utils/responsive';
-import { RootNavigationProp } from '@/navigation/types';
+import { RootNavigationProp, RootRouteProp } from '@/navigation/types';
 import { useTranslation, TranslationKeys } from '@/utils/localization';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useAuthStore } from '@/store/auth.store';
 import { darken } from '@/utils/color';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -53,9 +54,14 @@ const SLIDES_DATA: Slide[] = [
   },
 ];
 
+const LAST_SLIDE = SLIDES_DATA.length - 1;
+
 export const OnboardingScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'Onboarding'>>();
-  const [activeSlide, setActiveSlide] = useState(0);
+  const route = useRoute<RootRouteProp<'Onboarding'>>();
+  // e.g. after logout — jump straight to the "Get Started / Log in" slide.
+  const startAtEnd = route.params?.startAtEnd ?? false;
+  const [activeSlide, setActiveSlide] = useState(startAtEnd ? LAST_SLIDE : 0);
   const { t } = useTranslation();
   const flatListRef = useRef<FlatList>(null);
   const colors = useThemeColors();
@@ -78,9 +84,14 @@ export const OnboardingScreen: React.FC = () => {
     flatListRef.current?.scrollToIndex({ index: lastIndex, animated: true });
   };
 
-  const handleCreateAccount = () => {
-    // New-user flow starts with choosing a role (Figma: Onboarding → Join)
-    navigation.replace('RoleSelection');
+  const handleGetStarted = () => {
+    // Guest path (Figma: Onboarding → "Get Started" → Browse Services). The user
+    // explores without an account; registration is offered later behind the
+    // "Unlock All Provider" gate.
+    useAuthStore.getState().setGuest(true);
+    // navigate (not replace) so the back arrow on Browse Services returns here,
+    // where "Log in" is still available.
+    navigation.navigate('GuestBrowse');
   };
 
   const handleLogin = () => {
@@ -114,6 +125,7 @@ export const OnboardingScreen: React.FC = () => {
           onMomentumScrollEnd={handleMomentumScrollEnd}
           keyExtractor={(item) => item.id.toString()}
           getItemLayout={getItemLayout}
+          initialScrollIndex={startAtEnd ? LAST_SLIDE : 0}
           style={styles.flatList}
           renderItem={({ item }) => (
             <View style={styles.slideItem}>
@@ -208,11 +220,11 @@ export const OnboardingScreen: React.FC = () => {
                 </Pressable>
               </View>
             ) : (
-              // Slide 3: Create Account & Log In stack
+              // Slide 3: Get Started (guest) & Log In stack
               <View style={styles.lastSlideActions}>
                 <PrimaryButton
-                  label={t('createAccount')}
-                  onPress={handleCreateAccount}
+                  label={t('getStarted')}
+                  onPress={handleGetStarted}
                 />
                 <Spacer size="md" />
                 <SecondaryButton

@@ -9,6 +9,7 @@ import type { SettingsMenuItemVariant } from '@/components/layouts';
 import { Icon } from '@/components/icons';
 import type { IconName } from '@/components/icons';
 import { useUserStore } from '@/store/user.store';
+import { useAuthStore } from '@/store/auth.store';
 import { careProfileService, type CareProfile } from '@/api';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import ProfileCardBg from '../../../../assets/illustrations/settings_profile_card_bg.svg';
@@ -166,7 +167,13 @@ export const SettingsScreen: React.FC = () => {
           variant="safe"
           icon={<Icon name="signOut" variant="outline" size={ICON_SIZE} color={theme.colors.primary} />}
           style={styles.fullWidthRow}
-          onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Login' }] })}
+          onPress={() => {
+            useAuthStore.getState().logout();
+            useUserStore.getState().setProfile(null);
+            // Land straight on the "Get Started / Log in" slide (Figma 2694:20730),
+            // skipping the intro carousel.
+            navigation.reset({ index: 0, routes: [{ name: 'Onboarding', params: { startAtEnd: true } }] });
+          }}
         />
       </ScrollView>
     </Screen>

@@ -29,6 +29,9 @@ export const ENDPOINTS = {
     list: '/services',
     details: (id: string) => `/services/${id}`,
   },
+  categories: {
+    list: '/categories',
+  },
   pincodes: {
     cities: '/pincodes/cities',
     states: '/pincodes/states',

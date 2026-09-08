@@ -30,3 +30,5 @@ export { masterdataService, normalizeMasterDataResponse } from './services/maste
 export { pincodeService, toTitleCase, normalizePlaceList } from './services/pincode.service';
 export type { PincodeOffice } from './services/pincode.service';
 export type { MasterDataOption } from './services/masterdata.service';
+export { categoryService } from './services/category.service';
+export type { Category, CategoriesQuery, PaginationMeta } from './services/category.service';

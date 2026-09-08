@@ -9,6 +9,8 @@ interface OTPInputProps {
   value: string;
   onChange: (value: string) => void;
   error?: boolean;
+  /** Fired once every box is filled — lets callers auto-submit without a manual tap. */
+  onComplete?: (value: string) => void;
 }
 
 export const OTPInput: React.FC<OTPInputProps> = ({
@@ -16,6 +18,7 @@ export const OTPInput: React.FC<OTPInputProps> = ({
   value,
   onChange,
   error = false,
+  onComplete,
 }) => {
   const colors = useThemeColors();
   const inputRefs = useRef<RNTextInput[]>([]);
@@ -28,6 +31,10 @@ export const OTPInput: React.FC<OTPInputProps> = ({
     onChange(newValue);
     if (text !== '' && index < length - 1) {
       inputRefs.current[index + 1]?.focus();
+    }
+    if (text !== '' && newValue.length === length) {
+      inputRefs.current[index]?.blur();
+      onComplete?.(newValue);
     }
   };
 

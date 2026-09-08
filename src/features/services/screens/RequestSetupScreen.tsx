@@ -53,6 +53,7 @@ export const RequestSetupScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'RequestSetup'>>();
   const route = useRoute<RootRouteProp<'RequestSetup'>>();
   const org = getOrganization(route.params?.orgId ?? 'agewell');
+  const isBooking = route.params?.isBooking ?? false;
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
 
@@ -68,7 +69,7 @@ export const RequestSetupScreen: React.FC = () => {
 
   const handleConfirm = () => {
     if (!canConfirm) return;
-    navigation.navigate('RequestDetails');
+    navigation.navigate('RequestDetails', { orgId: org.id, isBooking });
   };
 
   return (

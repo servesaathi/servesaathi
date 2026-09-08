@@ -110,7 +110,7 @@ export const LoginScreen: React.FC = () => {
   );
 
   return (
-    <Screen scrollable statusBarBg={colors.background.layout}>
+    <Screen statusBarBg={colors.background.layout}>
       <Header leftIcon="back" transparent />
 
       <View style={styles.content}>
@@ -154,8 +154,6 @@ export const LoginScreen: React.FC = () => {
             loading={submitting}
           />
         </View>
-
-        <Spacer size={64} />
 
         {/* OR divider + social buttons all sit on Figma's shared gap-16 */}
         <View style={styles.dividerGroup}>

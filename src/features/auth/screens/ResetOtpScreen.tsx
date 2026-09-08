@@ -57,9 +57,9 @@ export const ResetOtpScreen: React.FC = () => {
     if (error) setError(null);
   };
 
-  const handleContinue = () => {
-    if (!isOtpComplete) return;
-    navigation.navigate('NewPassword', { token: otpValue });
+  const handleContinue = (code: string = otpValue) => {
+    if (code.length !== OTP_LENGTH) return;
+    navigation.navigate('NewPassword', { token: code });
   };
 
   const handleResend = async () => {
@@ -96,7 +96,13 @@ export const ResetOtpScreen: React.FC = () => {
 
         <Spacer size="xxl" />
 
-        <OTPInput length={OTP_LENGTH} value={otpValue} onChange={handleOtpChange} error={!!error} />
+        <OTPInput
+          length={OTP_LENGTH}
+          value={otpValue}
+          onChange={handleOtpChange}
+          onComplete={(code) => handleContinue(code)}
+          error={!!error}
+        />
 
         {error && (
           <>
@@ -109,7 +115,7 @@ export const ResetOtpScreen: React.FC = () => {
 
         <PrimaryButton
           label="Continue"
-          onPress={handleContinue}
+          onPress={() => handleContinue()}
           style={styles.button}
           disabled={!isOtpComplete}
         />

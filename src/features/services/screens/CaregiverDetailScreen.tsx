@@ -12,6 +12,7 @@ import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
 import { getOrganization } from '../data';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { LeadCaptureModal, LeadCaptureMode } from '../components/LeadCaptureModal';
 
 // "Caregivers - About / Reviews" (Figma 1256:24506 / 1256:24595).
 
@@ -80,6 +81,12 @@ export const CaregiverDetailScreen: React.FC = () => {
   const colors = useThemeColors();
   const [tab, setTab] = useState(0); // 0 About, 1 Review
   const [fav, setFav] = useState(false);
+  const [leadMode, setLeadMode] = useState<LeadCaptureMode | null>(null);
+
+  const handleBookVerified = () => {
+    setLeadMode(null);
+    navigation.navigate('RequestSetup', { orgId: org.id, isBooking: true });
+  };
 
   const Pill = ({ text, half }: { text: string; half?: boolean }) => (
     <View style={[styles.pill, { backgroundColor: colors.background.base }, half && styles.pillHalf]}>
@@ -122,7 +129,7 @@ export const CaregiverDetailScreen: React.FC = () => {
           <Spacer size="md" />
           <View style={styles.nameRow}>
             <Text style={[styles.orgName, { color: colors.text.primary }]}>{org.name}</Text>
-            <FavoriteButton active={fav} onPress={() => setFav((v) => !v)} />
+            <FavoriteButton active={fav} onPress={() => setLeadMode('save')} />
           </View>
 
           <Spacer size="sm" />
@@ -244,12 +251,24 @@ export const CaregiverDetailScreen: React.FC = () => {
           )}
 
           <Spacer size="xxl" />
-          <SecondaryButton label="Website" onPress={() => {}} />
+          <PrimaryButton label="Request a callback" onPress={() => setLeadMode('callback')} />
           <Spacer size="md" />
-          <PrimaryButton label="Request" onPress={() => navigation.navigate('RequestSetup', { orgId: org.id })} />
+          <PrimaryButton label="Book" onPress={() => setLeadMode('book')} />
+          <Spacer size="md" />
+          <SecondaryButton label="Website" onPress={() => {}} />
           <Spacer size="xl" />
         </View>
       </ScrollView>
+
+      <LeadCaptureModal
+        visible={leadMode !== null}
+        mode={leadMode ?? 'callback'}
+        onClose={() => setLeadMode(null)}
+        onVerified={(details) => {
+          if (leadMode === 'save') setFav(true);
+          if (leadMode === 'book') handleBookVerified();
+        }}
+      />
     </View>
   );
 };
