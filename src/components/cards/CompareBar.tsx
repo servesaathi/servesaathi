@@ -3,11 +3,13 @@ import { StyleSheet, Text, View, Image, Pressable, StyleProp, ViewStyle } from '
 import { theme } from '@/theme';
 import { responsiveFontSize } from '@/utils/responsive';
 import { Icon } from '@/components/icons';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 export interface CompareItem {
   id: string;
   name: string;
-  photoUri: string;
+  /** Remote URL, or a `require()`'d local asset for orgs with no photo of their own. */
+  photoUri: string | number;
 }
 
 interface CompareBarProps {
@@ -34,18 +36,19 @@ export const CompareBar: React.FC<CompareBarProps> = ({
   onComparePress,
   style,
 }) => {
+  const colors = useThemeColors();
   const emptySlots = Math.max(0, maxItems - items.length);
 
   return (
-    <View style={[styles.container, style]}>
-      <Pressable onPress={onToggleExpand} style={styles.toggle}>
-        <Icon name={expanded ? 'caretUp' : 'caretDown'} variant="outline" size={16} color={theme.colors.vividOrange[700]} />
+    <View style={[styles.container, { backgroundColor: colors.background.base }, style]}>
+      <Pressable onPress={onToggleExpand} style={[styles.toggle, { backgroundColor: colors.background.orange }]}>
+        <Icon name={expanded ? 'caretUp' : 'caretDown'} variant="outline" size={16} color={colors.accentOrange} />
       </Pressable>
 
       <View style={styles.headerRow}>
-        <Text style={styles.headerText}>Add more items</Text>
-        <Pressable onPress={onComparePress} style={styles.compareButton}>
-          <Text style={styles.compareButtonText}>Compare</Text>
+        <Text style={[styles.headerText, { color: colors.text.secondary }]}>Add more items</Text>
+        <Pressable onPress={onComparePress} style={[styles.compareButton, { backgroundColor: colors.secondarySurface }]}>
+          <Text style={[styles.compareButtonText, { color: colors.textInverse }]}>Compare</Text>
         </Pressable>
       </View>
 
@@ -53,18 +56,28 @@ export const CompareBar: React.FC<CompareBarProps> = ({
         <View style={styles.slotsRow}>
           {items.map((item) => (
             <View key={item.id} style={styles.filledSlot}>
-              <Image source={{ uri: item.photoUri }} style={styles.photo} />
-              <Text style={styles.name} numberOfLines={2}>
+              <Image
+                source={typeof item.photoUri === 'string' ? { uri: item.photoUri } : item.photoUri}
+                style={styles.photo}
+              />
+              <Text style={[styles.name, { color: colors.text.secondary }]} numberOfLines={2}>
                 {item.name}
               </Text>
-              <Pressable onPress={() => onRemoveItem(item.id)} style={styles.closeBadge}>
+              <Pressable
+                onPress={() => onRemoveItem(item.id)}
+                style={[styles.closeBadge, { backgroundColor: colors.accentPrimary }]}
+              >
                 <Icon name="close" variant="outline" size={12} color="#FFFFFF" />
               </Pressable>
             </View>
           ))}
           {Array.from({ length: emptySlots }).map((_, i) => (
-            <Pressable key={`empty-${i}`} onPress={onAddPress} style={styles.emptySlot}>
-              <Icon name="add" variant="outline" size={24} color={theme.colors.neutral[500]} />
+            <Pressable
+              key={`empty-${i}`}
+              onPress={onAddPress}
+              style={[styles.emptySlot, { borderColor: colors.border.card }]}
+            >
+              <Icon name="add" variant="outline" size={24} color={colors.text.muted} />
             </Pressable>
           ))}
         </View>

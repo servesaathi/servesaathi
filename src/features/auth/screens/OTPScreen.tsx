@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Platform } from 'react-native';
+import { Alert, StyleSheet, Text, View, Platform } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { RootNavigationProp, RootRouteProp } from '@/navigation/types';
 import { theme } from '@/theme';
@@ -58,9 +58,22 @@ export const OTPScreen: React.FC = () => {
       const data = await authService.verifyOtp({ phone, code });
       useAuthStore.getState().setPhoneVerification(data);
       if (data.isNewUser) {
-        // New phone: carry the phoneVerificationToken into the Create Account form,
-        // which finishes signup via POST /auth/register.
-        navigation.navigate('CreateAccount');
+        if (intent === 'login') {
+          // They tried to log in with a number that has no account — say so
+          // plainly instead of silently dropping them into sign-up.
+          Alert.alert(
+            "We don't recognize this number",
+            "There's no account for this mobile number yet. Let's get you registered.",
+            [
+              { text: 'Cancel', style: 'cancel', onPress: () => setOtpValue('') },
+              { text: 'Sign up', onPress: () => navigation.navigate('CreateAccount') },
+            ],
+          );
+        } else {
+          // New phone: carry the phoneVerificationToken into the Create Account form,
+          // which finishes signup via POST /auth/register.
+          navigation.navigate('CreateAccount');
+        }
       } else {
         // Existing account: /auth/otp/verify already logged us in and returned
         // accessToken + user — this IS the phone login.

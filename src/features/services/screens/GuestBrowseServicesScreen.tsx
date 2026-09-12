@@ -16,15 +16,15 @@ import { theme } from '@/theme';
 import { Spacer } from '@/components/layouts';
 import { PrimaryButton, IconButton } from '@/components/buttons';
 import { SearchInput, TextInput, OTPInput, SelectableChip } from '@/components/inputs';
-import { ComparePopUpCard } from '@/components/cards';
+import { ComparePopUpCard, CompareBar, type CompareItem } from '@/components/cards';
 import { Icon } from '@/components/icons';
-import type { IconName } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useAuthStore } from '@/store/auth.store';
-import { useUserStore } from '@/store/user.store';
 import { authService, getErrorMessage } from '@/api';
 import { ORGANIZATIONS } from '../data';
+import { GuestBottomNav } from '../components/GuestBottomNav';
+import { completeGuestVerification } from '../utils/guestVerification';
 
 // Guest browsing screen (Figma "Browse Services" — 2694:20730 → 2696:4239 → 2895:73743),
 // with the "unlock more providers" gate flow (2895:78057 → 2895:78101/78127 → 2895:78081).
@@ -37,13 +37,6 @@ const GUEST_VISIBLE_COUNT = 3;
 const DEFAULT_LOCATION_LABEL = 'New Delhi, Delhi 110001';
 const OTP_LENGTH = 4;
 const RESEND_SECONDS = 28; // Figma copy: "Resend in 00:28"
-
-const NAV_ITEMS: { key: string; label: string; icon: IconName }[] = [
-  { key: 'home', label: 'Home', icon: 'home' },
-  { key: 'hub', label: 'Hub', icon: 'grid' },
-  { key: 'profile', label: 'Profile', icon: 'profile' },
-  { key: 'setting', label: 'Setting', icon: 'setting' },
-];
 
 // Fallback imagery for orgs with no photo of their own (Figma shows grey slots).
 const FALLBACK_IMAGES = [theme.images.onboarding1, theme.images.onboarding2, theme.images.onboarding3];
@@ -91,6 +84,10 @@ export const GuestBrowseServicesScreen: React.FC = () => {
   const [locationLabel, setLocationLabel] = useState<string | null>(null);
   const [locationQuery, setLocationQuery] = useState('');
   const [compare, setCompare] = useState<string[]>([]);
+  // "Compare Pop up Expand / Mobile" tray (Figma 2895:78342) — collapsed to just the
+  // bar until the guest taps the caret to reveal the selected-org thumbnails.
+  const [compareExpanded, setCompareExpanded] = useState(false);
+  const [navHeight, setNavHeight] = useState(64 + (insets.bottom || theme.spacing.md));
   // Figma flow: the location sheet greets the guest as soon as they land here.
   const [showLocationSheet, setShowLocationSheet] = useState(true);
   const [showFilterSheet, setShowFilterSheet] = useState(false);
@@ -98,9 +95,12 @@ export const GuestBrowseServicesScreen: React.FC = () => {
   const [showSortSheet, setShowSortSheet] = useState(false);
   const [sortBy, setSortBy] = useState<string | null>(null);
 
-  // "Unlock more providers" gate flow
+  // "Unlock more providers" gate flow — an already-registered/logged-in visitor
+  // (verified on this screen, or elsewhere in the app entirely) starts unlocked,
+  // so the ask-for-name-and-mobile popup never resurfaces for them.
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const [unlockStep, setUnlockStep] = useState<UnlockStep>(null);
-  const [unlocked, setUnlocked] = useState(false);
+  const [unlocked, setUnlocked] = useState(isAuthenticated);
   const [fullName, setFullName] = useState('');
   const [mobile, setMobile] = useState('');
   const [otpCode, setOtpCode] = useState('');
@@ -112,6 +112,18 @@ export const GuestBrowseServicesScreen: React.FC = () => {
   const phone = `+91${mobile}`;
   const visibleOrgs = unlocked ? ORGANIZATIONS : ORGANIZATIONS.slice(0, GUEST_VISIBLE_COUNT);
   const lockedOrgs = unlocked ? [] : ORGANIZATIONS.slice(GUEST_VISIBLE_COUNT);
+
+  // Same photo the card shows, keyed by org id so the compare-tray thumbnail matches.
+  const orgImageFor = (id: string) => {
+    const idx = ORGANIZATIONS.findIndex((o) => o.id === id);
+    return ORGANIZATIONS[idx]?.image ?? FALLBACK_IMAGES[Math.max(idx, 0) % FALLBACK_IMAGES.length];
+  };
+
+  const compareItems: CompareItem[] = compare.map((id) => ({
+    id,
+    name: ORGANIZATIONS.find((o) => o.id === id)?.name ?? id,
+    photoUri: orgImageFor(id),
+  }));
 
   // OTP resend countdown — only ticks while the OTP step is open.
   useEffect(() => {
@@ -188,28 +200,10 @@ export const GuestBrowseServicesScreen: React.FC = () => {
     try {
       const data = await authService.verifyOtp({ phone, code });
       useAuthStore.getState().setPhoneVerification(data);
-
-      // An existing account: /auth/otp/verify already logged us in.
-      if (data.accessToken) {
-        useAuthStore.getState().setToken(data.accessToken);
-        useUserStore.getState().setProfile({
-          name: data.user ? `${data.user.firstName} ${data.user.lastName}`.trim() : fullName.trim(),
-          email: data.user?.email ?? '',
-          phone: data.user?.phone ?? phone,
-          role: null,
-          age: '',
-        });
-      } else {
-        // New phone: no full account yet — keep browsing as a verified guest and
-        // hold on to the details captured here for the eventual sign-up.
-        useUserStore.getState().setProfile({
-          name: fullName.trim(),
-          email: '',
-          phone,
-          role: null,
-          age: '',
-        });
-      }
+      // New phone -> /auth/register saves the account; existing phone -> adopt
+      // the session /auth/otp/verify already logged in. Either way we end up
+      // with a real, saved user everything afterward acts as.
+      await completeGuestVerification(data, fullName, phone);
 
       setUnlocked(true);
       setUnlockStep('done');
@@ -235,18 +229,35 @@ export const GuestBrowseServicesScreen: React.FC = () => {
     }
   };
 
-  const renderOrgCard = (org: (typeof ORGANIZATIONS)[number], index: number, locked = false) => (
+  const handleCompareNavigate = () => {
+    if (compare.length >= 2) navigation.navigate('GuestComparison', { orgIds: compare });
+  };
+
+  // Already unlocked (or a real account) -> go straight to the detail screen;
+  // otherwise the same ask-for-name-and-mobile popup as "Unlock All Provider".
+  const handleSeeDetails = (orgId: string) => {
+    if (unlocked) navigation.navigate('CaregiverDetail', { orgId });
+    else openUnlock();
+  };
+
+  // Bottom-nav tabs stay gated until unlocked; afterwards they fall through to Home.
+  const handleNavPress = () => {
+    if (unlocked) navigation.navigate('Home');
+    else openUnlock();
+  };
+
+  const renderOrgCard = (org: (typeof ORGANIZATIONS)[number], _index: number, locked = false) => (
     <ComparePopUpCard
       key={org.id}
       title={org.name}
-      imageUri={org.image ?? FALLBACK_IMAGES[index % FALLBACK_IMAGES.length]}
+      imageUri={orgImageFor(org.id)}
       location={org.city}
       distance={`${org.distanceKm} km`}
       rating={org.rating != null ? String(org.rating) : '-'}
       featured={org.featured}
       compareChecked={compare.includes(org.id)}
       onCompareToggle={locked ? undefined : () => toggleCompare(org.id)}
-      onSeeDetailsPress={locked ? undefined : openUnlock}
+      onSeeDetailsPress={locked ? undefined : () => handleSeeDetails(org.id)}
     />
   );
 
@@ -349,42 +360,30 @@ export const GuestBrowseServicesScreen: React.FC = () => {
             </View>
           </View>
         )}
+
+        {/* Room for the compare tray so the last card stays reachable above it. */}
+        {compare.length > 0 && <Spacer size={compareExpanded ? 200 : 72} />}
       </ScrollView>
 
-      {/* Visual bottom nav — every tab is gated for guests */}
-      <View
-        style={[
-          styles.bottomNav,
-          {
-            backgroundColor: colors.tabBar,
-            borderTopColor: colors.border.hairline,
-            paddingBottom: insets.bottom || theme.spacing.md,
-          },
-        ]}
-      >
-        <View style={styles.bottomNavContent}>
-          {NAV_ITEMS.slice(0, 2).map((item) => (
-            <Pressable key={item.key} style={styles.navItem} onPress={openUnlock} accessibilityRole="button">
-              <Icon name={item.icon} variant="outline" size={24} color={colors.text.muted} />
-              <Text style={[styles.navLabel, { color: colors.text.muted }]}>{item.label}</Text>
-            </Pressable>
-          ))}
+      {/* Select & compare tray (Figma "Compare Pop up Expand / Mobile" — 2895:78342).
+          Appears above the bottom nav once at least one provider is ticked. */}
+      {compare.length > 0 && (
+        <CompareBar
+          style={[styles.compareTray, { bottom: navHeight }]}
+          items={compareItems}
+          expanded={compareExpanded}
+          onToggleExpand={() => setCompareExpanded((v) => !v)}
+          onRemoveItem={toggleCompare}
+          onAddPress={() => setCompareExpanded(true)}
+          onComparePress={handleCompareNavigate}
+        />
+      )}
 
-          <Pressable style={styles.navItem} onPress={openUnlock} accessibilityRole="button" accessibilityLabel="Helpline">
-            <View style={[styles.helplineFab, { backgroundColor: colors.accentOrange }]}>
-              <Icon name="phone" variant="outline" size={24} color="#FFFFFF" />
-            </View>
-            <Text style={[styles.navLabel, { color: colors.text.muted }]}>Helpline</Text>
-          </Pressable>
-
-          {NAV_ITEMS.slice(2).map((item) => (
-            <Pressable key={item.key} style={styles.navItem} onPress={openUnlock} accessibilityRole="button">
-              <Icon name={item.icon} variant="outline" size={24} color={colors.text.muted} />
-              <Text style={[styles.navLabel, { color: colors.text.muted }]}>{item.label}</Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
+      {/* Visual bottom nav — gated until unlocked, then falls through to Home */}
+      <GuestBottomNav
+        onLockedPress={handleNavPress}
+        onLayout={(e) => setNavHeight(e.nativeEvent.layout.height)}
+      />
 
       {/* Location bottom sheet (Figma "Pop Up" 2696:4242) */}
       <Modal
@@ -877,46 +876,12 @@ const styles = StyleSheet.create({
     color: theme.colors.neutral[700],
     textAlign: 'center',
   },
-  bottomNav: {
+  compareTray: {
     position: 'absolute',
-    bottom: 0,
     left: 0,
     right: 0,
-    borderTopWidth: 1.5,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-  },
-  bottomNavContent: {
-    flexDirection: 'row',
-    minHeight: 64,
-    alignItems: 'flex-end',
-    justifyContent: 'space-around',
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.sm,
-  },
-  navItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    minHeight: 48,
-  },
-  navLabel: {
-    fontFamily: theme.typography.bodySmall.fontFamily,
-    fontSize: responsiveFontSize(14),
-    lineHeight: 20,
-    marginTop: 4,
-  },
-  helplineFab: {
-    width: 56,
-    height: 56,
-    borderRadius: 200,
-    marginTop: -16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...theme.shadows.md,
+    elevation: 12,
+    zIndex: 12,
   },
   sheetBackdrop: {
     flex: 1,

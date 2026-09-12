@@ -29,6 +29,7 @@ import { PersonalizedQuestionsScreen } from '@/features/services/screens/Persona
 import { CaregiverListScreen } from '@/features/services/screens/CaregiverListScreen';
 import { CaregiverDetailScreen } from '@/features/services/screens/CaregiverDetailScreen';
 import { ComparisonScreen } from '@/features/services/screens/ComparisonScreen';
+import { GuestComparisonScreen } from '@/features/services/screens/GuestComparisonScreen';
 import { RequestSetupScreen } from '@/features/services/screens/RequestSetupScreen';
 import { RequestDetailsScreen } from '@/features/services/screens/RequestDetailsScreen';
 import { BookDetailsScreen } from '@/features/services/screens/BookDetailsScreen';
@@ -73,6 +74,7 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen name="CaregiverList" component={CaregiverListScreen} />
       <Stack.Screen name="CaregiverDetail" component={CaregiverDetailScreen} />
       <Stack.Screen name="Comparison" component={ComparisonScreen} />
+      <Stack.Screen name="GuestComparison" component={GuestComparisonScreen} />
       <Stack.Screen name="RequestSetup" component={RequestSetupScreen} />
       <Stack.Screen name="RequestDetails" component={RequestDetailsScreen} />
       <Stack.Screen name="BookDetails" component={BookDetailsScreen} />

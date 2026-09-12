@@ -29,8 +29,10 @@ export type RootStackParamList = {
   Home: undefined;
   PersonalizedQuestions: { serviceType: string };
   CaregiverList: { serviceType: string };
-  CaregiverDetail: { orgId: string };
+  CaregiverDetail: { orgId: string; serviceType?: string };
   Comparison: { orgIds: string[] };
+  /** Guest-facing comparison — the lower rows are gated behind phone verification. */
+  GuestComparison: { orgIds: string[]; serviceType?: string };
   RequestSetup: { orgId: string; isBooking?: boolean };
   RequestDetails: { orgId?: string; isBooking?: boolean } | undefined;
   BookDetails: { orgId: string };

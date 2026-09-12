@@ -16,14 +16,20 @@ import { RootNavigationProp, RootRouteProp } from '@/navigation/types';
 import { theme } from '@/theme';
 import { Spacer } from '@/components/layouts';
 import { PrimaryButton, IconButton } from '@/components/buttons';
-import { SearchInput } from '@/components/inputs';
 import { responsiveFontSize } from '@/utils/responsive';
-import { ORGANIZATIONS, Organization } from '../data';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useAuthStore } from '@/store/auth.store';
+import { ORGANIZATIONS, Organization } from '../data';
+import { GuestBottomNav } from '../components/GuestBottomNav';
+import { UnlockComparisonSheet } from '../components/UnlockComparisonSheet';
 
-// "Comparsion" (Figma 1256:24299) — side-by-side comparison table.
-// 1 provider -> prompt to add another; 2 -> columns split the screen; 3+ -> fixed
-// 150px columns inside a horizontal scroll.
+// Guest-facing "Comparsion" (Figma 2895:78461) — the provider headers and the
+// Price row are visible, everything below ("Identity & Mission" onward) is dimmed
+// behind a "Compare All Providers Side-by-Side" gate until the guest verifies a
+// phone number. Verified/registered users skip the gate entirely.
+//
+// Layout: 1 provider -> prompt to add another; 2 -> columns split the screen
+// (no horizontal scroll); 3+ -> fixed 150px columns inside a horizontal scroll.
 
 const COL_WIDTH = 150;
 
@@ -33,18 +39,28 @@ const Star = ({ filled, mutedColor }: { filled: boolean; mutedColor: string }) =
   </Svg>
 );
 
-export const ComparisonScreen: React.FC = () => {
-  const navigation = useNavigation<RootNavigationProp<'Comparison'>>();
-  const route = useRoute<RootRouteProp<'Comparison'>>();
+export const GuestComparisonScreen: React.FC = () => {
+  const navigation = useNavigation<RootNavigationProp<'GuestComparison'>>();
+  const route = useRoute<RootRouteProp<'GuestComparison'>>();
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
-  const [search, setSearch] = useState('');
+
+  // Gated for anyone without a real account — a guest, or just a not-yet-logged-in
+  // visitor. Only a signed-in user (real token) sees the full matrix straight away.
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const [ids, setIds] = useState<string[]>(route.params?.orgIds ?? []);
+  const [unlocked, setUnlocked] = useState(isAuthenticated);
+  const [showUnlock, setShowUnlock] = useState(false);
+  const [navHeight, setNavHeight] = useState(64 + (insets.bottom || theme.spacing.md));
+
+  const title = route.params?.serviceType ?? 'Compare';
 
   const orgs = ids
     .map((id) => ORGANIZATIONS.find((o) => o.id === id))
     .filter((o): o is Organization => !!o);
 
+  // 3+ columns can't fit a phone — only then do we switch to fixed-width columns
+  // and horizontal scrolling. 1–2 columns just divide the available width.
   const isScrollable = orgs.length >= 3;
   const cellSizing: StyleProp<ViewStyle> = isScrollable ? styles.cellFixed : styles.cellFlex;
 
@@ -52,6 +68,27 @@ export const ComparisonScreen: React.FC = () => {
     const next = ids.filter((i) => i !== id);
     if (next.length === 0) navigation.goBack();
     else setIds(next); // 1 left -> the "add one more" prompt below takes over
+  };
+
+  const handleSeeDetails = (orgId: string) => {
+    if (unlocked) navigation.navigate('CaregiverDetail', { orgId, serviceType: route.params?.serviceType });
+    else setShowUnlock(true);
+  };
+
+  // Nav tabs stay gated until the guest verifies; afterwards they fall through to Home.
+  const handleNavPress = () => {
+    if (unlocked) navigation.navigate('Home');
+    else setShowUnlock(true);
+  };
+
+  const handleVerified = () => {
+    setUnlocked(true);
+    setShowUnlock(false);
+  };
+
+  const leaveForAuth = (go: () => void) => {
+    setShowUnlock(false);
+    go();
   };
 
   // Row helpers — every row renders one cell per organization so the columns
@@ -64,7 +101,10 @@ export const ComparisonScreen: React.FC = () => {
           style={[
             styles.cell,
             cellSizing,
-            { borderColor: colors.border.hairline, backgroundColor: shaded ? colors.background.orange : colors.background.base },
+            {
+              borderColor: colors.border.hairline,
+              backgroundColor: shaded ? colors.background.orange : colors.background.base,
+            },
           ]}
         >
           {render(org)}
@@ -117,11 +157,7 @@ export const ComparisonScreen: React.FC = () => {
         </Pressable>
       </View>
       <Text style={[styles.orgName, { color: colors.accentPrimary }]}>{org.name}</Text>
-      <PrimaryButton
-        label="See details"
-        size="small"
-        onPress={() => navigation.navigate('CaregiverDetail', { orgId: org.id })}
-      />
+      <PrimaryButton label="See details" size="small" onPress={() => handleSeeDetails(org.id)} />
     </View>
   );
 
@@ -129,41 +165,46 @@ export const ComparisonScreen: React.FC = () => {
     <ScrollView
       style={outerStyle}
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingBottom: (insets.bottom || theme.spacing.md) + theme.spacing.xl }}
+      contentContainerStyle={{ paddingBottom: navHeight + theme.spacing.xxl }}
     >
+      {/* Provider headers (always visible) */}
       <View style={styles.row}>{orgs.map((org) => renderHeaderCard(org, cellSizing))}</View>
 
+      {/* Price row (always visible) */}
       {labelRow('Price')}
       {cellsRow((org) => <Text style={[styles.rowValue, { color: colors.text.secondary }]}>{org.price}</Text>)}
 
-      {sectionHeader('Identity & Mission')}
-      {labelRow('Founded')}
-      {cellsRow((org) => <Text style={[styles.rowValue, { color: colors.text.secondary }]}>{org.founded}</Text>)}
-      {labelRow('Mission')}
-      {cellsRow((org) => <Text style={[styles.rowValue, { color: colors.text.secondary }]}>{org.mission}</Text>)}
+      {/* Everything below is gated for guests. */}
+      <View style={!unlocked && styles.lockedRows} pointerEvents={unlocked ? 'auto' : 'none'}>
+        {sectionHeader('Identity & Mission')}
+        {labelRow('Founded')}
+        {cellsRow((org) => <Text style={[styles.rowValue, { color: colors.text.secondary }]}>{org.founded}</Text>)}
+        {labelRow('Mission')}
+        {cellsRow((org) => <Text style={[styles.rowValue, { color: colors.text.secondary }]}>{org.mission}</Text>)}
 
-      {sectionHeader('Ratings and Review')}
-      {labelRow('Ratings')}
-      {cellsRow((org) => (
-        <View>
-          <View style={styles.starsRow}>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star key={i} filled={org.rating != null && i < Math.round(org.rating)} mutedColor={colors.border.card} />
-            ))}
+        {sectionHeader('Ratings and Review')}
+        {labelRow('Ratings')}
+        {cellsRow((org) => (
+          <View>
+            <View style={styles.starsRow}>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star key={i} filled={org.rating != null && i < Math.round(org.rating)} mutedColor={colors.border.card} />
+              ))}
+            </View>
+            <Text style={[styles.ratingText, { color: colors.accentOrange }]}>
+              {org.rating ?? '-'} ({org.ratingCount})
+            </Text>
           </View>
-          <Text style={[styles.ratingText, { color: colors.accentOrange }]}>
-            {org.rating ?? '-'} ({org.ratingCount})
-          </Text>
-        </View>
-      ))}
-      {labelRow('Impact Ratings')}
-      {listRows((org) => org.impact)}
+        ))}
+        {labelRow('Impact Ratings')}
+        {listRows((org) => org.impact)}
 
-      {sectionHeader('Programs & Initiatives')}
-      {listRows((org) => org.programs)}
+        {sectionHeader('Programs & Initiatives')}
+        {listRows((org) => org.programs)}
 
-      {sectionHeader('Services Provided')}
-      {listRows((org) => org.services)}
+        {sectionHeader('Services Provided')}
+        {listRows((org) => org.services)}
+      </View>
     </ScrollView>
   );
 
@@ -172,18 +213,23 @@ export const ComparisonScreen: React.FC = () => {
       <View style={[styles.top, { paddingTop: insets.top + theme.spacing.lg }]}>
         <View style={styles.headerRow}>
           <IconButton type="back" bg={colors.accentPrimary} accessibilityLabel="Go back" onPress={() => navigation.goBack()} size={40} />
-          <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Caregiver</Text>
+          <Text style={[styles.headerTitle, { color: colors.text.primary }]} numberOfLines={1}>
+            {title}
+          </Text>
           <View style={{ width: 40 }} />
         </View>
-        <Spacer size="lg" />
-        <SearchInput placeholder="Search caregivers" value={search} onChangeText={setSearch} />
         <Spacer size="lg" />
         <Text style={[styles.pageTitle, { color: colors.text.primary }]}>Compare Products</Text>
         <Spacer size="md" />
       </View>
 
       {orgs.length < 2 ? (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.needMore}>
+        // Need at least two providers — show the one picked plus a prompt to
+        // go back and add another.
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={[styles.needMore, { paddingBottom: navHeight + theme.spacing.xxl }]}
+        >
           <View style={styles.row}>
             {orgs.map((org) => renderHeaderCard(org, styles.cellFlex))}
             <Pressable
@@ -196,6 +242,7 @@ export const ComparisonScreen: React.FC = () => {
               <Text style={[styles.addText, { color: colors.text.muted }]}>Add provider</Text>
             </Pressable>
           </View>
+
           <Spacer size="xl" />
           <Text style={[styles.needMoreText, { color: colors.text.secondary }]}>
             Add one more provider to see the full side-by-side comparison.
@@ -210,6 +257,39 @@ export const ComparisonScreen: React.FC = () => {
       ) : (
         renderBody({ flex: 1 })
       )}
+
+      {/* Gate: scrim + "Compare All Providers Side-by-Side" card (Figma 2895:78665) */}
+      {orgs.length >= 2 && !unlocked && (
+        <>
+          <View
+            style={[styles.gateScrim, { backgroundColor: colors.background.layout, bottom: navHeight }]}
+            pointerEvents="none"
+          />
+          <View style={[styles.gateWrap, { bottom: navHeight + theme.spacing.xxl }]} pointerEvents="box-none">
+            <View style={[styles.gateCard, { backgroundColor: colors.background.layout }]}>
+              <Text style={[styles.gateTitle, { color: colors.text.primary }]}>Compare All Providers Side-by-Side</Text>
+              <Text style={[styles.gateBody, { color: colors.text.secondary }]}>
+                See full specifications, hidden fees, and performance ratings for all available options.
+              </Text>
+              <PrimaryButton label="View Full Comparison" onPress={() => setShowUnlock(true)} />
+            </View>
+          </View>
+        </>
+      )}
+
+      <GuestBottomNav
+        onLockedPress={handleNavPress}
+        onLayout={(e) => setNavHeight(e.nativeEvent.layout.height)}
+      />
+
+      <UnlockComparisonSheet
+        visible={showUnlock}
+        onClose={() => setShowUnlock(false)}
+        onVerified={handleVerified}
+        onGoogle={() => leaveForAuth(() => navigation.navigate('Login', { intent: 'login' }))}
+        onEmail={() => leaveForAuth(() => navigation.navigate('EnterEmail'))}
+        onLogin={() => leaveForAuth(() => navigation.navigate('Login', { intent: 'login' }))}
+      />
     </View>
   );
 };
@@ -228,6 +308,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   headerTitle: {
+    flex: 1,
+    marginHorizontal: theme.spacing.sm,
+    textAlign: 'center',
     fontFamily: theme.typography.h2.fontFamily,
     fontSize: responsiveFontSize(theme.typography.h2.fontSize),
     color: theme.colors.neutral[900],
@@ -265,6 +348,9 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(theme.typography.bodyMedium.fontSize),
     lineHeight: 20,
     color: theme.colors.neutral[700],
+  },
+  lockedRows: {
+    opacity: 0.35,
   },
   sectionHeader: {
     backgroundColor: theme.colors.tertiary,
@@ -325,7 +411,6 @@ const styles = StyleSheet.create({
   },
   needMore: {
     paddingHorizontal: theme.spacing.xl,
-    paddingBottom: theme.spacing.xxl,
   },
   addCard: {
     flex: 1,
@@ -353,6 +438,39 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     textAlign: 'center',
   },
+  gateScrim: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: '42%',
+    opacity: 0.6,
+  },
+  gateWrap: {
+    position: 'absolute',
+    left: theme.spacing.xl,
+    right: theme.spacing.xl,
+    alignItems: 'center',
+  },
+  gateCard: {
+    width: '100%',
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.xxl,
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    ...theme.shadows.md,
+  },
+  gateTitle: {
+    fontFamily: theme.typography.h3.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.h3.fontSize),
+    color: theme.colors.neutral[900],
+    textAlign: 'center',
+  },
+  gateBody: {
+    fontFamily: theme.typography.bodyLarge.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.bodyLarge.fontSize),
+    color: theme.colors.neutral[700],
+    textAlign: 'center',
+  },
 });
 
-export default ComparisonScreen;
+export default GuestComparisonScreen;

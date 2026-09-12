@@ -6,13 +6,14 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  TextInput as RNTextInput,
+  TextInput,
   View,
 } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { theme } from '@/theme';
 import { Spacer } from '@/components/layouts';
 import { PrimaryButton, IconButton } from '@/components/buttons';
-import { TextInput, OTPInput } from '@/components/inputs';
+import { TextInput as StyledTextInput, OTPInput } from '@/components/inputs';
 import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
 import { useThemeColors } from '@/hooks/useThemeColors';
@@ -20,54 +21,15 @@ import { useAuthStore } from '@/store/auth.store';
 import { authService, getErrorMessage } from '@/api';
 import { completeGuestVerification } from '../utils/guestVerification';
 
-// Provider-detail lead-capture popups reached after "unlocking all providers":
-// Save (Figma 2895:69194 → 69265/69291 → 69321), Request a callback
-// (2895:69217 → 69405/69431 → 69341) and Book/Enquire (2895:69241 → 69461/69487,
-// then straight into Request Set up — no "done" step of its own). All three
-// share the same name+mobile → OTP shape, just with different copy per Figma.
-
-export type LeadCaptureMode = 'save' | 'callback' | 'book';
+// "Unlock the Full Comparison Matrix" (Figma 2895:78888) + "Enter verification code"
+// (Figma 2895:79385) — the login gate a guest hits from GuestComparisonScreen's
+// "View Full Comparison". Mobile + OTP unlocks in place; the social / "Log in"
+// options hand off to the real auth screens.
 
 const OTP_LENGTH = 4;
 const RESEND_SECONDS = 28; // Figma copy: "Resend in 00:28"
 
-const COPY: Record<LeadCaptureMode, {
-  title: string;
-  body: string;
-  submitLabel: string;
-  disclaimer: string;
-  doneTitle: string;
-  doneBody: string;
-  doneButtonLabel: string;
-}> = {
-  save: {
-    title: 'Save This Provider to Your Favorites',
-    body: 'Create a secure shortlist so you can access your saved providers and compare them later from any device.',
-    submitLabel: 'Continue',
-    disclaimer: 'Standard message and data rates may app. We take steps to ensure your data stays private.',
-    doneTitle: 'Saved to Favorites',
-    doneBody: 'You can find your saved items anytime from your Service History.',
-    doneButtonLabel: 'Continue browsing',
-  },
-  callback: {
-    title: 'Get a Callback Within 15 Minutes',
-    body: 'Leave your name and number below, and an expert from this provider will call you directly.',
-    submitLabel: 'Call Me Back',
-    disclaimer: 'Agents are currently online and available to call.',
-    doneTitle: 'Callback requested',
-    doneBody: "We've received your request. Our team will contact you shortly.",
-    doneButtonLabel: 'Done',
-  },
-  book: {
-    title: 'Let’s get you started',
-    body: 'Enter your details and we’ll help you with your enquiry.',
-    submitLabel: 'Call Me Back',
-    disclaimer: 'Agents are currently online and available to call.',
-    doneTitle: '',
-    doneBody: '',
-    doneButtonLabel: '',
-  },
-};
+const isValidIndianMobile = (v: string) => /^[6-9]\d{9}$/.test(v);
 
 // "+919812340002" → "+91-98****02"
 const maskPhone = (phone: string) => {
@@ -77,29 +39,50 @@ const maskPhone = (phone: string) => {
   return `${match[1]}-${digits.slice(0, 2)}****${digits.slice(8)}`;
 };
 
-const isValidIndianMobile = (v: string) => /^[6-9]\d{9}$/.test(v);
+const GoogleIcon = () => (
+  <Svg width="20" height="20" viewBox="0 0 24 24">
+    <Path
+      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+      fill="#4285F4"
+    />
+    <Path
+      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+      fill="#34A853"
+    />
+    <Path
+      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+      fill="#FBBC05"
+    />
+    <Path
+      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+      fill="#EA4335"
+    />
+  </Svg>
+);
 
-type Step = 'form' | 'otp' | 'done';
+type Step = 'phone' | 'otp';
 
-interface LeadCaptureModalProps {
+interface UnlockComparisonSheetProps {
   visible: boolean;
-  mode: LeadCaptureMode;
   onClose: () => void;
-  /**
-   * Fired once the mobile number is verified. For 'save'/'callback' this is
-   * called when the user taps the done-screen button (which also closes the
-   * modal). For 'book' there's no done screen in Figma — it's called (and the
-   * modal closes) right after OTP verification so the caller can move on to
-   * Request Set up.
-   */
-  onVerified: (details: { name: string; phone: string }) => void;
+  /** Fired once the number is verified — the host reveals the full comparison. */
+  onVerified: () => void;
+  onGoogle: () => void;
+  onEmail: () => void;
+  onLogin: () => void;
 }
 
-export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mode, onClose, onVerified }) => {
+export const UnlockComparisonSheet: React.FC<UnlockComparisonSheetProps> = ({
+  visible,
+  onClose,
+  onVerified,
+  onGoogle,
+  onEmail,
+  onLogin,
+}) => {
   const colors = useThemeColors();
-  const copy = COPY[mode];
 
-  const [step, setStep] = useState<Step>('form');
+  const [step, setStep] = useState<Step>('phone');
   const [fullName, setFullName] = useState('');
   const [mobile, setMobile] = useState('');
   const [otpCode, setOtpCode] = useState('');
@@ -110,10 +93,10 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
 
   const phone = `+91${mobile}`;
 
-  // Reset to a clean form every time the popup is (re)opened.
+  // Clean slate every time the sheet is (re)opened.
   useEffect(() => {
     if (visible) {
-      setStep('form');
+      setStep('phone');
       setFullName('');
       setMobile('');
       setOtpCode('');
@@ -121,7 +104,7 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
       setOtpError(null);
       setResendIn(RESEND_SECONDS);
     }
-  }, [visible, mode]);
+  }, [visible]);
 
   useEffect(() => {
     if (step !== 'otp' || resendIn <= 0) return;
@@ -133,7 +116,7 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
     await authService.requestOtp({ phone, role: useAuthStore.getState().role });
   };
 
-  const handleSubmitDetails = async () => {
+  const handleContinue = async () => {
     if (submitting) return;
     if (!fullName.trim()) {
       setFormError('Please enter your full name.');
@@ -147,6 +130,7 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
     setFormError(null);
     try {
       await requestOtp();
+      useAuthStore.getState().setPhone(phone);
       setOtpCode('');
       setResendIn(RESEND_SECONDS);
       setStep('otp');
@@ -157,7 +141,7 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
     }
   };
 
-  const handleVerifyOtp = async (code: string = otpCode) => {
+  const handleVerify = async (code: string = otpCode) => {
     if (submitting || code.length !== OTP_LENGTH) return;
     setSubmitting(true);
     setOtpError(null);
@@ -165,16 +149,11 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
       const data = await authService.verifyOtp({ phone, code });
       useAuthStore.getState().setPhoneVerification(data);
       // New phone -> /auth/register saves the account; existing phone -> adopt
-      // the session /auth/otp/verify already logged in. Everything from here
-      // on (save/callback/book) acts as that now-real user.
+      // the session /auth/otp/verify already logged in. The comparison unlocks
+      // as that now-real user either way.
       await completeGuestVerification(data, fullName, phone);
 
-      const details = { name: fullName.trim(), phone };
-      if (mode === 'book') {
-        onVerified(details);
-      } else {
-        setStep('done');
-      }
+      onVerified();
     } catch (err) {
       setOtpError(getErrorMessage(err));
     } finally {
@@ -197,30 +176,31 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
     }
   };
 
-  const handleDone = () => {
-    onVerified({ name: fullName.trim(), phone });
-    onClose();
-  };
-
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <KeyboardAvoidingView style={styles.backdrop} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <KeyboardAvoidingView
+        style={styles.backdrop}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={[styles.card, { backgroundColor: colors.background.layout }]}>
+        <View style={[styles.sheet, { backgroundColor: colors.background.layout }]}>
           <View style={styles.headerRow}>
             <View style={{ flex: 1 }} />
             <IconButton type="close" bg={colors.accentPrimary} accessibilityLabel="Close" onPress={onClose} size={40} />
           </View>
 
-          {step === 'form' && (
+          {step === 'phone' && (
             <>
               <Spacer size="sm" />
-              <Text style={[styles.title, { color: colors.text.primary }]}>{copy.title}</Text>
+              <Text style={[styles.title, { color: colors.text.primary }]}>Unlock the Full Comparison Matrix</Text>
               <Spacer size="md" />
-              <Text style={[styles.body, { color: colors.text.secondary }]}>{copy.body}</Text>
-              <Spacer size="lg" />
+              <Text style={[styles.body, { color: colors.text.secondary }]}>
+                Enter your details below to instantly unlock the remaining providers and compare detailed
+                specifications side-by-side.
+              </Text>
 
-              <TextInput
+              <Spacer size="lg" />
+              <StyledTextInput
                 label="Full Name"
                 placeholder="Full Name"
                 value={fullName}
@@ -231,6 +211,7 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
                 autoCapitalize="words"
               />
 
+              <Spacer size="md" />
               <Text style={[styles.fieldLabel, { color: colors.text.primary }]}>Mobile Number</Text>
               <Spacer size="sm" />
               <View style={styles.phoneRow}>
@@ -238,7 +219,7 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
                   <Text style={[styles.ccText, { color: colors.text.primary }]}>(+91)</Text>
                   <Icon name="navigationDown" variant="outline" size={14} color={colors.text.secondary} />
                 </View>
-                <RNTextInput
+                <TextInput
                   style={[
                     styles.numInput,
                     { backgroundColor: colors.background.base, borderColor: colors.border.card, color: colors.text.primary },
@@ -262,9 +243,40 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
               )}
 
               <Spacer size="md" />
-              <PrimaryButton label={copy.submitLabel} onPress={handleSubmitDetails} loading={submitting} />
+              <PrimaryButton label="Continue" onPress={handleContinue} loading={submitting} />
+
               <Spacer size="lg" />
-              <Text style={[styles.disclaimer, { color: colors.text.tertiary }]}>{copy.disclaimer}</Text>
+              <View style={styles.orRow}>
+                <View style={[styles.orLine, { backgroundColor: colors.accentOrange }]} />
+                <Text style={[styles.orText, { color: colors.text.secondary }]}>OR</Text>
+                <View style={[styles.orLine, { backgroundColor: colors.accentOrange }]} />
+              </View>
+
+              <Spacer size="lg" />
+              <Pressable
+                style={[styles.lightButton, { backgroundColor: colors.background.base, borderColor: colors.border.hairline }]}
+                onPress={onGoogle}
+                accessibilityRole="button"
+              >
+                <GoogleIcon />
+                <Text style={[styles.lightButtonText, { color: colors.text.primary }]}>Sign in with Google</Text>
+              </Pressable>
+              <Spacer size="md" />
+              <Pressable
+                style={[styles.lightButton, { backgroundColor: colors.background.base, borderColor: colors.border.hairline }]}
+                onPress={onEmail}
+                accessibilityRole="button"
+              >
+                <Text style={[styles.lightButtonText, { color: colors.text.primary }]}>Sign in with Email</Text>
+              </Pressable>
+
+              <Spacer size="lg" />
+              <Text style={[styles.loginRow, { color: colors.text.secondary }]}>
+                Already have an account?{' '}
+                <Text style={[styles.loginLink, { color: colors.accentPrimary }]} onPress={onLogin}>
+                  Log in
+                </Text>
+              </Text>
             </>
           )}
 
@@ -286,7 +298,7 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
                   setOtpCode(v);
                   if (otpError) setOtpError(null);
                 }}
-                onComplete={(code) => handleVerifyOtp(code)}
+                onComplete={(code) => handleVerify(code)}
                 error={!!otpError}
               />
               {otpError && (
@@ -296,10 +308,10 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
                 </>
               )}
 
-              <Spacer size="lg" />
+              <Spacer size="xl" />
               <PrimaryButton
                 label="Continue"
-                onPress={() => handleVerifyOtp()}
+                onPress={() => handleVerify()}
                 loading={submitting}
                 disabled={otpCode.length !== OTP_LENGTH}
               />
@@ -320,16 +332,7 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
             </>
           )}
 
-          {step === 'done' && (
-            <>
-              <Spacer size="sm" />
-              <Text style={[styles.title, { color: colors.text.primary }]}>{copy.doneTitle}</Text>
-              <Spacer size="md" />
-              <Text style={[styles.body, { color: colors.text.secondary }]}>{copy.doneBody}</Text>
-              <Spacer size="lg" />
-              <PrimaryButton label={copy.doneButtonLabel} onPress={handleDone} />
-            </>
-          )}
+          <Spacer size="lg" />
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -340,16 +343,14 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(9, 25, 10, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.xl,
+    justifyContent: 'flex-end',
   },
-  card: {
-    width: '100%',
-    maxWidth: 360,
-    borderRadius: 16,
-    padding: theme.spacing.xxl,
-    ...theme.shadows.md,
+  sheet: {
+    borderTopLeftRadius: theme.radius.lg,
+    borderTopRightRadius: theme.radius.lg,
+    paddingHorizontal: theme.spacing.xxl,
+    paddingTop: theme.spacing.xxl,
+    paddingBottom: theme.spacing.xxl,
   },
   headerRow: {
     flexDirection: 'row',
@@ -368,13 +369,6 @@ const styles = StyleSheet.create({
   },
   bodyStrong: {
     fontFamily: theme.fonts.bold,
-  },
-  disclaimer: {
-    fontFamily: theme.typography.bodySmall.fontFamily,
-    fontStyle: 'italic',
-    fontSize: responsiveFontSize(13),
-    lineHeight: 17,
-    textAlign: 'center',
   },
   fieldLabel: {
     fontFamily: theme.typography.h5.fontFamily,
@@ -415,6 +409,41 @@ const styles = StyleSheet.create({
     color: theme.colors.status.error,
     textAlign: 'center',
   },
+  orRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+  },
+  orLine: {
+    flex: 1,
+    height: 1.5,
+  },
+  orText: {
+    fontFamily: theme.typography.label.fontFamily,
+    fontSize: responsiveFontSize(16),
+  },
+  lightButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    minHeight: 48,
+    paddingHorizontal: theme.spacing.xxl,
+    borderWidth: 1,
+    borderRadius: theme.radius.control,
+  },
+  lightButtonText: {
+    fontFamily: theme.typography.label.fontFamily,
+    fontSize: responsiveFontSize(16),
+  },
+  loginRow: {
+    fontFamily: theme.typography.bodyMedium.fontFamily,
+    fontSize: responsiveFontSize(15),
+    textAlign: 'center',
+  },
+  loginLink: {
+    fontFamily: theme.fonts.bold,
+  },
   resendText: {
     fontFamily: theme.typography.bodyMedium.fontFamily,
     fontSize: responsiveFontSize(15),
@@ -425,4 +454,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LeadCaptureModal;
+export default UnlockComparisonSheet;

@@ -24,10 +24,15 @@ export interface VerifyOtpData {
 }
 
 export interface RegisterPayload {
-  email: string;
-  password: string;
   firstName: string;
   lastName: string;
+  /**
+   * Optional: the full Create Account form always sends these, but the quick
+   * guest-unlock flows (name + phone only) register without them — the
+   * account is created from just phoneVerificationToken + name.
+   */
+  email?: string;
+  password?: string;
   phone?: string;
   role?: ApiRole;
   /**

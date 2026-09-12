@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, Image, Pressable } from 'react-native';
+import { Alert, StyleSheet, Text, View, ScrollView, Image, Pressable } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,11 +8,14 @@ import { theme } from '@/theme';
 import { Spacer, SegmentedTabs } from '@/components/layouts';
 import { PrimaryButton, SecondaryButton, IconButton } from '@/components/buttons';
 import { StatusChip, FavoriteButton } from '@/components/cards';
+import { Checkbox } from '@/components/inputs';
 import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
 import { getOrganization } from '../data';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useAuthStore } from '@/store/auth.store';
 import { LeadCaptureModal, LeadCaptureMode } from '../components/LeadCaptureModal';
+import { GuestBottomNav } from '../components/GuestBottomNav';
 
 // "Caregivers - About / Reviews" (Figma 1256:24506 / 1256:24595).
 
@@ -79,13 +82,35 @@ export const CaregiverDetailScreen: React.FC = () => {
   const org = getOrganization(route.params?.orgId ?? 'agewell');
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
+  // Guest chrome (bottom nav + Compare row) shows for anyone browsing without an account.
+  const isGuest = !useAuthStore((s) => s.isAuthenticated);
   const [tab, setTab] = useState(0); // 0 About, 1 Review
   const [fav, setFav] = useState(false);
+  const [compareChecked, setCompareChecked] = useState(false);
   const [leadMode, setLeadMode] = useState<LeadCaptureMode | null>(null);
+
+  const headerTitle = route.params?.serviceType ?? 'Caregiver';
 
   const handleBookVerified = () => {
     setLeadMode(null);
     navigation.navigate('RequestSetup', { orgId: org.id, isBooking: true });
+  };
+
+  // Save/Callback/Book all ask for name+mobile only to convert a guest into a
+  // real account. Someone already registered has nothing left to ask — do the
+  // underlying action directly instead of popping the lead-capture modal again.
+  const handleLeadAction = (mode: LeadCaptureMode) => {
+    if (!isGuest) {
+      if (mode === 'save') {
+        setFav(true);
+      } else if (mode === 'book') {
+        handleBookVerified();
+      } else {
+        Alert.alert('Callback requested', "We've received your request. Our team will contact you shortly.");
+      }
+      return;
+    }
+    setLeadMode(mode);
   };
 
   const Pill = ({ text, half }: { text: string; half?: boolean }) => (
@@ -98,11 +123,15 @@ export const CaregiverDetailScreen: React.FC = () => {
     <View style={[styles.root, { backgroundColor: colors.background.layout }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + theme.spacing.lg }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingTop: insets.top + theme.spacing.lg },
+          isGuest && { paddingBottom: 96 + insets.bottom },
+        ]}
       >
         <View style={styles.headerRow}>
           <IconButton type="back" bg={colors.accentPrimary} accessibilityLabel="Go back" onPress={() => navigation.goBack()} size={40} />
-          <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Caregiver</Text>
+          <Text style={[styles.headerTitle, { color: colors.text.primary }]}>{headerTitle}</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -115,6 +144,9 @@ export const CaregiverDetailScreen: React.FC = () => {
           ) : (
             <View style={[styles.hero, { backgroundColor: colors.border.hairline }]} />
           )}
+          <View style={[styles.heroArrow, { backgroundColor: colors.accentOrange }]}>
+            <Icon name="navigationRight" variant="outline" size={22} color="#FFFFFF" />
+          </View>
         </View>
 
         <Spacer size="lg" />
@@ -129,7 +161,7 @@ export const CaregiverDetailScreen: React.FC = () => {
           <Spacer size="md" />
           <View style={styles.nameRow}>
             <Text style={[styles.orgName, { color: colors.text.primary }]}>{org.name}</Text>
-            <FavoriteButton active={fav} onPress={() => setLeadMode('save')} />
+            <FavoriteButton active={fav} onPress={() => handleLeadAction('save')} />
           </View>
 
           <Spacer size="sm" />
@@ -142,6 +174,16 @@ export const CaregiverDetailScreen: React.FC = () => {
             <Icon name="send" variant="outline" size={18} color={colors.accentOrange} />
             <Text style={[styles.directionsText, { color: colors.accentOrange }]}>Get Directions</Text>
           </Pressable>
+
+          {isGuest && (
+            <>
+              <Spacer size="sm" />
+              <Pressable style={styles.compareRow} onPress={() => setCompareChecked((v) => !v)}>
+                <Checkbox checked={compareChecked} onPress={() => setCompareChecked((v) => !v)} />
+                <Text style={[styles.compareText, { color: colors.accentPrimary }]}>Compare</Text>
+              </Pressable>
+            </>
+          )}
 
           <Spacer size="lg" />
           {/* Stats */}
@@ -251,9 +293,9 @@ export const CaregiverDetailScreen: React.FC = () => {
           )}
 
           <Spacer size="xxl" />
-          <PrimaryButton label="Request a callback" onPress={() => setLeadMode('callback')} />
+          <PrimaryButton label="Request a callback" onPress={() => handleLeadAction('callback')} />
           <Spacer size="md" />
-          <PrimaryButton label="Book" onPress={() => setLeadMode('book')} />
+          <PrimaryButton label="Book" onPress={() => handleLeadAction('book')} />
           <Spacer size="md" />
           <SecondaryButton label="Website" onPress={() => {}} />
           <Spacer size="xl" />
@@ -269,6 +311,8 @@ export const CaregiverDetailScreen: React.FC = () => {
           if (leadMode === 'book') handleBookVerified();
         }}
       />
+
+      {isGuest && <GuestBottomNav onLockedPress={() => navigation.navigate('GuestBrowse')} />}
     </View>
   );
 };
@@ -298,6 +342,27 @@ const styles = StyleSheet.create({
   hero: {
     width: '100%',
     height: 180,
+  },
+  heroArrow: {
+    position: 'absolute',
+    right: theme.spacing.xl,
+    bottom: -20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...theme.shadows.sm,
+  },
+  compareRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  compareText: {
+    fontFamily: theme.typography.label.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.label.fontSize),
+    color: theme.colors.primary,
   },
   inner: {
     paddingHorizontal: theme.spacing.xl,
