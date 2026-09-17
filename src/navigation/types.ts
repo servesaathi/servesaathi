@@ -1,6 +1,17 @@
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 
+/** What the user picked on RequestSetupScreen — carried forward so RequestDetailsScreen
+ *  can show the real selection (and "Edit" can send them back to change it). */
+export interface RequestFormValues {
+  method: string;
+  /** "2026-04-15" — see toDateISO/parseDateISO in features/services/utils/scheduleDate.ts. */
+  dateISO: string;
+  time: string;
+  notes: string;
+  reminder: boolean;
+}
+
 export type RootStackParamList = {
   Splash: undefined;
   LanguageSelect: undefined;
@@ -34,7 +45,7 @@ export type RootStackParamList = {
   /** Guest-facing comparison — the lower rows are gated behind phone verification. */
   GuestComparison: { orgIds: string[]; serviceType?: string };
   RequestSetup: { orgId: string; isBooking?: boolean };
-  RequestDetails: { orgId?: string; isBooking?: boolean } | undefined;
+  RequestDetails: { orgId?: string; isBooking?: boolean; requestValues?: RequestFormValues } | undefined;
   BookDetails: { orgId: string };
   HelplineList: undefined;
   ShareLocation: undefined;

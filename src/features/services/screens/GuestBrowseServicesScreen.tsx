@@ -20,11 +20,11 @@ import { ComparePopUpCard, CompareBar, type CompareItem } from '@/components/car
 import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import { useAuthStore } from '@/store/auth.store';
-import { authService, getErrorMessage } from '@/api';
-import { ORGANIZATIONS } from '../data';
+import { useAuthStore, useIsGuestVerified } from '@/store/auth.store';
+import { authService, categoryService, getErrorMessage } from '@/api';
+import { ORGANIZATIONS, getOrgImage, SERVICE_CATEGORIES, toServiceCategories, type ServiceCategory } from '../data';
 import { GuestBottomNav } from '../components/GuestBottomNav';
-import { completeGuestVerification } from '../utils/guestVerification';
+import { completeGuestVerification, registerGuestAndRequestOtp } from '../utils/guestVerification';
 
 // Guest browsing screen (Figma "Browse Services" — 2694:20730 → 2696:4239 → 2895:73743),
 // with the "unlock more providers" gate flow (2895:78057 → 2895:78101/78127 → 2895:78081).
@@ -37,9 +37,6 @@ const GUEST_VISIBLE_COUNT = 3;
 const DEFAULT_LOCATION_LABEL = 'New Delhi, Delhi 110001';
 const OTP_LENGTH = 4;
 const RESEND_SECONDS = 28; // Figma copy: "Resend in 00:28"
-
-// Fallback imagery for orgs with no photo of their own (Figma shows grey slots).
-const FALLBACK_IMAGES = [theme.images.onboarding1, theme.images.onboarding2, theme.images.onboarding3];
 
 // "Filter by" sheet groups (Figma 2696:6231), replicated as-is.
 const FILTER_RATINGS = ['24/7 Care', 'Day Care', 'On-demand', 'Part time'];
@@ -90,17 +87,28 @@ export const GuestBrowseServicesScreen: React.FC = () => {
   const [navHeight, setNavHeight] = useState(64 + (insets.bottom || theme.spacing.md));
   // Figma flow: the location sheet greets the guest as soon as they land here.
   const [showLocationSheet, setShowLocationSheet] = useState(true);
+  // Category picker shown once the location is set, before the org list —
+  // no services API yet (see data.ts), so every category just reveals the
+  // same mock organizations list below.
+  const [categories, setCategories] = useState<ServiceCategory[]>(SERVICE_CATEGORIES);
+  const [category, setCategory] = useState<ServiceCategory | null>(null);
   const [showFilterSheet, setShowFilterSheet] = useState(false);
   const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS);
   const [showSortSheet, setShowSortSheet] = useState(false);
   const [sortBy, setSortBy] = useState<string | null>(null);
 
   // "Unlock more providers" gate flow — an already-registered/logged-in visitor
-  // (verified on this screen, or elsewhere in the app entirely) starts unlocked,
-  // so the ask-for-name-and-mobile popup never resurfaces for them.
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  // (verified on this screen, or elsewhere in the app entirely) is unlocked,
+  // so the ask-for-name-and-mobile popup never resurfaces for them. Read live
+  // on every render rather than snapshotted once via useState(isVerified) —
+  // that would only capture whatever it was at this screen's first mount, so
+  // verifying elsewhere wouldn't be reflected if this instance was already
+  // mounted (e.g. navigating back to it). sheetUnlocked covers unlocking via
+  // this screen's own sheet instead.
+  const isVerified = useIsGuestVerified();
   const [unlockStep, setUnlockStep] = useState<UnlockStep>(null);
-  const [unlocked, setUnlocked] = useState(isAuthenticated);
+  const [sheetUnlocked, setSheetUnlocked] = useState(false);
+  const unlocked = isVerified || sheetUnlocked;
   const [fullName, setFullName] = useState('');
   const [mobile, setMobile] = useState('');
   const [otpCode, setOtpCode] = useState('');
@@ -108,6 +116,10 @@ export const GuestBrowseServicesScreen: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [otpError, setOtpError] = useState<string | null>(null);
   const [resendIn, setResendIn] = useState(RESEND_SECONDS);
+  // Set when guest/register comes back 409 "already exists" — this phone
+  // already has an account, so the OTP step welcomes them back instead of
+  // implying a brand-new signup (see registerGuestAndRequestOtp).
+  const [returningGuest, setReturningGuest] = useState(false);
 
   const phone = `+91${mobile}`;
   const visibleOrgs = unlocked ? ORGANIZATIONS : ORGANIZATIONS.slice(0, GUEST_VISIBLE_COUNT);
@@ -115,8 +127,8 @@ export const GuestBrowseServicesScreen: React.FC = () => {
 
   // Same photo the card shows, keyed by org id so the compare-tray thumbnail matches.
   const orgImageFor = (id: string) => {
-    const idx = ORGANIZATIONS.findIndex((o) => o.id === id);
-    return ORGANIZATIONS[idx]?.image ?? FALLBACK_IMAGES[Math.max(idx, 0) % FALLBACK_IMAGES.length];
+    const org = ORGANIZATIONS.find((o) => o.id === id);
+    return org ? getOrgImage(org) : undefined;
   };
 
   const compareItems: CompareItem[] = compare.map((id) => ({
@@ -124,6 +136,24 @@ export const GuestBrowseServicesScreen: React.FC = () => {
     name: ORGANIZATIONS.find((o) => o.id === id)?.name ?? id,
     photoUri: orgImageFor(id),
   }));
+
+  // Falls back to the static Figma mock until the live API has categories
+  // seeded — see toServiceCategories in ../data.ts.
+  useEffect(() => {
+    let cancelled = false;
+    categoryService
+      .getCategories({ isActive: true, sortBy: 'sortOrder', sortOrder: 'ASC', limit: 100 })
+      .then(({ items }) => {
+        if (cancelled || items.length === 0) return;
+        setCategories(toServiceCategories(items));
+      })
+      .catch(() => {
+        // Network/API failure — keep showing the static mock rather than an empty grid.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // OTP resend countdown — only ticks while the OTP step is open.
   useEffect(() => {
@@ -159,14 +189,11 @@ export const GuestBrowseServicesScreen: React.FC = () => {
   const openUnlock = () => {
     setFormError(null);
     setOtpError(null);
+    setReturningGuest(false);
     setUnlockStep('form');
   };
 
   const closeUnlock = () => setUnlockStep(null);
-
-  const requestOtp = async () => {
-    await authService.requestOtp({ phone, role: useAuthStore.getState().role });
-  };
 
   const handleSubmitDetails = async () => {
     if (submitting) return;
@@ -181,7 +208,8 @@ export const GuestBrowseServicesScreen: React.FC = () => {
     setSubmitting(true);
     setFormError(null);
     try {
-      await requestOtp();
+      const { alreadyRegistered } = await registerGuestAndRequestOtp(fullName, phone);
+      setReturningGuest(alreadyRegistered);
       useAuthStore.getState().setPhone(phone);
       setOtpCode('');
       setResendIn(RESEND_SECONDS);
@@ -199,13 +227,12 @@ export const GuestBrowseServicesScreen: React.FC = () => {
     setOtpError(null);
     try {
       const data = await authService.verifyOtp({ phone, code });
-      useAuthStore.getState().setPhoneVerification(data);
-      // New phone -> /auth/register saves the account; existing phone -> adopt
-      // the session /auth/otp/verify already logged in. Either way we end up
-      // with a real, saved user everything afterward acts as.
+      // Existing phone -> logs in for real; new phone -> stays a verified
+      // guest (no /auth/register call — it needs email/password we don't
+      // collect here; see guestVerification.ts).
       await completeGuestVerification(data, fullName, phone);
 
-      setUnlocked(true);
+      setSheetUnlocked(true);
       setUnlockStep('done');
     } catch (err) {
       setOtpError(getErrorMessage(err));
@@ -220,7 +247,7 @@ export const GuestBrowseServicesScreen: React.FC = () => {
     setOtpError(null);
     setOtpCode('');
     try {
-      await requestOtp();
+      await authService.requestOtp({ phone, role: useAuthStore.getState().role });
       setResendIn(RESEND_SECONDS);
     } catch (err) {
       setOtpError(getErrorMessage(err));
@@ -308,61 +335,101 @@ export const GuestBrowseServicesScreen: React.FC = () => {
         <SearchInput placeholder="Search" value={search} onChangeText={setSearch} />
         <Spacer size="lg" />
 
-        {/* FILTER BY | SORT BY (Figma 2895:73743) */}
-        <View style={[styles.filterRow, { borderColor: colors.border.hairline }]}>
-          <Pressable style={styles.filterCell} onPress={() => setShowFilterSheet(true)}>
-            <Text style={[styles.filterText, { color: colors.text.primary }]}>FILTER BY</Text>
-          </Pressable>
-          <View style={[styles.filterDivider, { backgroundColor: colors.border.hairline }]} />
-          <Pressable style={styles.filterCell} onPress={() => setShowSortSheet(true)}>
-            <Text style={[styles.filterText, { color: colors.text.primary }]}>SORT BY</Text>
-          </Pressable>
-        </View>
-
-        <Spacer size="lg" />
-        <Text style={[styles.countText, { color: colors.text.secondary }]}>
-          {ORGANIZATIONS.length} organizations
-        </Text>
-        <Spacer size="md" />
-
-        {/* Preview: the first few providers are fully visible (all, once unlocked) */}
-        {visibleOrgs.map((org, i) => (
-          <View key={org.id} style={styles.cardWrap}>{renderOrgCard(org, i)}</View>
-        ))}
-
-        {/* Locked: the rest of the list is dimmed behind the sign-up gate
-            (Figma "Hide Providers" 2895:73764 + "View Providers" 2895:74214) */}
-        {lockedOrgs.length > 0 && (
-          <View style={styles.lockedSection}>
-            <View style={styles.lockedList} pointerEvents="none">
-              {lockedOrgs.map((org, i) => (
-                <View key={org.id} style={styles.cardWrap}>{renderOrgCard(org, i + GUEST_VISIBLE_COUNT, true)}</View>
+        {!category ? (
+          /* Category picker — shown once the location is set, before any
+             providers do. No services API yet (see data.ts), so every
+             category just reveals the same mock organizations list below. */
+          <>
+            <Text style={[styles.categoryHeading, { color: colors.text.primary }]}>
+              What would be most helpful right now?
+            </Text>
+            <Spacer size="lg" />
+            <View style={styles.grid}>
+              {categories.map((cat) => (
+                <Pressable
+                  key={cat.id}
+                  style={[styles.categoryCard, { backgroundColor: colors.background.base }]}
+                  onPress={() => setCategory(cat)}
+                >
+                  <View style={[styles.categoryArch, { backgroundColor: colors.background.orange }]}>
+                    <Icon name={cat.icon} variant="outline" size={40} color={colors.accentOrange} />
+                  </View>
+                  <Text style={[styles.categoryLabel, { color: colors.text.strong }]}>{cat.label}</Text>
+                </Pressable>
               ))}
             </View>
-            <View
-              style={[styles.lockedScrim, { backgroundColor: colors.background.layout }]}
-              pointerEvents="none"
-            />
+          </>
+        ) : (
+          <>
+            {/* Chosen category — tap to go back and pick a different one */}
+            <Pressable
+              style={[styles.categoryChip, { backgroundColor: colors.background.orange }]}
+              onPress={() => setCategory(null)}
+              accessibilityRole="button"
+              accessibilityLabel="Change category"
+            >
+              <Text style={[styles.categoryChipText, { color: colors.accentOrange }]}>{category.label}</Text>
+              <Icon name="close" variant="outline" size={14} color={colors.accentOrange} />
+            </Pressable>
+            <Spacer size="lg" />
 
-            <View style={styles.gateOverlay} pointerEvents="box-none">
-              <View
-                style={[
-                  styles.gateCard,
-                  { backgroundColor: colors.background.base, borderColor: colors.border.hairline },
-                ]}
-              >
-                <Text style={[styles.gateTitle, { color: colors.text.primary }]}>View Providers</Text>
-                <Text style={[styles.gateBody, { color: colors.text.secondary }]}>
-                  Enter your mobile number and OTP to unlock more providers.
-                </Text>
-                <PrimaryButton label="Unlock All Provider" onPress={openUnlock} />
-              </View>
+            {/* FILTER BY | SORT BY (Figma 2895:73743) */}
+            <View style={[styles.filterRow, { borderColor: colors.border.hairline }]}>
+              <Pressable style={styles.filterCell} onPress={() => setShowFilterSheet(true)}>
+                <Text style={[styles.filterText, { color: colors.text.primary }]}>FILTER BY</Text>
+              </Pressable>
+              <View style={[styles.filterDivider, { backgroundColor: colors.border.hairline }]} />
+              <Pressable style={styles.filterCell} onPress={() => setShowSortSheet(true)}>
+                <Text style={[styles.filterText, { color: colors.text.primary }]}>SORT BY</Text>
+              </Pressable>
             </View>
-          </View>
-        )}
 
-        {/* Room for the compare tray so the last card stays reachable above it. */}
-        {compare.length > 0 && <Spacer size={compareExpanded ? 200 : 72} />}
+            <Spacer size="lg" />
+            <Text style={[styles.countText, { color: colors.text.secondary }]}>
+              {ORGANIZATIONS.length} organizations
+            </Text>
+            <Spacer size="md" />
+
+            {/* Preview: the first few providers are fully visible (all, once unlocked) */}
+            {visibleOrgs.map((org, i) => (
+              <View key={org.id} style={styles.cardWrap}>{renderOrgCard(org, i)}</View>
+            ))}
+
+            {/* Locked: the rest of the list is dimmed behind the sign-up gate
+                (Figma "Hide Providers" 2895:73764 + "View Providers" 2895:74214) */}
+            {lockedOrgs.length > 0 && (
+              <View style={styles.lockedSection}>
+                <View style={styles.lockedList} pointerEvents="none">
+                  {lockedOrgs.map((org, i) => (
+                    <View key={org.id} style={styles.cardWrap}>{renderOrgCard(org, i + GUEST_VISIBLE_COUNT, true)}</View>
+                  ))}
+                </View>
+                <View
+                  style={[styles.lockedScrim, { backgroundColor: colors.background.layout }]}
+                  pointerEvents="none"
+                />
+
+                <View style={styles.gateOverlay} pointerEvents="box-none">
+                  <View
+                    style={[
+                      styles.gateCard,
+                      { backgroundColor: colors.background.base, borderColor: colors.border.hairline },
+                    ]}
+                  >
+                    <Text style={[styles.gateTitle, { color: colors.text.primary }]}>View Providers</Text>
+                    <Text style={[styles.gateBody, { color: colors.text.secondary }]}>
+                      Enter your mobile number and OTP to unlock more providers.
+                    </Text>
+                    <PrimaryButton label="Unlock All Provider" onPress={openUnlock} />
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {/* Room for the compare tray so the last card stays reachable above it. */}
+            {compare.length > 0 && <Spacer size={compareExpanded ? 200 : 72} />}
+          </>
+        )}
       </ScrollView>
 
       {/* Select & compare tray (Figma "Compare Pop up Expand / Mobile" — 2895:78342).
@@ -420,10 +487,12 @@ export const GuestBrowseServicesScreen: React.FC = () => {
 
             <Spacer size="lg" />
             <SearchInput
-              placeholder="Search"
+              placeholder="Enter 6-digit PIN code"
               value={locationQuery}
-              onChangeText={setLocationQuery}
+              onChangeText={(v) => setLocationQuery(v.replace(/\D/g, '').slice(0, 6))}
               onSubmitEditing={handleLocationSearch}
+              keyboardType="number-pad"
+              maxLength={6}
               returnKeyType="search"
             />
             <Spacer size="lg" />
@@ -505,11 +574,16 @@ export const GuestBrowseServicesScreen: React.FC = () => {
             {unlockStep === 'otp' && (
               <>
                 <Spacer size="sm" />
-                <Text style={[styles.sheetTitle, { color: colors.text.primary }]}>Enter verification code</Text>
+                <Text style={[styles.sheetTitle, { color: colors.text.primary }]}>
+                  {returningGuest ? 'Welcome back!' : 'Enter verification code'}
+                </Text>
                 <Spacer size="md" />
                 <Text style={[styles.sheetBody, { color: colors.text.secondary }]}>
-                  The OTP has been sent to your verified mobile{' '}
+                  {returningGuest
+                    ? 'Looks like you already have an account with this number. Enter the OTP sent to '
+                    : 'The OTP has been sent to your verified mobile '}
                   <Text style={[styles.sheetBodyStrong, { color: colors.text.primary }]}>{maskPhone(phone)}</Text>
+                  {returningGuest ? ' to continue.' : ''}
                 </Text>
 
                 <Spacer size="lg" />
@@ -557,7 +631,9 @@ export const GuestBrowseServicesScreen: React.FC = () => {
             {unlockStep === 'done' && (
               <>
                 <Spacer size="sm" />
-                <Text style={[styles.sheetTitle, { color: colors.text.primary }]}>{"You're All Set!"}</Text>
+                <Text style={[styles.sheetTitle, { color: colors.text.primary }]}>
+                  {returningGuest ? 'Welcome back!' : "You're All Set!"}
+                </Text>
                 <Spacer size="md" />
                 <Text style={[styles.sheetBody, { color: colors.text.secondary }]}>
                   Your mobile number has been verified. You can now view more providers.
@@ -804,6 +880,52 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  categoryHeading: {
+    fontFamily: theme.typography.h3.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.h3.fontSize),
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.md,
+  },
+  categoryCard: {
+    flexBasis: '47%',
+    flexGrow: 1,
+    borderRadius: theme.radius.sm,
+    overflow: 'hidden',
+    alignItems: 'center',
+    paddingBottom: theme.spacing.md,
+    ...theme.shadows.sm,
+  },
+  categoryArch: {
+    width: '100%',
+    height: 76,
+    borderBottomLeftRadius: 999,
+    borderBottomRightRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  categoryLabel: {
+    fontFamily: theme.typography.bodyMedium.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.bodyMedium.fontSize),
+    textAlign: 'center',
+    paddingHorizontal: theme.spacing.sm,
+  },
+  categoryChip: {
+    flexDirection: 'row',
+    alignSelf: 'flex-start',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    height: 32,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: 60,
+  },
+  categoryChipText: {
+    fontFamily: theme.typography.label.fontFamily,
+    fontSize: responsiveFontSize(14),
   },
   filterRow: {
     flexDirection: 'row',

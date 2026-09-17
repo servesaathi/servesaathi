@@ -16,11 +16,23 @@ interface AuthState {
   /** Short-lived token returned by OTP verify, consumed by registration. */
   phoneVerificationToken: string | null;
   isNewUser: boolean | null;
+  /**
+   * STOPGAP until the backend has a phone-only quick-registration endpoint:
+   * a guest who verifies a brand-new number (via GuestBrowseServicesScreen,
+   * LeadCaptureModal, or UnlockComparisonSheet) has their name+phone saved
+   * locally and this flips true, so the UI treats them as done — no real
+   * account/token exists server-side, so this deliberately does NOT touch
+   * `token`/`isAuthenticated` (which would send a fake bearer token on real
+   * API calls). Swap the frontend-only save for a real register() call, and
+   * this flag goes away, once that endpoint ships — see guestVerification.ts.
+   */
+  isLocallyRegistered: boolean;
   setToken: (token: string | null) => void;
   setGuest: (isGuest: boolean) => void;
   setRole: (role: ApiRole) => void;
   setPhone: (phone: string | null) => void;
   setPhoneVerification: (data: { phoneVerificationToken?: string; isNewUser: boolean }) => void;
+  setLocallyRegistered: (value: boolean) => void;
   logout: () => void;
 }
 
@@ -40,6 +52,7 @@ export const useAuthStore = create<AuthState>()(
       phone: null,
       phoneVerificationToken: null,
       isNewUser: null,
+      isLocallyRegistered: false,
       // A real token always wins over guest mode.
       setToken: (token) => set(token ? { token, isAuthenticated: true, isGuest: false } : { token: null, isAuthenticated: false }),
       setGuest: (isGuest) => set({ isGuest }),
@@ -47,6 +60,7 @@ export const useAuthStore = create<AuthState>()(
       setPhone: (phone) => set({ phone }),
       setPhoneVerification: ({ phoneVerificationToken, isNewUser }) =>
         set({ phoneVerificationToken: phoneVerificationToken ?? null, isNewUser }),
+      setLocallyRegistered: (value) => set({ isLocallyRegistered: value }),
       logout: () =>
         set({
           token: null,
@@ -55,6 +69,7 @@ export const useAuthStore = create<AuthState>()(
           phone: null,
           phoneVerificationToken: null,
           isNewUser: null,
+          isLocallyRegistered: false,
         }),
     }),
     {
@@ -63,4 +78,13 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
+/**
+ * "Done verifying" for gating purposes — a real account (isAuthenticated) or
+ * the frontend-only stopgap save (isLocallyRegistered, see the field's doc
+ * comment above). Screens that decide whether to show the guest unlock popup
+ * again should read this instead of isAuthenticated alone.
+ */
+export const useIsGuestVerified = (): boolean =>
+  useAuthStore((s) => s.isAuthenticated || s.isLocallyRegistered);
+
 export default useAuthStore;

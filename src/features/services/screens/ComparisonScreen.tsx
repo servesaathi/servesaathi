@@ -18,7 +18,7 @@ import { Spacer } from '@/components/layouts';
 import { PrimaryButton, IconButton } from '@/components/buttons';
 import { SearchInput } from '@/components/inputs';
 import { responsiveFontSize } from '@/utils/responsive';
-import { ORGANIZATIONS, Organization } from '../data';
+import { ORGANIZATIONS, Organization, getOrgImage } from '../data';
 import { useThemeColors } from '@/hooks/useThemeColors';
 
 // "Comparsion" (Figma 1256:24299) — side-by-side comparison table.
@@ -103,11 +103,7 @@ export const ComparisonScreen: React.FC = () => {
   const renderHeaderCard = (org: Organization, sizing: StyleProp<ViewStyle>) => (
     <View key={org.id} style={[styles.orgHeaderCell, sizing]}>
       <View style={styles.orgLogoBox}>
-        {org.image ? (
-          <Image source={org.image} style={styles.orgLogo} resizeMode="cover" />
-        ) : (
-          <View style={[styles.orgLogo, { backgroundColor: colors.border.hairline }]} />
-        )}
+        <Image source={getOrgImage(org)} style={styles.orgLogo} resizeMode="cover" />
         <Pressable
           style={[styles.removeBtn, { backgroundColor: colors.background.base, borderColor: colors.accentPrimary }]}
           onPress={() => removeOrg(org.id)}

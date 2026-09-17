@@ -41,6 +41,12 @@ const CATEGORY_ICON_BY_SLUG: Record<string, IconName> = {
   services: 'service',
   travel: 'passport',
   usp: 'usp',
+  // Live categories seeded on the backend (GET /categories, checked 2026-09-17).
+  'diagnostic-centres': 'medicine',
+  'palliative-care': 'nursing',
+  'rehabilitation-centres': 'rehabilitationCare',
+  'retirement-communities': 'home',
+  'assisted-living': 'homeSafety',
 };
 const DEFAULT_CATEGORY_ICON: IconName = 'service';
 
@@ -207,3 +213,16 @@ export const ORGANIZATIONS: Organization[] = [
 
 export const getOrganization = (id: string): Organization =>
   ORGANIZATIONS.find((o) => o.id === id) ?? ORGANIZATIONS[0];
+
+// Several mock orgs have no photo of their own (image: null) — until the real
+// /services API returns actual photo URLs, every screen should show *some*
+// image rather than a bare grey box. Falls back to one of these, chosen
+// deterministically by list position so a given org always gets the same one.
+const FALLBACK_IMAGES = [theme.images.onboarding1, theme.images.onboarding2, theme.images.onboarding3];
+
+/** Real photo if the org has one, otherwise a deterministic fallback. */
+export const getOrgImage = (org: Organization): any => {
+  if (org.image) return org.image;
+  const idx = Math.max(ORGANIZATIONS.findIndex((o) => o.id === org.id), 0);
+  return FALLBACK_IMAGES[idx % FALLBACK_IMAGES.length];
+};

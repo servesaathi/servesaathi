@@ -11,7 +11,7 @@ import { SearchInput, Checkbox, SelectableChip } from '@/components/inputs';
 import { StatusChip } from '@/components/cards';
 import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
-import { ORGANIZATIONS } from '../data';
+import { ORGANIZATIONS, getOrgImage } from '../data';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import type { ThemePalette } from '@/theme/palette';
 
@@ -153,11 +153,7 @@ export const CaregiverListScreen: React.FC = () => {
         {ORGANIZATIONS.map((org) => (
           <View key={org.id} style={[styles.orgCard, { backgroundColor: colors.background.base }]}>
             <View style={styles.orgImageWrap}>
-              {org.image ? (
-                <Image source={org.image} style={styles.orgImage} resizeMode="cover" />
-              ) : (
-                <View style={[styles.orgImage, { backgroundColor: colors.border.hairline }]} />
-              )}
+              <Image source={getOrgImage(org)} style={styles.orgImage} resizeMode="cover" />
               {org.featured && (
                 <View style={[styles.ribbon, { backgroundColor: colors.accentOrange }]}>
                   <Star color="#FFD700" />

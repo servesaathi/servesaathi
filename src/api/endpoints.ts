@@ -11,6 +11,9 @@ export const ENDPOINTS = {
     forgotPassword: '/auth/forgot-password',
     resetPassword: '/auth/reset-password',
   },
+  guest: {
+    register: '/guest/register',
+  },
   users: {
     me: '/users/me',
   },

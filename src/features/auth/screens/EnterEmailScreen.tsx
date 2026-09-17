@@ -112,8 +112,6 @@ export const EnterEmailScreen: React.FC = () => {
           Forget Password?
         </Text>
 
-        <Spacer size={64} />
-
         <View style={styles.footer}>
           <View style={styles.footerRow}>
             <Text style={[styles.footerText, { color: colors.text.secondary }]}>Don't have an account yet? </Text>
@@ -129,6 +127,7 @@ export const EnterEmailScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   content: {
+    flex: 1, // fill viewport so the footer's auto margin can push it to the bottom
     paddingHorizontal: theme.spacing.xl,
     paddingTop: theme.spacing.md,
     paddingBottom: Platform.OS === 'ios' ? 44 : 32,
@@ -151,6 +150,9 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
   },
   footer: {
+    // Matches Figma: footer is pinned to the bottom of the screen, with the
+    // leftover space between "Forget Password?" and the footer absorbed here.
+    marginTop: 'auto',
     width: '100%',
     alignItems: 'center',
   },

@@ -19,7 +19,7 @@ import { responsiveFontSize } from '@/utils/responsive';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useAuthStore } from '@/store/auth.store';
 import { authService, getErrorMessage } from '@/api';
-import { completeGuestVerification } from '../utils/guestVerification';
+import { completeGuestVerification, registerGuestAndRequestOtp } from '../utils/guestVerification';
 
 // "Unlock the Full Comparison Matrix" (Figma 2895:78888) + "Enter verification code"
 // (Figma 2895:79385) — the login gate a guest hits from GuestComparisonScreen's
@@ -90,6 +90,10 @@ export const UnlockComparisonSheet: React.FC<UnlockComparisonSheetProps> = ({
   const [formError, setFormError] = useState<string | null>(null);
   const [otpError, setOtpError] = useState<string | null>(null);
   const [resendIn, setResendIn] = useState(RESEND_SECONDS);
+  // Set when guest/register comes back 409 "already exists" — this phone
+  // already has an account, so the OTP step welcomes them back instead of
+  // implying a brand-new signup (see registerGuestAndRequestOtp).
+  const [returningGuest, setReturningGuest] = useState(false);
 
   const phone = `+91${mobile}`;
 
@@ -103,6 +107,7 @@ export const UnlockComparisonSheet: React.FC<UnlockComparisonSheetProps> = ({
       setFormError(null);
       setOtpError(null);
       setResendIn(RESEND_SECONDS);
+      setReturningGuest(false);
     }
   }, [visible]);
 
@@ -111,10 +116,6 @@ export const UnlockComparisonSheet: React.FC<UnlockComparisonSheetProps> = ({
     const id = setTimeout(() => setResendIn((s) => s - 1), 1000);
     return () => clearTimeout(id);
   }, [step, resendIn]);
-
-  const requestOtp = async () => {
-    await authService.requestOtp({ phone, role: useAuthStore.getState().role });
-  };
 
   const handleContinue = async () => {
     if (submitting) return;
@@ -129,7 +130,8 @@ export const UnlockComparisonSheet: React.FC<UnlockComparisonSheetProps> = ({
     setSubmitting(true);
     setFormError(null);
     try {
-      await requestOtp();
+      const { alreadyRegistered } = await registerGuestAndRequestOtp(fullName, phone);
+      setReturningGuest(alreadyRegistered);
       useAuthStore.getState().setPhone(phone);
       setOtpCode('');
       setResendIn(RESEND_SECONDS);
@@ -147,10 +149,9 @@ export const UnlockComparisonSheet: React.FC<UnlockComparisonSheetProps> = ({
     setOtpError(null);
     try {
       const data = await authService.verifyOtp({ phone, code });
-      useAuthStore.getState().setPhoneVerification(data);
-      // New phone -> /auth/register saves the account; existing phone -> adopt
-      // the session /auth/otp/verify already logged in. The comparison unlocks
-      // as that now-real user either way.
+      // Existing phone -> logs in for real; new phone -> stays a verified
+      // guest (no /auth/register call — it needs email/password we don't
+      // collect here; see guestVerification.ts).
       await completeGuestVerification(data, fullName, phone);
 
       onVerified();
@@ -167,7 +168,7 @@ export const UnlockComparisonSheet: React.FC<UnlockComparisonSheetProps> = ({
     setOtpError(null);
     setOtpCode('');
     try {
-      await requestOtp();
+      await authService.requestOtp({ phone, role: useAuthStore.getState().role });
       setResendIn(RESEND_SECONDS);
     } catch (err) {
       setOtpError(getErrorMessage(err));
@@ -283,11 +284,16 @@ export const UnlockComparisonSheet: React.FC<UnlockComparisonSheetProps> = ({
           {step === 'otp' && (
             <>
               <Spacer size="sm" />
-              <Text style={[styles.title, { color: colors.text.primary }]}>Enter verification code</Text>
+              <Text style={[styles.title, { color: colors.text.primary }]}>
+                {returningGuest ? 'Welcome back!' : 'Enter verification code'}
+              </Text>
               <Spacer size="md" />
               <Text style={[styles.body, { color: colors.text.secondary }]}>
-                The OTP has been sent to your verified mobile{' '}
+                {returningGuest
+                  ? 'Looks like you already have an account with this number. Enter the OTP sent to '
+                  : 'The OTP has been sent to your verified mobile '}
                 <Text style={[styles.bodyStrong, { color: colors.text.primary }]}>{maskPhone(phone)}</Text>
+                {returningGuest ? ' to continue.' : ''}
               </Text>
 
               <Spacer size="lg" />

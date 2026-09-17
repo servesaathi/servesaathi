@@ -18,7 +18,7 @@ import { responsiveFontSize } from '@/utils/responsive';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useAuthStore } from '@/store/auth.store';
 import { authService, getErrorMessage } from '@/api';
-import { completeGuestVerification } from '../utils/guestVerification';
+import { completeGuestVerification, registerGuestAndRequestOtp } from '../utils/guestVerification';
 
 // Provider-detail lead-capture popups reached after "unlocking all providers":
 // Save (Figma 2895:69194 → 69265/69291 → 69321), Request a callback
@@ -107,6 +107,10 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
   const [formError, setFormError] = useState<string | null>(null);
   const [otpError, setOtpError] = useState<string | null>(null);
   const [resendIn, setResendIn] = useState(RESEND_SECONDS);
+  // Set when guest/register comes back 409 "already exists" — this phone
+  // already has an account, so the OTP step welcomes them back instead of
+  // implying a brand-new signup (see registerGuestAndRequestOtp).
+  const [returningGuest, setReturningGuest] = useState(false);
 
   const phone = `+91${mobile}`;
 
@@ -120,6 +124,7 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
       setFormError(null);
       setOtpError(null);
       setResendIn(RESEND_SECONDS);
+      setReturningGuest(false);
     }
   }, [visible, mode]);
 
@@ -128,10 +133,6 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
     const id = setTimeout(() => setResendIn((s) => s - 1), 1000);
     return () => clearTimeout(id);
   }, [step, resendIn]);
-
-  const requestOtp = async () => {
-    await authService.requestOtp({ phone, role: useAuthStore.getState().role });
-  };
 
   const handleSubmitDetails = async () => {
     if (submitting) return;
@@ -146,7 +147,8 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
     setSubmitting(true);
     setFormError(null);
     try {
-      await requestOtp();
+      const { alreadyRegistered } = await registerGuestAndRequestOtp(fullName, phone);
+      setReturningGuest(alreadyRegistered);
       setOtpCode('');
       setResendIn(RESEND_SECONDS);
       setStep('otp');
@@ -163,10 +165,9 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
     setOtpError(null);
     try {
       const data = await authService.verifyOtp({ phone, code });
-      useAuthStore.getState().setPhoneVerification(data);
-      // New phone -> /auth/register saves the account; existing phone -> adopt
-      // the session /auth/otp/verify already logged in. Everything from here
-      // on (save/callback/book) acts as that now-real user.
+      // Existing phone -> logs in for real; new phone -> stays a verified
+      // guest (no /auth/register call — it needs email/password we don't
+      // collect here; see guestVerification.ts).
       await completeGuestVerification(data, fullName, phone);
 
       const details = { name: fullName.trim(), phone };
@@ -188,7 +189,7 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
     setOtpError(null);
     setOtpCode('');
     try {
-      await requestOtp();
+      await authService.requestOtp({ phone, role: useAuthStore.getState().role });
       setResendIn(RESEND_SECONDS);
     } catch (err) {
       setOtpError(getErrorMessage(err));
@@ -271,11 +272,16 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
           {step === 'otp' && (
             <>
               <Spacer size="sm" />
-              <Text style={[styles.title, { color: colors.text.primary }]}>Enter verification code</Text>
+              <Text style={[styles.title, { color: colors.text.primary }]}>
+                {returningGuest ? 'Welcome back!' : 'Enter verification code'}
+              </Text>
               <Spacer size="md" />
               <Text style={[styles.body, { color: colors.text.secondary }]}>
-                The OTP has been sent to your verified mobile{' '}
+                {returningGuest
+                  ? 'Looks like you already have an account with this number. Enter the OTP sent to '
+                  : 'The OTP has been sent to your verified mobile '}
                 <Text style={[styles.bodyStrong, { color: colors.text.primary }]}>{maskPhone(phone)}</Text>
+                {returningGuest ? ' to continue.' : ''}
               </Text>
 
               <Spacer size="lg" />

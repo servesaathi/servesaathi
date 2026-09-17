@@ -18,8 +18,8 @@ import { Spacer } from '@/components/layouts';
 import { PrimaryButton, IconButton } from '@/components/buttons';
 import { responsiveFontSize } from '@/utils/responsive';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import { useAuthStore } from '@/store/auth.store';
-import { ORGANIZATIONS, Organization } from '../data';
+import { useIsGuestVerified } from '@/store/auth.store';
+import { ORGANIZATIONS, Organization, getOrgImage } from '../data';
 import { GuestBottomNav } from '../components/GuestBottomNav';
 import { UnlockComparisonSheet } from '../components/UnlockComparisonSheet';
 
@@ -46,10 +46,19 @@ export const GuestComparisonScreen: React.FC = () => {
   const colors = useThemeColors();
 
   // Gated for anyone without a real account — a guest, or just a not-yet-logged-in
-  // visitor. Only a signed-in user (real token) sees the full matrix straight away.
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  // visitor. A signed-in user (real token) or one already saved via the
+  // frontend-only stopgap (see guestVerification.ts) sees the full matrix straight away.
+  //
+  // isVerified is read live on every render rather than snapshotted once —
+  // useState(isVerified) would only capture whatever it was at this screen's
+  // FIRST mount, so verifying on a different screen (e.g. GuestBrowse's
+  // "Unlock All Provider") wouldn't be reflected here if this screen was
+  // already mounted, or if it mounts before the auth store finishes anything
+  // async. sheetUnlocked covers unlocking via this screen's own sheet instead.
+  const isVerified = useIsGuestVerified();
   const [ids, setIds] = useState<string[]>(route.params?.orgIds ?? []);
-  const [unlocked, setUnlocked] = useState(isAuthenticated);
+  const [sheetUnlocked, setSheetUnlocked] = useState(false);
+  const unlocked = isVerified || sheetUnlocked;
   const [showUnlock, setShowUnlock] = useState(false);
   const [navHeight, setNavHeight] = useState(64 + (insets.bottom || theme.spacing.md));
 
@@ -82,7 +91,7 @@ export const GuestComparisonScreen: React.FC = () => {
   };
 
   const handleVerified = () => {
-    setUnlocked(true);
+    setSheetUnlocked(true);
     setShowUnlock(false);
   };
 
@@ -143,11 +152,7 @@ export const GuestComparisonScreen: React.FC = () => {
   const renderHeaderCard = (org: Organization, sizing: StyleProp<ViewStyle>) => (
     <View key={org.id} style={[styles.orgHeaderCell, sizing]}>
       <View style={styles.orgLogoBox}>
-        {org.image ? (
-          <Image source={org.image} style={styles.orgLogo} resizeMode="cover" />
-        ) : (
-          <View style={[styles.orgLogo, { backgroundColor: colors.border.hairline }]} />
-        )}
+        <Image source={getOrgImage(org)} style={styles.orgLogo} resizeMode="cover" />
         <Pressable
           style={[styles.removeBtn, { backgroundColor: colors.background.base, borderColor: colors.accentPrimary }]}
           onPress={() => removeOrg(org.id)}

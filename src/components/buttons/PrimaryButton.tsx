@@ -58,6 +58,8 @@ export const PrimaryButton: React.FC<BaseButtonProps> = ({
         <>
           {prefixIcon && prefixIcon}
           <Text
+            numberOfLines={1}
+            adjustsFontSizeToFit
             style={[
               styles.label,
               size === 'small' ? styles.smallLabel : styles.mediumLabel,
@@ -79,6 +81,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     borderRadius: theme.radius.control,
+    // A label that's still too long after adjustsFontSizeToFit (e.g. this
+    // button squeezed to half a footer row) must stay inside the pill
+    // rather than bleed past its edge.
+    overflow: 'hidden',
   },
   medium: {
     height: 48,
@@ -92,6 +98,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
   },
   label: {
+    flexShrink: 1,
     fontFamily: theme.typography.label.fontFamily,
     textAlign: 'center',
     ...Platform.select({ web: { userSelect: 'none' } }),

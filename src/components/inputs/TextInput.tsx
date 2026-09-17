@@ -39,6 +39,7 @@ export const TextInput: React.FC<TextInputProps> = ({
   suffixIcon,
   onFocus,
   onBlur,
+  onContentSizeChange,
   secureTextEntry,
   placeholderTextColor,
   ...props
@@ -47,6 +48,17 @@ export const TextInput: React.FC<TextInputProps> = ({
   const [isFocused, setIsFocused] = useState(false);
   const hasError = !!error;
 
+  // Multiline boxes (e.g. "Additional Notes") don't reliably grow with their
+  // own content from style alone — `minHeight` sets a floor but RN's layout
+  // doesn't keep re-measuring against it as text wraps, so typed text can
+  // render past the box's bottom edge instead of the box growing to fit it.
+  // Track the native-reported content height explicitly instead, floored at
+  // whatever minHeight the caller asked for via inputStyle.
+  const minMultilineHeight = props.multiline
+    ? (StyleSheet.flatten(inputStyle)?.minHeight as number | undefined) ?? 48
+    : undefined;
+  const [multilineHeight, setMultilineHeight] = useState(minMultilineHeight);
+
   const handleFocus = (e: any) => {
     setIsFocused(true);
     if (onFocus) onFocus(e);
@@ -54,6 +66,12 @@ export const TextInput: React.FC<TextInputProps> = ({
   const handleBlur = (e: any) => {
     setIsFocused(false);
     if (onBlur) onBlur(e);
+  };
+  const handleContentSizeChange = (e: any) => {
+    if (minMultilineHeight != null) {
+      setMultilineHeight(Math.max(minMultilineHeight, e.nativeEvent.contentSize.height));
+    }
+    onContentSizeChange?.(e);
   };
 
   return (
@@ -78,6 +96,10 @@ export const TextInput: React.FC<TextInputProps> = ({
       <View
         style={[
           styles.inputContainer,
+          // multiline callers (e.g. "Additional Notes") size the RNTextInput itself via
+          // inputStyle's minHeight — the container must grow with it instead of staying
+          // pinned at the single-line height, or the box visibly cuts off the text area.
+          props.multiline && styles.inputContainerMultiline,
           // computed theme-aware border/background
           {
             backgroundColor: colors.background.base,
@@ -98,9 +120,16 @@ export const TextInput: React.FC<TextInputProps> = ({
         <RNTextInput
           placeholderTextColor={placeholderTextColor ?? colors.text.secondary}
           secureTextEntry={secureTextEntry}
-          style={[styles.input, { color: colors.text.primary }, inputStyle]}
+          style={[
+            styles.input,
+            props.multiline && styles.inputMultiline,
+            props.multiline && { height: multilineHeight },
+            { color: colors.text.primary },
+            inputStyle,
+          ]}
           onFocus={handleFocus}
           onBlur={handleBlur}
+          onContentSizeChange={props.multiline ? handleContentSizeChange : onContentSizeChange}
           {...props}
         />
         {suffixIcon && <View style={styles.suffixIcon}>{suffixIcon}</View>}
@@ -130,6 +159,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     backgroundColor: theme.colors.background.base,
   },
+  // Swaps the fixed single-line height for one that grows with the multiline
+  // RNTextInput's own (caller-set) minHeight, and top-aligns instead of
+  // vertically centering so a tall box doesn't float its text in the middle.
+  inputContainerMultiline: {
+    height: undefined,
+    minHeight: 48,
+    alignItems: 'flex-start',
+    paddingVertical: theme.spacing.sm,
+  },
   input: {
     flex: 1,
     height: '100%',
@@ -137,6 +175,9 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(theme.typography.bodyLarge.fontSize),
     color: theme.colors.neutral[900],
     padding: 0,
+  },
+  inputMultiline: {
+    height: undefined,
   },
   prefixIcon: { marginRight: theme.spacing.sm, justifyContent: 'center', alignItems: 'center' },
   suffixIcon: { marginLeft: theme.spacing.sm, justifyContent: 'center', alignItems: 'center' },

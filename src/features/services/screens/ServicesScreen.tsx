@@ -66,9 +66,16 @@ export const ServicesScreen: React.FC = () => {
     };
   }, []);
 
-  const handleCategoryPress = (categoryId: string) => {
-    // Only Infrastructure has a designed flow so far
-    if (categoryId === 'infrastructure') setShowInfrastructure(true);
+  const handleCategoryPress = (category: ServiceCategory) => {
+    if (category.id === 'infrastructure') {
+      // The only category with its own designed sub-flow so far.
+      setShowInfrastructure(true);
+      return;
+    }
+    // No services API yet (see data.ts) — every other category jumps
+    // straight to the same mock organizations list Infrastructure's flow
+    // ends on, so every card is clickable instead of a dead end.
+    navigation.navigate('CaregiverList', { serviceType: category.label });
   };
 
   const handleInfrastructureOption = (label: string) => {
@@ -177,7 +184,7 @@ export const ServicesScreen: React.FC = () => {
                 <Pressable
                   key={cat.id}
                   style={[styles.categoryCard, { backgroundColor: colors.background.base }]}
-                  onPress={() => handleCategoryPress(cat.id)}
+                  onPress={() => handleCategoryPress(cat)}
                 >
                   <View style={[styles.categoryArch, { backgroundColor: colors.background.orange }]}>
                     <Icon name={cat.icon} variant="outline" size={40} color={colors.accentOrange} />

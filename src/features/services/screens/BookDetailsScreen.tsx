@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, Image, Pressable } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import Svg, { Circle, Path, Text as SvgText } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootNavigationProp, RootRouteProp } from '@/navigation/types';
 import { theme } from '@/theme';
@@ -9,8 +10,29 @@ import { PrimaryButton, SecondaryButton, IconButton } from '@/components/buttons
 import { TextInput } from '@/components/inputs';
 import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
-import { getOrganization } from '../data';
+import { getOrganization, getOrgImage } from '../data';
 import { useThemeColors } from '@/hooks/useThemeColors';
+
+// A coupon code is letters/digits only, always shown upper-case — matches
+// how every mainstream storefront (Amazon, Shopify, etc.) normalizes promo
+// codes. 12 chars comfortably fits real-world codes (e.g. "WELCOME2026").
+const PROMO_CODE_MAX_LENGTH = 12;
+const sanitizePromoCode = (value: string) =>
+  value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, PROMO_CODE_MAX_LENGTH);
+
+// Simplified Mastercard mark — no card-brand asset in the project yet, so
+// this is drawn inline like the Google icon elsewhere in the app. Includes
+// the small "mastercard" wordmark under the circles, same as the real logo.
+const MastercardIcon = () => (
+  <Svg width="30" height="20" viewBox="0 0 30 20">
+    <Circle cx="11" cy="8" r="8" fill="#EB001B" />
+    <Circle cx="19" cy="8" r="8" fill="#F79E1B" />
+    <Path d="M15 1.8a8 8 0 000 12.4 8 8 0 000-12.4z" fill="#FF5F00" />
+    <SvgText x="15" y="19" fontSize="5.5" fontWeight="bold" fill="#4A4A4A" textAnchor="middle">
+      mastercard
+    </SvgText>
+  </Svg>
+);
 
 // "Book Details" (Figma 2895:69772) — booking checkout: summary, billing
 // breakdown, promo code, payment method and notes, reached from Request
@@ -64,11 +86,7 @@ export const BookDetailsScreen: React.FC = () => {
         {/* Organization summary card */}
         <View style={[styles.orgCard, { backgroundColor: colors.background.base, borderLeftColor: colors.accentPrimary }]}>
           <View style={styles.orgHeaderRow}>
-            {org.image ? (
-              <Image source={org.image} style={styles.orgThumb} resizeMode="cover" />
-            ) : (
-              <View style={[styles.orgThumb, { backgroundColor: colors.border.hairline }]} />
-            )}
+            <Image source={getOrgImage(org)} style={styles.orgThumb} resizeMode="cover" />
             <View style={styles.orgHeaderText}>
               <Text style={[styles.orgName, { color: colors.text.secondary }]}>{org.name}</Text>
               <View style={styles.ratingRow}>
@@ -130,15 +148,19 @@ export const BookDetailsScreen: React.FC = () => {
         <Spacer size="xl" />
 
         {/* Promo code */}
+        <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Promo / Coupon Code</Text>
+        <Spacer size="sm" />
         <View style={styles.promoRow}>
           <TextInput
-            label="Promo / Coupon Code"
-            placeholder="--"
+            placeholder="Enter code"
             value={promoCode}
-            onChangeText={setPromoCode}
+            onChangeText={(v) => setPromoCode(sanitizePromoCode(v))}
+            maxLength={PROMO_CODE_MAX_LENGTH}
+            autoCapitalize="characters"
+            autoCorrect={false}
             containerStyle={styles.promoInput}
           />
-          <SecondaryButton label="Add" size="small" onPress={() => {}} style={styles.promoBtn} />
+          <SecondaryButton label="Add" size="small" onPress={() => {}} disabled={!promoCode} style={styles.promoBtn} />
         </View>
 
         <Spacer size="lg" />
@@ -148,8 +170,8 @@ export const BookDetailsScreen: React.FC = () => {
         <Spacer size="sm" />
         <View style={styles.paymentRow}>
           <View style={[styles.paymentCard, { backgroundColor: colors.background.base, borderColor: colors.border.hairline }]}>
-            <View style={[styles.cardLogo, { backgroundColor: colors.background.orange }]}>
-              <Icon name="payment" variant="outline" size={22} color={colors.accentOrange} />
+            <View style={[styles.cardLogo, { backgroundColor: colors.background.base, borderColor: colors.border.hairline }]}>
+              <MastercardIcon />
             </View>
             <View>
               <Text style={[styles.cardTitle, { color: colors.text.secondary }]}>Card</Text>
@@ -219,10 +241,10 @@ export const BookDetailsScreen: React.FC = () => {
 
             <Spacer size="lg" />
             <Text style={[styles.paymentMethodLabel, { color: colors.text.primary }]}>Payment method</Text>
-            <Spacer size="xs" />
+            <Spacer size="xl" />
             <View style={[styles.paymentCard, { backgroundColor: colors.background.base, borderColor: colors.border.hairline, width: '100%' }]}>
-              <View style={[styles.cardLogo, { backgroundColor: colors.background.orange }]}>
-                <Icon name="payment" variant="outline" size={22} color={colors.accentOrange} />
+              <View style={[styles.cardLogo, { backgroundColor: colors.background.base, borderColor: colors.border.hairline }]}>
+                <MastercardIcon />
               </View>
               <View>
                 <Text style={[styles.cardTitle, { color: colors.text.secondary }]}>Card</Text>
@@ -379,14 +401,21 @@ const styles = StyleSheet.create({
   },
   promoRow: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     gap: theme.spacing.lg,
   },
   promoInput: {
     flex: 1,
+    // TextInput's own container adds a bottom margin for stacked fields —
+    // not wanted here since it sits beside the Add button in a row, and it
+    // was throwing off the two off center relative to each other.
+    marginBottom: 0,
   },
   promoBtn: {
     width: 100,
+    // Match the input/card row height exactly — SecondaryButton's "small"
+    // size is 32px, well short of the 48px input/card box it sits beside.
+    height: 48,
   },
   paymentRow: {
     flexDirection: 'row',
@@ -407,6 +436,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 32,
     borderRadius: 6,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -421,7 +451,6 @@ const styles = StyleSheet.create({
   notesInput: {
     minHeight: 72,
     textAlignVertical: 'top',
-    paddingTop: theme.spacing.md,
   },
   termsText: {
     fontFamily: theme.typography.bodyLarge.fontFamily,

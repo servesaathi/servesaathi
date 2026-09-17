@@ -11,6 +11,7 @@ import { Icon } from '@/components/icons';
 import type { IconName } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { formatWeekdayDate, parseDateISO } from '../utils/scheduleDate';
 
 // "Request Details" (Figma 1256:24795) — confirmation, active request info and timeline.
 
@@ -61,6 +62,20 @@ export const RequestDetailsScreen: React.FC = () => {
   const colors = useThemeColors();
   const isBooking = route.params?.isBooking ?? false;
   const orgId = route.params?.orgId;
+  // What the guest actually picked on Request Setup — falls back to the
+  // Figma mock's values if this screen was somehow reached without them
+  // (e.g. a future entry point), so it never renders blank.
+  const requestValues = route.params?.requestValues;
+  const methodLabel = requestValues?.method ?? 'Request Callback';
+  const dateLabel = requestValues ? formatWeekdayDate(parseDateISO(requestValues.dateISO)) : 'Wednesday, 15 May';
+  const timeLabel = requestValues?.time ?? '3:00 PM';
+
+  // "Edit" goes back to the still-mounted Request Setup screen — its form
+  // state (method/date/time/notes/reminder) is exactly what was just
+  // confirmed, so the guest lands right back where they left off rather
+  // than a reset form. Re-confirming there pushes a fresh Request Details
+  // with the updated pick.
+  const handleEdit = () => navigation.goBack();
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background.layout }]}>
@@ -92,14 +107,14 @@ export const RequestDetailsScreen: React.FC = () => {
         <Spacer size="xxl" />
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Active Requests</Text>
-          <Pressable style={styles.editRow}>
+          <Pressable style={styles.editRow} onPress={handleEdit} accessibilityRole="button" accessibilityLabel="Edit request">
             <Text style={[styles.editText, { color: colors.accentPrimary }]}>Edit</Text>
             <Icon name="navigationRight" variant="outline" size={20} color={colors.accentPrimary} />
           </Pressable>
         </View>
         <Spacer size="lg" />
 
-        <InfoRow icon="phone" label="Method" value="Request Callback" />
+        <InfoRow icon="phone" label="Method" value={methodLabel} />
         <InfoRow
           icon="government"
           label="Location"
@@ -107,7 +122,7 @@ export const RequestDetailsScreen: React.FC = () => {
           caption="Second Floor, M8A, Vinoba Puri, Block M, Part II, Lajpat Nagar, New Delhi, Delhi 110024"
           directions
         />
-        <InfoRow icon="calendar" label="Date & Time" value="Wednesday, 15 May" captionOrange="3:00 PM" />
+        <InfoRow icon="calendar" label="Date & Time" value={dateLabel} captionOrange={timeLabel} />
         <InfoRow icon="profile" label="Assigned Saathi" value="Priya Sharma" />
         <InfoRow icon="time" label="Submitted" value="10:02 AM" />
 

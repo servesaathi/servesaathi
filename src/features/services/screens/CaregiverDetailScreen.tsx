@@ -11,9 +11,9 @@ import { StatusChip, FavoriteButton } from '@/components/cards';
 import { Checkbox } from '@/components/inputs';
 import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
-import { getOrganization } from '../data';
+import { getOrganization, getOrgImage } from '../data';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import { useAuthStore } from '@/store/auth.store';
+import { useIsGuestVerified } from '@/store/auth.store';
 import { LeadCaptureModal, LeadCaptureMode } from '../components/LeadCaptureModal';
 import { GuestBottomNav } from '../components/GuestBottomNav';
 
@@ -83,7 +83,7 @@ export const CaregiverDetailScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   // Guest chrome (bottom nav + Compare row) shows for anyone browsing without an account.
-  const isGuest = !useAuthStore((s) => s.isAuthenticated);
+  const isGuest = !useIsGuestVerified();
   const [tab, setTab] = useState(0); // 0 About, 1 Review
   const [fav, setFav] = useState(false);
   const [compareChecked, setCompareChecked] = useState(false);
@@ -139,11 +139,7 @@ export const CaregiverDetailScreen: React.FC = () => {
 
         {/* Hero image */}
         <View style={styles.heroWrap}>
-          {org.image ? (
-            <Image source={org.image} style={styles.hero} resizeMode="cover" />
-          ) : (
-            <View style={[styles.hero, { backgroundColor: colors.border.hairline }]} />
-          )}
+          <Image source={getOrgImage(org)} style={styles.hero} resizeMode="cover" />
           <View style={[styles.heroArrow, { backgroundColor: colors.accentOrange }]}>
             <Icon name="navigationRight" variant="outline" size={22} color="#FFFFFF" />
           </View>

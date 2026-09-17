@@ -26,8 +26,12 @@ export const DateCard: React.FC<DateCardProps> = ({ date, week, selected = false
         style,
       ]}
     >
-      <Text style={[styles.date, { color: selected ? colors.text.strong : colors.text.muted }]}>{date}</Text>
-      <Text style={[styles.week, { color: selected ? colors.text.strong : colors.text.muted }]}>{week}</Text>
+      <Text style={[styles.date, { color: selected ? colors.text.strong : colors.text.muted }]} numberOfLines={1}>
+        {date}
+      </Text>
+      <Text style={[styles.week, { color: selected ? colors.text.strong : colors.text.muted }]} numberOfLines={1}>
+        {week}
+      </Text>
     </Pressable>
   );
 };
@@ -43,7 +47,11 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.sm,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.lg,
+    // Kept tight on purpose: 5 cards share one row, and the widest weekday
+    // abbreviations ("WED"/"THU") need most of that width for their own
+    // text — theme.spacing.lg here left too little room and wrapped them
+    // onto two lines at typical screen widths.
+    paddingHorizontal: theme.spacing.xs,
     paddingVertical: theme.spacing.sm,
   },
   date: {
