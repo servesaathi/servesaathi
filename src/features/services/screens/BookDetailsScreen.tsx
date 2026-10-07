@@ -10,7 +10,8 @@ import { PrimaryButton, SecondaryButton, IconButton } from '@/components/buttons
 import { TextInput } from '@/components/inputs';
 import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
-import { getOrganization, getOrgImage } from '../data';
+import { getOrgImage } from '../data';
+import { useOrganization } from '../hooks/useProviders';
 import { useThemeColors } from '@/hooks/useThemeColors';
 
 // A coupon code is letters/digits only, always shown upper-case — matches
@@ -44,7 +45,7 @@ const TAX = 241;
 export const BookDetailsScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'BookDetails'>>();
   const route = useRoute<RootRouteProp<'BookDetails'>>();
-  const org = getOrganization(route.params?.orgId ?? 'agewell');
+  const org = useOrganization(route.params?.orgId);
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
 

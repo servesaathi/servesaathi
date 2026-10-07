@@ -93,9 +93,22 @@ interface LeadCaptureModalProps {
    * Request Set up.
    */
   onVerified: (details: { name: string; phone: string }) => void;
+  /**
+   * Runs right after verification and before the done step, for work that
+   * needs the session OTP just created ('save' persists the favourite here,
+   * so "Saved to Favorites" only shows once it really is). If it throws, the
+   * error shows on the OTP step and Continue retries just this action.
+   */
+  onBeforeDone?: () => Promise<void>;
 }
 
-export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mode, onClose, onVerified }) => {
+export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({
+  visible,
+  mode,
+  onClose,
+  onVerified,
+  onBeforeDone,
+}) => {
   const colors = useThemeColors();
   const copy = COPY[mode];
 
@@ -111,6 +124,8 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
   // already has an account, so the OTP step welcomes them back instead of
   // implying a brand-new signup (see registerGuestAndRequestOtp).
   const [returningGuest, setReturningGuest] = useState(false);
+  // OTP already accepted — a retry after onBeforeDone failed must not re-verify the used code.
+  const [verified, setVerified] = useState(false);
 
   const phone = `+91${mobile}`;
 
@@ -125,6 +140,7 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
       setOtpError(null);
       setResendIn(RESEND_SECONDS);
       setReturningGuest(false);
+      setVerified(false);
     }
   }, [visible, mode]);
 
@@ -164,11 +180,15 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
     setSubmitting(true);
     setOtpError(null);
     try {
-      const data = await authService.verifyOtp({ phone, code });
-      // Existing phone -> logs in for real; new phone -> stays a verified
-      // guest (no /auth/register call — it needs email/password we don't
-      // collect here; see guestVerification.ts).
-      await completeGuestVerification(data, fullName, phone);
+      if (!verified) {
+        const data = await authService.verifyOtp({ phone, code });
+        // Existing phone -> logs in for real; new phone -> stays a verified
+        // guest (no /auth/register call — it needs email/password we don't
+        // collect here; see guestVerification.ts).
+        await completeGuestVerification(data, fullName, phone);
+        setVerified(true);
+      }
+      await onBeforeDone?.();
 
       const details = { name: fullName.trim(), phone };
       if (mode === 'book') {
@@ -304,25 +324,29 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({ visible, mod
 
               <Spacer size="lg" />
               <PrimaryButton
-                label="Continue"
+                label={verified ? 'Try again' : 'Continue'}
                 onPress={() => handleVerifyOtp()}
                 loading={submitting}
                 disabled={otpCode.length !== OTP_LENGTH}
               />
 
-              <Spacer size="lg" />
-              <Text style={[styles.resendText, { color: colors.text.secondary }]}>
-                {"Didn't receive OTP? "}
-                {resendIn > 0 ? (
-                  <Text style={[styles.bodyStrong, { color: colors.text.primary }]}>
-                    Resend in 00:{String(resendIn).padStart(2, '0')}
+              {!verified && (
+                <>
+                  <Spacer size="lg" />
+                  <Text style={[styles.resendText, { color: colors.text.secondary }]}>
+                    {"Didn't receive OTP? "}
+                    {resendIn > 0 ? (
+                      <Text style={[styles.bodyStrong, { color: colors.text.primary }]}>
+                        Resend in 00:{String(resendIn).padStart(2, '0')}
+                      </Text>
+                    ) : (
+                      <Text style={[styles.resendLink, { color: colors.accentPrimary }]} onPress={handleResend}>
+                        {submitting ? 'Sending…' : 'Resend'}
+                      </Text>
+                    )}
                   </Text>
-                ) : (
-                  <Text style={[styles.resendLink, { color: colors.accentPrimary }]} onPress={handleResend}>
-                    {submitting ? 'Sending…' : 'Resend'}
-                  </Text>
-                )}
-              </Text>
+                </>
+              )}
             </>
           )}
 

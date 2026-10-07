@@ -32,6 +32,24 @@ export const ENDPOINTS = {
     list: '/services',
     details: (id: string) => `/services/${id}`,
   },
+  providers: {
+    list: '/providers',
+    /** Full public profile incl. programs, services and recognitions — lives under the services module. */
+    profile: (providerId: string | number) => `/services/providers/${providerId}/profile`,
+    /** Public weekly hours. */
+    availability: (providerId: string | number) => `/providers/${providerId}/availability`,
+  },
+  reviews: {
+    /** GET = paginated list, PUT = create-or-update my review, DELETE = remove my review. */
+    forProvider: (providerId: string | number) => `/reviews/provider/${providerId}`,
+    mine: (providerId: string | number) => `/reviews/provider/${providerId}/me`,
+  },
+  favorites: {
+    /** Signed-in user's saved providers. All three need a bearer token. */
+    list: '/favorites',
+    /** POST = save, DELETE = unsave; both 204 with no body. */
+    item: (providerId: string | number) => `/favorites/${providerId}`,
+  },
   categories: {
     list: '/categories',
   },

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   StyleSheet,
   Text,
   View,
@@ -18,7 +19,8 @@ import { Spacer } from '@/components/layouts';
 import { PrimaryButton, IconButton } from '@/components/buttons';
 import { SearchInput } from '@/components/inputs';
 import { responsiveFontSize } from '@/utils/responsive';
-import { ORGANIZATIONS, Organization, getOrgImage } from '../data';
+import { Organization, getOrgImage } from '../data';
+import { useOrganizations } from '../hooks/useProviders';
 import { useThemeColors } from '@/hooks/useThemeColors';
 
 // "Comparsion" (Figma 1256:24299) — side-by-side comparison table.
@@ -41,9 +43,7 @@ export const ComparisonScreen: React.FC = () => {
   const [search, setSearch] = useState('');
   const [ids, setIds] = useState<string[]>(route.params?.orgIds ?? []);
 
-  const orgs = ids
-    .map((id) => ORGANIZATIONS.find((o) => o.id === id))
-    .filter((o): o is Organization => !!o);
+  const { orgs, isLoading, isError, refetch } = useOrganizations(ids);
 
   const isScrollable = orgs.length >= 3;
   const cellSizing: StyleProp<ViewStyle> = isScrollable ? styles.cellFixed : styles.cellFlex;
@@ -133,8 +133,8 @@ export const ComparisonScreen: React.FC = () => {
       {cellsRow((org) => <Text style={[styles.rowValue, { color: colors.text.secondary }]}>{org.price}</Text>)}
 
       {sectionHeader('Identity & Mission')}
-      {labelRow('Founded')}
-      {cellsRow((org) => <Text style={[styles.rowValue, { color: colors.text.secondary }]}>{org.founded}</Text>)}
+      {labelRow('Experience')}
+      {cellsRow((org) => <Text style={[styles.rowValue, { color: colors.text.secondary }]}>{org.experience}</Text>)}
       {labelRow('Mission')}
       {cellsRow((org) => <Text style={[styles.rowValue, { color: colors.text.secondary }]}>{org.mission}</Text>)}
 
@@ -178,7 +178,21 @@ export const ComparisonScreen: React.FC = () => {
         <Spacer size="md" />
       </View>
 
-      {orgs.length < 2 ? (
+      {orgs.length === 0 && (isLoading || isError) ? (
+        <View style={styles.loadState}>
+          {isLoading ? (
+            <ActivityIndicator size="large" color={colors.accentPrimary} />
+          ) : (
+            <>
+              <Text style={[styles.loadStateText, { color: colors.text.secondary }]}>
+                Unable to load the providers to compare.
+              </Text>
+              <Spacer size="md" />
+              <PrimaryButton label="Try Again" size="small" onPress={refetch} />
+            </>
+          )}
+        </View>
+      ) : orgs.length < 2 ? (
         <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.needMore}>
           <View style={styles.row}>
             {orgs.map((org) => renderHeaderCard(org, styles.cellFlex))}
@@ -232,6 +246,17 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.h3.fontFamily,
     fontSize: responsiveFontSize(theme.typography.h3.fontSize),
     color: theme.colors.neutral[900],
+  },
+  loadState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: theme.spacing.xl,
+  },
+  loadStateText: {
+    fontFamily: theme.typography.bodyMedium.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.bodyMedium.fontSize),
+    textAlign: 'center',
   },
   row: {
     flexDirection: 'row',

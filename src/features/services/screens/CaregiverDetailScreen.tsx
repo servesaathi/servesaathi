@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, View, ScrollView, Image, Pressable } from 'react-native';
+import { ActivityIndicator, Alert, Linking, StyleSheet, Text, View, ScrollView, Image, Pressable } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,57 +11,17 @@ import { StatusChip, FavoriteButton } from '@/components/cards';
 import { Checkbox } from '@/components/inputs';
 import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
-import { getOrganization, getOrgImage } from '../data';
+import { formatExperience, formatRupees, formatVisits, getOrgImage } from '../data';
+import { useOrganization, useProviderAvailability, useProviderProfile } from '../hooks/useProviders';
+import { useIsFavorite, useToggleFavorite } from '../hooks/useFavorites';
+import { ProviderReviews } from '../components/ProviderReviews';
+import { getErrorMessage } from '@/api';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import { useIsGuestVerified } from '@/store/auth.store';
+import { useAuthStore, useIsGuestVerified } from '@/store/auth.store';
 import { LeadCaptureModal, LeadCaptureMode } from '../components/LeadCaptureModal';
 import { GuestBottomNav } from '../components/GuestBottomNav';
 
 // "Caregivers - About / Reviews" (Figma 1256:24506 / 1256:24595).
-
-const ABOUT_TEXT =
-  'AgeWell Foundation is a national-level NGO established in 1999, headquartered in New Delhi, working across 640 districts of India.';
-const KEY_FACTS = [
-  '7,500 primary volunteers and 80,000 secondary volunteers',
-  'Interacts with 25,000+ elderly daily',
-  'Recognized by UN-DPI',
-];
-const PROGRAMS = [
-  'Weekly visits by trained couselors',
-  '24/7 Phone support',
-  'Helpline Services',
-  'Emotional & Social Support',
-  'Assistance Servies',
-  'Guidance on legal, financial, health',
-];
-const SERVICES_PROVIDED = [
-  'Companionship', 'Counselling', 'Regular check-in', 'Volunteer visits',
-  'Escort for errands', 'Phone Support', 'Hospital Visits', 'Hospital Visits',
-];
-const RECOGNITIONS = [
-  'UN ECOSOC Special Consultative',
-  'UN-DPI Associate NGO Status',
-  'Member of Planning Commission Working Groups',
-];
-const AVAILABILITY: Array<{ day: string; hours: string; off?: boolean }> = [
-  { day: 'Monday', hours: '9 AM - 6 PM' },
-  { day: 'Tuesday', hours: '9 AM - 6 PM' },
-  { day: 'Wednesday', hours: 'Not available', off: true },
-  { day: 'Thursday', hours: '9 AM - 6 PM' },
-  { day: 'Friday', hours: '9 AM - 6 PM' },
-  { day: 'Saturday', hours: '9 AM - 6 PM' },
-  { day: 'Sunday', hours: 'Not available', off: true },
-];
-const REVIEWS = [
-  {
-    name: 'Lalitha R,', date: 'Mar 28, 2026', stars: 5,
-    text: 'Punctual and respectful. Brought medicine on time. Would prefer same Saathi again.',
-  },
-  {
-    name: 'Suresh K', date: 'Mar 20, 2026', stars: 4,
-    text: 'Very patient and helpful. My mother-in-law feels comfortable with him. He helped her with UPI payment, doctor appointment and other.',
-  },
-];
 
 const Star = ({ filled, mutedColor }: { filled: boolean; mutedColor: string }) => (
   <Svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? '#E7A500' : mutedColor}>
@@ -79,13 +39,22 @@ const CheckBadge = ({ color }: { color: string }) => (
 export const CaregiverDetailScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'CaregiverDetail'>>();
   const route = useRoute<RootRouteProp<'CaregiverDetail'>>();
-  const org = getOrganization(route.params?.orgId ?? 'agewell');
+  const orgId = route.params?.orgId;
+  const org = useOrganization(orgId);
+  const profileQuery = useProviderProfile(orgId);
+  const profile = profileQuery.data;
+  // Loaded on its own so a slow or failing call never holds up the rest of the page.
+  const availabilityQuery = useProviderAvailability(orgId);
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   // Guest chrome (bottom nav + Compare row) shows for anyone browsing without an account.
   const isGuest = !useIsGuestVerified();
+  // Favourites need a real session — a locally-registered visitor (no token) goes through OTP first.
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isFav = useIsFavorite(orgId);
+  const toggleFavorite = useToggleFavorite();
+  const favPending = toggleFavorite.isPending && toggleFavorite.variables?.providerId === org.id;
   const [tab, setTab] = useState(0); // 0 About, 1 Review
-  const [fav, setFav] = useState(false);
   const [compareChecked, setCompareChecked] = useState(false);
   const [leadMode, setLeadMode] = useState<LeadCaptureMode | null>(null);
 
@@ -96,14 +65,39 @@ export const CaregiverDetailScreen: React.FC = () => {
     navigation.navigate('RequestSetup', { orgId: org.id, isBooking: true });
   };
 
-  // Save/Callback/Book all ask for name+mobile only to convert a guest into a
-  // real account. Someone already registered has nothing left to ask — do the
+  const handleFavoritePress = () => {
+    if (!isAuthenticated) {
+      // Signed out: the 'save' popup verifies the phone, then saveAfterSignIn persists it.
+      setLeadMode('save');
+      return;
+    }
+    if (favPending) return;
+    toggleFavorite.mutate(
+      { providerId: org.id, save: !isFav },
+      {
+        onError: (err) =>
+          Alert.alert(isFav ? "Couldn't remove from favorites" : "Couldn't save this provider", getErrorMessage(err)),
+      },
+    );
+  };
+
+  // Called by the 'save' popup once OTP has verified the phone, before it shows
+  // "Saved to Favorites" — so the heart only fills after the POST succeeds.
+  const saveAfterSignIn = async () => {
+    if (!useAuthStore.getState().isAuthenticated) {
+      // A brand-new number that guest/register couldn't create an account for
+      // gets no token (see guestVerification.ts), so there's nothing to save against.
+      throw new Error("Your number is verified, but we couldn't sign you in, so this provider wasn't saved. Please sign in and try again.");
+    }
+    await toggleFavorite.mutateAsync({ providerId: org.id, save: true });
+  };
+
+  // Callback/Book ask for name+mobile only to convert a guest into a real
+  // account. Someone already registered has nothing left to ask — do the
   // underlying action directly instead of popping the lead-capture modal again.
-  const handleLeadAction = (mode: LeadCaptureMode) => {
+  const handleLeadAction = (mode: Exclude<LeadCaptureMode, 'save'>) => {
     if (!isGuest) {
-      if (mode === 'save') {
-        setFav(true);
-      } else if (mode === 'book') {
+      if (mode === 'book') {
         handleBookVerified();
       } else {
         Alert.alert('Callback requested', "We've received your request. Our team will contact you shortly.");
@@ -118,6 +112,32 @@ export const CaregiverDetailScreen: React.FC = () => {
       <Text style={[styles.pillText, { color: colors.text.tertiary }]}>{text}</Text>
     </View>
   );
+
+  // The profile drives every section below, so hold the page until it arrives.
+  if (!profile) {
+    return (
+      <View style={[styles.root, { backgroundColor: colors.background.layout }]}>
+        <View style={[styles.headerRow, { paddingTop: insets.top + theme.spacing.lg }]}>
+          <IconButton type="back" bg={colors.accentPrimary} accessibilityLabel="Go back" onPress={() => navigation.goBack()} size={40} />
+          <Text style={[styles.headerTitle, { color: colors.text.primary }]}>{headerTitle}</Text>
+          <View style={{ width: 40 }} />
+        </View>
+        <View style={styles.loadState}>
+          {profileQuery.isError ? (
+            <>
+              <Text style={[styles.bodyText, { color: colors.text.secondary, textAlign: 'center' }]}>
+                {getErrorMessage(profileQuery.error)}
+              </Text>
+              <Spacer size="md" />
+              <PrimaryButton label="Try Again" size="small" onPress={() => profileQuery.refetch()} />
+            </>
+          ) : (
+            <ActivityIndicator size="large" color={colors.accentPrimary} />
+          )}
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background.layout }]}>
@@ -157,12 +177,12 @@ export const CaregiverDetailScreen: React.FC = () => {
           <Spacer size="md" />
           <View style={styles.nameRow}>
             <Text style={[styles.orgName, { color: colors.text.primary }]}>{org.name}</Text>
-            <FavoriteButton active={fav} onPress={() => handleLeadAction('save')} />
+            <FavoriteButton active={isFav} onPress={handleFavoritePress} />
           </View>
 
           <Spacer size="sm" />
           <Text style={[styles.address, { color: colors.text.secondary }]}>
-            Second Floor, M8A, Vinoba Puri, Block M, Part II, Lajpat Nagar, New Delhi, Delhi 110024, India
+            {profile.registeredAddress ?? profile.city}
           </Text>
 
           <Spacer size="sm" />
@@ -190,12 +210,12 @@ export const CaregiverDetailScreen: React.FC = () => {
             </View>
             <View style={[styles.statDivider, { backgroundColor: colors.border.hairline }]} />
             <View style={styles.statCell}>
-              <Text style={[styles.statValue, { color: colors.text.primary }]}>27+ yrs</Text>
+              <Text style={[styles.statValue, { color: colors.text.primary }]}>{formatExperience(profile.yearsOfExperience)}</Text>
               <Text style={[styles.statLabel, { color: colors.text.tertiary }]}>Experience</Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: colors.border.hairline }]} />
             <View style={styles.statCell}>
-              <Text style={[styles.statValue, { color: colors.text.primary }]}>25,000+</Text>
+              <Text style={[styles.statValue, { color: colors.text.primary }]}>{formatVisits(profile.experienceCount)}</Text>
               <Text style={[styles.statLabel, { color: colors.text.tertiary }]}>Visits done</Text>
             </View>
           </View>
@@ -208,83 +228,95 @@ export const CaregiverDetailScreen: React.FC = () => {
             <>
               <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>About the facility</Text>
               <Spacer size="sm" />
-              <Text style={[styles.bodyText, { color: colors.text.secondary }]}>{ABOUT_TEXT}</Text>
+              <Text style={[styles.bodyText, { color: colors.text.secondary }]}>
+                {profile.aboutText ?? profile.bio ?? 'No description available yet.'}
+              </Text>
 
-              <Spacer size="lg" />
-              <Text style={[styles.keyFacts, { color: colors.text.primary }]}>Key facts:</Text>
-              {KEY_FACTS.map((fact) => (
-                <View key={fact} style={styles.bulletRow}>
-                  <Text style={[styles.bullet, { color: colors.text.secondary }]}>•</Text>
-                  <Text style={[styles.bodyText, { color: colors.text.secondary }]}>{fact}</Text>
-                </View>
-              ))}
+              {profile.keyFacts.length > 0 && (
+                <>
+                  <Spacer size="lg" />
+                  <Text style={[styles.keyFacts, { color: colors.text.primary }]}>Key facts:</Text>
+                  {profile.keyFacts.map((fact) => (
+                    <View key={fact} style={styles.bulletRow}>
+                      <Text style={[styles.bullet, { color: colors.text.secondary }]}>•</Text>
+                      <Text style={[styles.bodyText, { color: colors.text.secondary }]}>{fact}</Text>
+                    </View>
+                  ))}
+                </>
+              )}
 
-              <Spacer size="xxl" />
-              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Programs &amp; Initiatives</Text>
-              <Spacer size="md" />
-              <View style={styles.pillCol}>
-                {PROGRAMS.map((p) => <Pill key={p} text={p} />)}
-              </View>
+              {profile.programs.length > 0 && (
+                <>
+                  <Spacer size="xxl" />
+                  <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Programs &amp; Initiatives</Text>
+                  <Spacer size="md" />
+                  <View style={styles.pillCol}>
+                    {profile.programs.map((p) => <Pill key={p.id} text={p.name} />)}
+                  </View>
+                </>
+              )}
 
-              <Spacer size="xxl" />
-              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Services Provided</Text>
-              <Spacer size="md" />
-              <View style={styles.pillGrid}>
-                {SERVICES_PROVIDED.map((s, i) => <Pill key={`${s}-${i}`} text={s} half />)}
-              </View>
+              {profile.servicesProvided.length > 0 && (
+                <>
+                  <Spacer size="xxl" />
+                  <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Services Provided</Text>
+                  <Spacer size="md" />
+                  <View style={styles.pillGrid}>
+                    {profile.servicesProvided.map((s) => <Pill key={s.id} text={s.serviceName} half />)}
+                  </View>
+                </>
+              )}
 
-              <Spacer size="xxl" />
-              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Recognitions &amp; Accreditations</Text>
-              <Spacer size="md" />
-              <View style={styles.pillCol}>
-                {RECOGNITIONS.map((r) => <Pill key={r} text={r} />)}
-              </View>
+              {profile.recognitions.length > 0 && (
+                <>
+                  <Spacer size="xxl" />
+                  <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Recognitions &amp; Accreditations</Text>
+                  <Spacer size="md" />
+                  <View style={styles.pillCol}>
+                    {profile.recognitions.map((r) => <Pill key={r.title} text={r.title} />)}
+                  </View>
+                </>
+              )}
 
               <Spacer size="xxl" />
               <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Pricing</Text>
               <Spacer size="md" />
-              <Pill text="FREE (government-supported helpline), Training programs subsidized" />
+              {profile.servicesProvided.length > 0 ? (
+                <View style={styles.pillCol}>
+                  {profile.servicesProvided.map((s) => (
+                    <Pill
+                      key={s.id}
+                      text={`${s.serviceName} — ${formatRupees(s.effectivePrice)}${s.priceTypeLabel ? ` ${s.priceTypeLabel.toLowerCase()}` : ''}`}
+                    />
+                  ))}
+                </View>
+              ) : (
+                <Pill text="Pricing on request" />
+              )}
             </>
           ) : (
             <>
               <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Availability this week</Text>
               <Spacer size="md" />
-              {AVAILABILITY.map((slot) => (
-                <View key={slot.day} style={styles.dayRow}>
-                  <Text style={[styles.dayName, { color: colors.text.strong }]}>{slot.day}</Text>
-                  <Text style={[styles.dayHours, { color: slot.off ? colors.accentOrange : colors.text.tertiary }]}>{slot.hours}</Text>
-                </View>
-              ))}
+              {availabilityQuery.isPending ? (
+                <ActivityIndicator size="small" color={colors.accentPrimary} style={styles.availabilityLoading} />
+              ) : availabilityQuery.data ? (
+                availabilityQuery.data.map((slot) => (
+                  <View key={slot.day} style={styles.dayRow}>
+                    <Text style={[styles.dayName, { color: colors.text.strong }]}>{slot.day}</Text>
+                    <Text style={[styles.dayHours, { color: slot.off ? colors.accentOrange : colors.text.tertiary }]}>{slot.hours}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={[styles.availabilityEmpty, { color: colors.text.tertiary }]}>
+                  {availabilityQuery.isError
+                    ? "Availability couldn't be loaded right now."
+                    : "This provider hasn't published their hours yet."}
+                </Text>
+              )}
 
               <Spacer size="xl" />
-              <View style={styles.feedbackHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Recent Feedback</Text>
-                <Pressable style={styles.viewAll}>
-                  <Text style={[styles.viewAllText, { color: colors.accentPrimary }]}>View All</Text>
-                  <Icon name="navigationRight" variant="outline" size={20} color={colors.accentPrimary} />
-                </Pressable>
-              </View>
-              <Spacer size="md" />
-              {REVIEWS.map((review) => (
-                <View key={review.name} style={[styles.reviewCard, { backgroundColor: colors.background.base }]}>
-                  <View style={styles.reviewHeader}>
-                    <View style={[styles.reviewAvatar, { backgroundColor: colors.border.hairline }]}>
-                      <Icon name="profile" variant="outline" size={20} color={colors.accentPrimary} />
-                    </View>
-                    <View style={styles.reviewHeadText}>
-                      <Text style={[styles.reviewName, { color: colors.text.primary }]}>{review.name}</Text>
-                      <View style={styles.starsRow}>
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Star key={i} filled={i < review.stars} mutedColor={colors.border.card} />
-                        ))}
-                      </View>
-                    </View>
-                    <Text style={[styles.reviewDate, { color: colors.text.tertiary }]}>{review.date}</Text>
-                  </View>
-                  <Spacer size="sm" />
-                  <Text style={[styles.bodyText, { color: colors.text.secondary }]}>{review.text}</Text>
-                </View>
-              ))}
+              <ProviderReviews providerId={String(profile.id)} />
             </>
           )}
 
@@ -293,8 +325,12 @@ export const CaregiverDetailScreen: React.FC = () => {
           <Spacer size="md" />
           <PrimaryButton label="Book" onPress={() => handleLeadAction('book')} />
           <Spacer size="md" />
-          <SecondaryButton label="Website" onPress={() => {}} />
-          <Spacer size="xl" />
+          {!!profile.websiteUrl && (
+            <>
+              <SecondaryButton label="Website" onPress={() => Linking.openURL(profile.websiteUrl!)} />
+              <Spacer size="xl" />
+            </>
+          )}
         </View>
       </ScrollView>
 
@@ -302,8 +338,8 @@ export const CaregiverDetailScreen: React.FC = () => {
         visible={leadMode !== null}
         mode={leadMode ?? 'callback'}
         onClose={() => setLeadMode(null)}
-        onVerified={(details) => {
-          if (leadMode === 'save') setFav(true);
+        onBeforeDone={leadMode === 'save' ? saveAfterSignIn : undefined}
+        onVerified={() => {
           if (leadMode === 'book') handleBookVerified();
         }}
       />
@@ -331,6 +367,12 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.h2.fontFamily,
     fontSize: responsiveFontSize(theme.typography.h2.fontSize),
     color: theme.colors.neutral[900],
+  },
+  loadState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: theme.spacing.xl,
   },
   heroWrap: {
     position: 'relative',
@@ -489,6 +531,15 @@ const styles = StyleSheet.create({
   },
   dayOff: {
     color: theme.colors.tertiary,
+  },
+  availabilityLoading: {
+    alignSelf: 'flex-start',
+    paddingVertical: theme.spacing.sm,
+  },
+  availabilityEmpty: {
+    fontFamily: theme.typography.bodyMedium.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.bodyMedium.fontSize),
+    paddingVertical: theme.spacing.sm,
   },
   feedbackHeader: {
     flexDirection: 'row',

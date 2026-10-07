@@ -1,6 +1,6 @@
 import apiClient from '../axios';
 import ENDPOINTS from '../endpoints';
-import { ApiEnvelope } from '../types';
+import { unwrapList, type ListBody } from './listResponse';
 
 // GET /api/v1/categories (Swagger tag "Categories", https://powderblue-rook-471609.hostingersite.com/api/docs#/Categories)
 export interface Category {
@@ -20,7 +20,8 @@ export interface Category {
 export interface CategoriesQuery {
   page?: number;
   limit?: number;
-  sortBy?: string;
+  /** Only real columns — an unknown value makes the backend 500. */
+  sortBy?: 'sortOrder' | 'name' | 'createdAt';
   sortOrder?: 'ASC' | 'DESC';
   /** Search by category name. */
   search?: string;
@@ -35,21 +36,14 @@ export interface PaginationMeta {
   totalPages: number;
 }
 
-// The Swagger doc at /api/docs describes the success shape as
-// `data: { items: Category[], meta: {...} }`, but the live backend (verified
-// 2026-08-25 against the real endpoint) actually returns `data` as the bare
-// Category[] with `meta` as a sibling of `data`, not nested inside it. Typed
-// against the real response, not the (stale) generated doc schema.
-interface CategoriesEnvelope extends ApiEnvelope<Category[]> {
-  meta: PaginationMeta;
-}
-
+// The live backend returns `data: Category[]` with `meta` beside it, while the
+// Swagger doc says `data: { items, meta }` — unwrapList accepts both.
 export const categoryService = {
   getCategories: async (
     params?: CategoriesQuery
   ): Promise<{ items: Category[]; meta: PaginationMeta }> => {
-    const res = await apiClient.get<CategoriesEnvelope>(ENDPOINTS.categories.list, { params });
-    return { items: res.data.data, meta: res.data.meta };
+    const res = await apiClient.get<ListBody<Category>>(ENDPOINTS.categories.list, { params });
+    return unwrapList(res.data);
   },
 };
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   StyleSheet,
   Text,
   View,
@@ -19,7 +20,8 @@ import { PrimaryButton, IconButton } from '@/components/buttons';
 import { responsiveFontSize } from '@/utils/responsive';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useIsGuestVerified } from '@/store/auth.store';
-import { ORGANIZATIONS, Organization, getOrgImage } from '../data';
+import { Organization, getOrgImage } from '../data';
+import { useOrganizations } from '../hooks/useProviders';
 import { GuestBottomNav } from '../components/GuestBottomNav';
 import { UnlockComparisonSheet } from '../components/UnlockComparisonSheet';
 
@@ -64,9 +66,7 @@ export const GuestComparisonScreen: React.FC = () => {
 
   const title = route.params?.serviceType ?? 'Compare';
 
-  const orgs = ids
-    .map((id) => ORGANIZATIONS.find((o) => o.id === id))
-    .filter((o): o is Organization => !!o);
+  const { orgs, isLoading, isError, refetch } = useOrganizations(ids);
 
   // 3+ columns can't fit a phone — only then do we switch to fixed-width columns
   // and horizontal scrolling. 1–2 columns just divide the available width.
@@ -182,8 +182,8 @@ export const GuestComparisonScreen: React.FC = () => {
       {/* Everything below is gated for guests. */}
       <View style={!unlocked && styles.lockedRows} pointerEvents={unlocked ? 'auto' : 'none'}>
         {sectionHeader('Identity & Mission')}
-        {labelRow('Founded')}
-        {cellsRow((org) => <Text style={[styles.rowValue, { color: colors.text.secondary }]}>{org.founded}</Text>)}
+        {labelRow('Experience')}
+        {cellsRow((org) => <Text style={[styles.rowValue, { color: colors.text.secondary }]}>{org.experience}</Text>)}
         {labelRow('Mission')}
         {cellsRow((org) => <Text style={[styles.rowValue, { color: colors.text.secondary }]}>{org.mission}</Text>)}
 
@@ -228,7 +228,21 @@ export const GuestComparisonScreen: React.FC = () => {
         <Spacer size="md" />
       </View>
 
-      {orgs.length < 2 ? (
+      {orgs.length === 0 && (isLoading || isError) ? (
+        <View style={styles.loadState}>
+          {isLoading ? (
+            <ActivityIndicator size="large" color={colors.accentPrimary} />
+          ) : (
+            <>
+              <Text style={[styles.loadStateText, { color: colors.text.secondary }]}>
+                Unable to load the providers to compare.
+              </Text>
+              <Spacer size="md" />
+              <PrimaryButton label="Try Again" size="small" onPress={refetch} />
+            </>
+          )}
+        </View>
+      ) : orgs.length < 2 ? (
         // Need at least two providers — show the one picked plus a prompt to
         // go back and add another.
         <ScrollView
@@ -324,6 +338,17 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.h3.fontFamily,
     fontSize: responsiveFontSize(theme.typography.h3.fontSize),
     color: theme.colors.neutral[900],
+  },
+  loadState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: theme.spacing.xl,
+  },
+  loadStateText: {
+    fontFamily: theme.typography.bodyMedium.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.bodyMedium.fontSize),
+    textAlign: 'center',
   },
   row: {
     flexDirection: 'row',

@@ -34,3 +34,13 @@ export { categoryService } from './services/category.service';
 export type { Category, CategoriesQuery, PaginationMeta } from './services/category.service';
 export { guestService } from './services/guest.service';
 export type { GuestRegisterPayload, GuestRegisterData } from './services/guest.service';
+export { providerService } from './services/provider.service';
+export type {
+  ProviderSummary,
+  ProviderProfile,
+  ProviderAvailability,
+  ProvidersQuery,
+} from './services/provider.service';
+export { reviewService } from './services/review.service';
+export type { Review, ReviewsQuery, UpsertReviewPayload } from './services/review.service';
+export { favoriteService } from './services/favorite.service';

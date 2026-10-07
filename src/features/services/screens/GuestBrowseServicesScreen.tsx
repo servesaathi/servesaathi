@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   StyleSheet,
   Text,
   View,
@@ -21,8 +22,10 @@ import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useAuthStore, useIsGuestVerified } from '@/store/auth.store';
-import { authService, categoryService, getErrorMessage } from '@/api';
-import { ORGANIZATIONS, getOrgImage, SERVICE_CATEGORIES, toServiceCategories, type ServiceCategory } from '../data';
+import { authService, getErrorMessage } from '@/api';
+import { getOrgImage, type Organization, type ServiceCategory } from '../data';
+import { useProviderOrgs } from '../hooks/useProviders';
+import { CategoryGrid } from '../components/CategoryGrid';
 import { GuestBottomNav } from '../components/GuestBottomNav';
 import { completeGuestVerification, registerGuestAndRequestOtp } from '../utils/guestVerification';
 
@@ -88,9 +91,7 @@ export const GuestBrowseServicesScreen: React.FC = () => {
   // Figma flow: the location sheet greets the guest as soon as they land here.
   const [showLocationSheet, setShowLocationSheet] = useState(true);
   // Category picker shown once the location is set, before the org list —
-  // no services API yet (see data.ts), so every category just reveals the
-  // same mock organizations list below.
-  const [categories, setCategories] = useState<ServiceCategory[]>(SERVICE_CATEGORIES);
+  // picking one loads the providers in that category.
   const [category, setCategory] = useState<ServiceCategory | null>(null);
   const [showFilterSheet, setShowFilterSheet] = useState(false);
   const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS);
@@ -122,38 +123,26 @@ export const GuestBrowseServicesScreen: React.FC = () => {
   const [returningGuest, setReturningGuest] = useState(false);
 
   const phone = `+91${mobile}`;
-  const visibleOrgs = unlocked ? ORGANIZATIONS : ORGANIZATIONS.slice(0, GUEST_VISIBLE_COUNT);
-  const lockedOrgs = unlocked ? [] : ORGANIZATIONS.slice(GUEST_VISIBLE_COUNT);
+
+  // Live providers (GET /providers?categoryId= + each provider's profile) in the
+  // chosen category. Not fetched until a category is picked — the category grid
+  // is all that shows before that.
+  const providersQuery = useProviderOrgs(category?.id, category !== null);
+  const orgs: Organization[] = providersQuery.data ?? [];
+  const visibleOrgs = unlocked ? orgs : orgs.slice(0, GUEST_VISIBLE_COUNT);
+  const lockedOrgs = unlocked ? [] : orgs.slice(GUEST_VISIBLE_COUNT);
 
   // Same photo the card shows, keyed by org id so the compare-tray thumbnail matches.
   const orgImageFor = (id: string) => {
-    const org = ORGANIZATIONS.find((o) => o.id === id);
+    const org = orgs.find((o) => o.id === id);
     return org ? getOrgImage(org) : undefined;
   };
 
   const compareItems: CompareItem[] = compare.map((id) => ({
     id,
-    name: ORGANIZATIONS.find((o) => o.id === id)?.name ?? id,
+    name: orgs.find((o) => o.id === id)?.name ?? id,
     photoUri: orgImageFor(id),
   }));
-
-  // Falls back to the static Figma mock until the live API has categories
-  // seeded — see toServiceCategories in ../data.ts.
-  useEffect(() => {
-    let cancelled = false;
-    categoryService
-      .getCategories({ isActive: true, sortBy: 'sortOrder', sortOrder: 'ASC', limit: 100 })
-      .then(({ items }) => {
-        if (cancelled || items.length === 0) return;
-        setCategories(toServiceCategories(items));
-      })
-      .catch(() => {
-        // Network/API failure — keep showing the static mock rather than an empty grid.
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // OTP resend countdown — only ticks while the OTP step is open.
   useEffect(() => {
@@ -273,13 +262,12 @@ export const GuestBrowseServicesScreen: React.FC = () => {
     else openUnlock();
   };
 
-  const renderOrgCard = (org: (typeof ORGANIZATIONS)[number], _index: number, locked = false) => (
+  const renderOrgCard = (org: Organization, _index: number, locked = false) => (
     <ComparePopUpCard
       key={org.id}
       title={org.name}
       imageUri={orgImageFor(org.id)}
       location={org.city}
-      distance={`${org.distanceKm} km`}
       rating={org.rating != null ? String(org.rating) : '-'}
       featured={org.featured}
       compareChecked={compare.includes(org.id)}
@@ -336,28 +324,13 @@ export const GuestBrowseServicesScreen: React.FC = () => {
         <Spacer size="lg" />
 
         {!category ? (
-          /* Category picker — shown once the location is set, before any
-             providers do. No services API yet (see data.ts), so every
-             category just reveals the same mock organizations list below. */
+          /* Category picker — shown once the location is set, before any providers do. */
           <>
             <Text style={[styles.categoryHeading, { color: colors.text.primary }]}>
               What would be most helpful right now?
             </Text>
             <Spacer size="lg" />
-            <View style={styles.grid}>
-              {categories.map((cat) => (
-                <Pressable
-                  key={cat.id}
-                  style={[styles.categoryCard, { backgroundColor: colors.background.base }]}
-                  onPress={() => setCategory(cat)}
-                >
-                  <View style={[styles.categoryArch, { backgroundColor: colors.background.orange }]}>
-                    <Icon name={cat.icon} variant="outline" size={40} color={colors.accentOrange} />
-                  </View>
-                  <Text style={[styles.categoryLabel, { color: colors.text.strong }]}>{cat.label}</Text>
-                </Pressable>
-              ))}
-            </View>
+            <CategoryGrid onSelect={setCategory} />
           </>
         ) : (
           <>
@@ -386,9 +359,31 @@ export const GuestBrowseServicesScreen: React.FC = () => {
 
             <Spacer size="lg" />
             <Text style={[styles.countText, { color: colors.text.secondary }]}>
-              {ORGANIZATIONS.length} organizations
+              {providersQuery.isSuccess ? `${orgs.length} organizations` : ' '}
             </Text>
             <Spacer size="md" />
+
+            {providersQuery.isPending && (
+              <View style={styles.listState}>
+                <ActivityIndicator size="large" color={colors.accentPrimary} />
+              </View>
+            )}
+            {providersQuery.isError && (
+              <View style={styles.listState}>
+                <Text style={[styles.listStateText, { color: colors.text.secondary }]}>
+                  {getErrorMessage(providersQuery.error)}
+                </Text>
+                <Spacer size="md" />
+                <PrimaryButton label="Try Again" size="small" onPress={() => providersQuery.refetch()} />
+              </View>
+            )}
+            {providersQuery.isSuccess && orgs.length === 0 && (
+              <View style={styles.listState}>
+                <Text style={[styles.listStateText, { color: colors.text.secondary }]}>
+                  No providers found in this category yet.
+                </Text>
+              </View>
+            )}
 
             {/* Preview: the first few providers are fully visible (all, once unlocked) */}
             {visibleOrgs.map((org, i) => (
@@ -885,35 +880,6 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.h3.fontFamily,
     fontSize: responsiveFontSize(theme.typography.h3.fontSize),
   },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.md,
-  },
-  categoryCard: {
-    flexBasis: '47%',
-    flexGrow: 1,
-    borderRadius: theme.radius.sm,
-    overflow: 'hidden',
-    alignItems: 'center',
-    paddingBottom: theme.spacing.md,
-    ...theme.shadows.sm,
-  },
-  categoryArch: {
-    width: '100%',
-    height: 76,
-    borderBottomLeftRadius: 999,
-    borderBottomRightRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: theme.spacing.sm,
-  },
-  categoryLabel: {
-    fontFamily: theme.typography.bodyMedium.fontFamily,
-    fontSize: responsiveFontSize(theme.typography.bodyMedium.fontSize),
-    textAlign: 'center',
-    paddingHorizontal: theme.spacing.sm,
-  },
   categoryChip: {
     flexDirection: 'row',
     alignSelf: 'flex-start',
@@ -955,6 +921,15 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.bodyMedium.fontFamily,
     fontSize: responsiveFontSize(theme.typography.bodyMedium.fontSize),
     color: theme.colors.neutral[700],
+  },
+  listState: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.xxl,
+  },
+  listStateText: {
+    fontFamily: theme.typography.bodyMedium.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.bodyMedium.fontSize),
+    textAlign: 'center',
   },
   cardWrap: {
     marginBottom: theme.spacing.lg,

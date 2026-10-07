@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Pressable, ScrollView, Modal } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,11 +13,10 @@ import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import type { ThemePalette } from '@/theme/palette';
-import { SERVICE_CATEGORIES, INFRASTRUCTURE_OPTIONS, toServiceCategories, type ServiceCategory } from '../data';
-import { categoryService } from '@/api';
+import type { ServiceCategory } from '../data';
+import { CategoryGrid } from '../components/CategoryGrid';
 
-// "Our Service - My Services / All Services" (Figma 1255:26894 / 1255:26926)
-// plus the "Infrastructure" picker sheet (1256:23704).
+// "Our Service - My Services / All Services" (Figma 1255:26894 / 1255:26926).
 
 interface SectionHeaderProps {
   title: string;
@@ -44,44 +43,10 @@ export const ServicesScreen: React.FC = () => {
   const colors = useThemeColors();
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState(0); // 0 = My Services, 1 = All Services
-  const [showInfrastructure, setShowInfrastructure] = useState(false);
-  // Falls back to the static Figma mock until the live API has categories
-  // seeded (as of 2026-08-25 GET /categories returns an empty list on the
-  // staging backend) — see toServiceCategories in ../data.ts.
-  const [categories, setCategories] = useState<ServiceCategory[]>(SERVICE_CATEGORIES);
 
-  useEffect(() => {
-    let cancelled = false;
-    categoryService
-      .getCategories({ isActive: true, sortBy: 'sortOrder', sortOrder: 'ASC', limit: 100 })
-      .then(({ items }) => {
-        if (cancelled || items.length === 0) return;
-        setCategories(toServiceCategories(items));
-      })
-      .catch(() => {
-        // Network/API failure — keep showing the static mock rather than an empty grid.
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const handleCategoryPress = (category: ServiceCategory) => {
-    if (category.id === 'infrastructure') {
-      // The only category with its own designed sub-flow so far.
-      setShowInfrastructure(true);
-      return;
-    }
-    // No services API yet (see data.ts) — every other category jumps
-    // straight to the same mock organizations list Infrastructure's flow
-    // ends on, so every card is clickable instead of a dead end.
-    navigation.navigate('CaregiverList', { serviceType: category.label });
-  };
-
-  const handleInfrastructureOption = (label: string) => {
-    setShowInfrastructure(false);
-    navigation.navigate('PersonalizedQuestions', { serviceType: label });
-  };
+  // Every category opens the provider list filtered to it (GET /providers?categoryId=).
+  const handleCategoryPress = (category: ServiceCategory) =>
+    navigation.navigate('CaregiverList', { serviceType: category.label, categoryId: category.id });
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background.layout }]}>
@@ -179,69 +144,10 @@ export const ServicesScreen: React.FC = () => {
           <>
             <Text style={[styles.gridTitle, { color: colors.text.primary }]}>What do you need help with?</Text>
             <Spacer size="lg" />
-            <View style={styles.grid}>
-              {categories.map((cat) => (
-                <Pressable
-                  key={cat.id}
-                  style={[styles.categoryCard, { backgroundColor: colors.background.base }]}
-                  onPress={() => handleCategoryPress(cat)}
-                >
-                  <View style={[styles.categoryArch, { backgroundColor: colors.background.orange }]}>
-                    <Icon name={cat.icon} variant="outline" size={40} color={colors.accentOrange} />
-                  </View>
-                  <Text style={[styles.categoryLabel, { color: colors.text.strong }]}>{cat.label}</Text>
-                </Pressable>
-              ))}
-            </View>
+            <CategoryGrid onSelect={handleCategoryPress} />
           </>
         )}
       </ScrollView>
-
-      {/* Infrastructure picker sheet (Figma 1256:23704) */}
-      {showInfrastructure && (
-        <Modal visible animationType="slide" transparent onRequestClose={() => setShowInfrastructure(false)}>
-          <View style={styles.modalRoot}>
-            <View
-              style={[
-                styles.modalSheet,
-                { backgroundColor: colors.background.layout, paddingTop: insets.top + theme.spacing.xxl },
-              ]}
-            >
-              <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, { color: colors.text.primary }]}>Infrastructure</Text>
-                <IconButton
-                  type="close"
-                  accessibilityLabel="Close"
-                  onPress={() => setShowInfrastructure(false)}
-                  size={40}
-                />
-              </View>
-              <Spacer size="xxl" />
-              <Text style={[styles.modalQuestion, { color: colors.text.primary }]}>Who needs care?</Text>
-              <Text style={[styles.modalSubtitle, { color: colors.text.secondary }]}>Help us personalize your search</Text>
-              <Spacer size="xl" />
-
-              <View style={styles.optionList}>
-                {INFRASTRUCTURE_OPTIONS.map((opt) => (
-                  <Pressable
-                    key={opt.id}
-                    style={[styles.optionCard, { backgroundColor: colors.background.base }]}
-                    onPress={() => handleInfrastructureOption(opt.label)}
-                  >
-                    <View style={styles.optionIcon}>
-                      <Icon name={opt.icon} variant="outline" size={24} color={theme.colors.tertiary} />
-                    </View>
-                    <View>
-                      <Text style={[styles.optionTitle, { color: colors.text.primary }]}>{opt.label}</Text>
-                      <Text style={[styles.optionCaption, { color: colors.text.tertiary }]}>{opt.available} available</Text>
-                    </View>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-          </View>
-        </Modal>
-      )}
     </View>
   );
 };
@@ -305,106 +211,6 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.h3.fontFamily,
     fontSize: responsiveFontSize(theme.typography.h3.fontSize),
     color: theme.colors.neutral[900],
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.md,
-  },
-  categoryCard: {
-    flexBasis: '47%',
-    flexGrow: 1,
-    backgroundColor: theme.colors.background.base,
-    borderRadius: theme.radius.sm,
-    overflow: 'hidden',
-    alignItems: 'center',
-    paddingBottom: theme.spacing.md,
-    ...theme.shadows.sm,
-  },
-  categoryArch: {
-    width: '100%',
-    height: 76,
-    backgroundColor: theme.colors.vividOrange[100],
-    borderBottomLeftRadius: 999,
-    borderBottomRightRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: theme.spacing.sm,
-  },
-  categoryLabel: {
-    fontFamily: theme.typography.bodyMedium.fontFamily,
-    fontSize: responsiveFontSize(theme.typography.bodyMedium.fontSize),
-    color: theme.colors.neutral[800],
-  },
-  modalRoot: {
-    flex: 1,
-    backgroundColor: 'rgba(9, 25, 10, 0.9)',
-  },
-  modalSheet: {
-    flex: 1,
-    marginTop: theme.spacing.xxxl,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    backgroundColor: theme.colors.background.layout,
-    paddingHorizontal: theme.spacing.xl,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  modalTitle: {
-    flex: 1,
-    fontFamily: theme.typography.h2.fontFamily,
-    fontSize: responsiveFontSize(theme.typography.h2.fontSize),
-    color: theme.colors.neutral[900],
-    textAlign: 'center',
-    marginLeft: 40, // balance the 40px close button
-  },
-  modalQuestion: {
-    fontFamily: theme.typography.h3.fontFamily,
-    fontSize: responsiveFontSize(theme.typography.h3.fontSize),
-    color: theme.colors.neutral[900],
-  },
-  modalSubtitle: {
-    fontFamily: theme.typography.bodyLarge.fontFamily,
-    fontSize: responsiveFontSize(theme.typography.bodyLarge.fontSize),
-    color: theme.colors.neutral[700],
-    marginTop: 2,
-  },
-  optionList: {
-    gap: theme.spacing.lg,
-  },
-  optionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-    backgroundColor: theme.colors.background.base,
-    borderLeftWidth: 4,
-    borderLeftColor: theme.colors.tertiary,
-    borderRadius: theme.radius.sm,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    ...theme.shadows.sm,
-  },
-  optionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.vividOrange[100],
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  optionTitle: {
-    fontFamily: theme.typography.h5.fontFamily,
-    fontSize: responsiveFontSize(theme.typography.h5.fontSize),
-    color: theme.colors.neutral[900],
-  },
-  optionCaption: {
-    fontFamily: theme.typography.bodyMedium.fontFamily,
-    fontSize: responsiveFontSize(theme.typography.bodyMedium.fontSize),
-    color: theme.colors.neutral[600],
-    marginTop: 1,
   },
 });
 

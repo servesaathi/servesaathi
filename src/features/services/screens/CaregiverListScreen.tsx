@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, Pressable, ScrollView, Image, Modal } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View, Pressable, ScrollView, Image, Modal } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,7 +11,9 @@ import { SearchInput, Checkbox, SelectableChip } from '@/components/inputs';
 import { StatusChip } from '@/components/cards';
 import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
-import { ORGANIZATIONS, getOrgImage } from '../data';
+import { getOrgImage } from '../data';
+import { useProviderOrgs } from '../hooks/useProviders';
+import { getErrorMessage } from '@/api';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import type { ThemePalette } from '@/theme/palette';
 
@@ -77,6 +79,8 @@ export const CaregiverListScreen: React.FC = () => {
   const colors = useThemeColors();
 
   const [search, setSearch] = useState('');
+  const providersQuery = useProviderOrgs(route.params?.categoryId);
+  const orgs = providersQuery.data ?? [];
   const [compare, setCompare] = useState<string[]>([]);
   const [showFilter, setShowFilter] = useState(false);
   const [showSort, setShowSort] = useState(false);
@@ -147,10 +151,32 @@ export const CaregiverListScreen: React.FC = () => {
         </View>
 
         <Spacer size="lg" />
-        <Text style={[styles.countText, { color: colors.text.secondary }]}>{ORGANIZATIONS.length} organizations</Text>
+        <Text style={[styles.countText, { color: colors.text.secondary }]}>
+          {providersQuery.isSuccess ? `${orgs.length} organizations` : ' '}
+        </Text>
         <Spacer size="md" />
 
-        {ORGANIZATIONS.map((org) => (
+        {providersQuery.isPending && (
+          <View style={styles.listState}>
+            <ActivityIndicator size="large" color={colors.accentPrimary} />
+          </View>
+        )}
+        {providersQuery.isError && (
+          <View style={styles.listState}>
+            <Text style={[styles.listStateText, { color: colors.text.secondary }]}>
+              {getErrorMessage(providersQuery.error)}
+            </Text>
+            <Spacer size="md" />
+            <PrimaryButton label="Try Again" size="small" onPress={() => providersQuery.refetch()} />
+          </View>
+        )}
+        {providersQuery.isSuccess && orgs.length === 0 && (
+          <View style={styles.listState}>
+            <Text style={[styles.listStateText, { color: colors.text.secondary }]}>No providers found yet.</Text>
+          </View>
+        )}
+
+        {orgs.map((org) => (
           <View key={org.id} style={[styles.orgCard, { backgroundColor: colors.background.base }]}>
             <View style={styles.orgImageWrap}>
               <Image source={getOrgImage(org)} style={styles.orgImage} resizeMode="cover" />
@@ -175,7 +201,7 @@ export const CaregiverListScreen: React.FC = () => {
               </View>
               <View style={styles.orgMetaRow}>
                 <Icon name="location" variant="outline" size={16} color={colors.accentPrimary} />
-                <Text style={[styles.orgMeta, { color: colors.text.secondary }]}>{org.city} • {org.distanceKm} km</Text>
+                <Text style={[styles.orgMeta, { color: colors.text.secondary }]}>{org.city}</Text>
               </View>
               <View style={styles.orgActionsRow}>
                 <Pressable style={styles.compareRow} onPress={() => toggleCompare(org.id)}>
@@ -291,6 +317,15 @@ const styles = StyleSheet.create({
     fontSize: responsiveFontSize(theme.typography.smallCaption.fontSize),
     color: theme.colors.neutral[900],
     letterSpacing: 0.5,
+  },
+  listState: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.xxl,
+  },
+  listStateText: {
+    fontFamily: theme.typography.bodyMedium.fontFamily,
+    fontSize: responsiveFontSize(theme.typography.bodyMedium.fontSize),
+    textAlign: 'center',
   },
   countText: {
     fontFamily: theme.typography.bodyMedium.fontFamily,

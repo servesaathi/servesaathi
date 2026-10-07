@@ -164,7 +164,7 @@ export const RequestDetailsScreen: React.FC = () => {
           {isBooking ? (
             <PrimaryButton
               label="Proceed to Payment"
-              onPress={() => navigation.navigate('BookDetails', { orgId: orgId ?? 'agewell' })}
+              onPress={() => navigation.navigate('BookDetails', { orgId: orgId ?? '' })}
               style={styles.footerBtn}
             />
           ) : (

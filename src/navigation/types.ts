@@ -39,7 +39,8 @@ export type RootStackParamList = {
   SettingUp: undefined;
   Home: undefined;
   PersonalizedQuestions: { serviceType: string };
-  CaregiverList: { serviceType: string };
+  /** categoryId narrows the list to one backend category (GET /providers?categoryId=). */
+  CaregiverList: { serviceType: string; categoryId?: number };
   CaregiverDetail: { orgId: string; serviceType?: string };
   Comparison: { orgIds: string[] };
   /** Guest-facing comparison — the lower rows are gated behind phone verification. */

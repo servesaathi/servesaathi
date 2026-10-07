@@ -11,7 +11,7 @@ import { TextInput, SelectableChip, ToggleSwitch } from '@/components/inputs';
 import { StatusChip, FavoriteButton, DateCard, TimeCard } from '@/components/cards';
 import { Icon } from '@/components/icons';
 import { responsiveFontSize } from '@/utils/responsive';
-import { getOrganization } from '../data';
+import { useOrganization } from '../hooks/useProviders';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import type { ThemePalette } from '@/theme/palette';
 import {
@@ -270,7 +270,7 @@ const calendarStyles = StyleSheet.create({
 export const RequestSetupScreen: React.FC = () => {
   const navigation = useNavigation<RootNavigationProp<'RequestSetup'>>();
   const route = useRoute<RootRouteProp<'RequestSetup'>>();
-  const org = getOrganization(route.params?.orgId ?? 'agewell');
+  const org = useOrganization(route.params?.orgId);
   const isBooking = route.params?.isBooking ?? false;
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();

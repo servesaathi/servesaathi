@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as SplashScreen from 'expo-splash-screen';
 import RootNavigator from './src/navigation/RootNavigator';
+import { clearFavoritesOnSessionChange } from './src/features/services/hooks/useFavorites';
 import { installTextAccessibility } from './src/utils/textAccessibility';
 
 // Swap react-native's Text/TextInput for accessibility-aware wrappers before
@@ -30,6 +31,9 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Logout or a different account signing in: drop the previous account's favourites.
+clearFavoritesOnSessionChange(queryClient);
 
 export default function App() {
   return (
