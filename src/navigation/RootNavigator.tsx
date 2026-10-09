@@ -34,6 +34,10 @@ import { RequestSetupScreen } from '@/features/services/screens/RequestSetupScre
 import { RequestDetailsScreen } from '@/features/services/screens/RequestDetailsScreen';
 import { BookDetailsScreen } from '@/features/services/screens/BookDetailsScreen';
 import { SupportChatScreen } from '@/features/emergency/screens/SupportChatScreen';
+import { EwsHomeScreen } from '@/features/ews/screens/EwsHomeScreen';
+import { EwsCheckInScreen } from '@/features/ews/screens/EwsCheckInScreen';
+import { EwsPlanScreen } from '@/features/ews/screens/EwsPlanScreen';
+import { EwsExploreScreen } from '@/features/ews/screens/EwsExploreScreen';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -79,6 +83,12 @@ export const RootNavigator: React.FC = () => {
       <Stack.Screen name="RequestDetails" component={RequestDetailsScreen} />
       <Stack.Screen name="BookDetails" component={BookDetailsScreen} />
       <Stack.Screen name="SupportChat" component={SupportChatScreen} />
+      <Stack.Screen name="EwsHome" component={EwsHomeScreen} />
+      {/* No swipe-back: leaving the check-in always goes through Save & Exit,
+          and a Tier 1 safety card must be acknowledged, never swiped away. */}
+      <Stack.Screen name="EwsCheckIn" component={EwsCheckInScreen} options={{ gestureEnabled: false }} />
+      <Stack.Screen name="EwsPlan" component={EwsPlanScreen} />
+      <Stack.Screen name="EwsExplore" component={EwsExploreScreen} />
     </Stack.Navigator>
   );
 };

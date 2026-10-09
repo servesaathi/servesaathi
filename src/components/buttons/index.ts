@@ -3,6 +3,7 @@ export * from './types';
 export { PrimaryButton } from './PrimaryButton';
 export { SecondaryButton } from './SecondaryButton';
 export { TertiaryButton } from './TertiaryButton';
+export { LightButton } from './LightButton';
 export { HyperlinkButton } from './HyperlinkButton';
 export { DestructiveButton } from './DestructiveButton';
 export { IconButton } from './IconButton';

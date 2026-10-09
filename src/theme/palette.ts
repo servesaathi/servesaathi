@@ -45,6 +45,17 @@ export interface ThemePalette {
   // redefines it to a pale mint (#D5EBD6) with a near-black label via
   // textInverse, matching the onboarding "Log in" button.
   secondarySurface: string;
+  // EWS band treatments (Figma "Pop-over Chip" on Background/O Line, Status -
+  // Error tiles). Light values are the Figma tokens; dark/high-contrast are
+  // tuned so 14–16px chip text keeps >= 4.5:1 on its own surface.
+  accentOrangeSurface: string; // Background/O Line #FFE3D2 — orange chip fill
+  accentOrangeText: string; // Vivid Orange/700 #994613 — text on the orange chip
+  error: string; // Status - Error #DC2626 — "Needs attention" numbers/text
+  errorSurface: string; // red-bg #FEE2E2 at 75% — "Needs attention" icon tile
+  // Label of the light-green "Light" button (Forest Green/600 #256428 on G
+  // Line) — a stronger green than accentPrimary so it holds contrast on the
+  // pale fill.
+  accentPrimaryStrong: string;
 }
 
 export const lightPalette: ThemePalette = {
@@ -63,6 +74,11 @@ export const lightPalette: ThemePalette = {
   accentOrangeMuted: '#FFC8A5',
   textInverse: '#FFFFFF',
   secondarySurface: '#123214',
+  accentOrangeSurface: '#FFE3D2',
+  accentOrangeText: '#994613',
+  error: '#DC2626',
+  errorSurface: '#FEE2E2',
+  accentPrimaryStrong: '#256428',
 };
 
 // Dark background per spec: #0D1F0E. Surface/orange tones are lifted just
@@ -87,6 +103,11 @@ export const darkPalette: ThemePalette = {
   // against the #0D1F0E dark background (unlike high contrast, plain dark
   // mode doesn't have a Figma-specified value for this).
   secondarySurface: '#1C4B1E',
+  accentOrangeSurface: '#4A2A16',
+  accentOrangeText: '#FFC8A5',
+  error: '#F87171',
+  errorSurface: '#3B1A1A',
+  accentPrimaryStrong: '#8CC48F',
 };
 
 // High contrast — sourced directly from the Figma "Start an app - High
@@ -129,6 +150,11 @@ const highContrastFigma: ThemePalette = {
   // onboarding "Log in" button is a light pill with a near-black label
   // (textInverse), not a darker-green fill like the other two themes.
   secondarySurface: '#D5EBD6',
+  accentOrangeSurface: '#331A0C',
+  accentOrangeText: '#FF9C62',
+  error: '#FF6B6B',
+  errorSurface: '#2A0F0F',
+  accentPrimaryStrong: '#58A35B',
 };
 
 export const highContrastLight: ThemePalette = highContrastFigma;

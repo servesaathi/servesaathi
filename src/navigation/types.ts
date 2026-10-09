@@ -1,5 +1,6 @@
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RouteProp } from '@react-navigation/native';
+import { RouteProp, NavigatorScreenParams } from '@react-navigation/native';
+import type { BottomTabParamList } from './BottomTabNavigator';
 
 /** What the user picked on RequestSetupScreen — carried forward so RequestDetailsScreen
  *  can show the real selection (and "Edit" can send them back to change it). */
@@ -37,7 +38,7 @@ export type RootStackParamList = {
   Subscription: undefined;
   PaymentMethod: undefined;
   SettingUp: undefined;
-  Home: undefined;
+  Home: NavigatorScreenParams<BottomTabParamList> | undefined;
   PersonalizedQuestions: { serviceType: string };
   /** categoryId narrows the list to one backend category (GET /providers?categoryId=). */
   CaregiverList: { serviceType: string; categoryId?: number };
@@ -54,6 +55,11 @@ export type RootStackParamList = {
   SupportChat: undefined;
   Notifications: undefined;
   EditProfile: undefined;
+  /** Elder Wellbeing Score — `start` opens the set-up pop-up on arrival. */
+  EwsHome: { start?: boolean } | undefined;
+  EwsCheckIn: undefined;
+  EwsPlan: undefined;
+  EwsExplore: undefined;
 };
 
 export type RootNavigationProp<RouteName extends keyof RootStackParamList> = StackNavigationProp<

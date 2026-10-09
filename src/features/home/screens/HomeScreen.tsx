@@ -12,6 +12,7 @@ import { responsiveFontSize } from '@/utils/responsive';
 import { useUserStore } from '@/store/user.store';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import type { ThemePalette } from '@/theme/palette';
+import { EwsHomeCard } from '@/features/ews/components/EwsHomeCard';
 
 // "Home" (Figma 1248:44660) — new-user landing state with empty task/request/event sections.
 
@@ -87,6 +88,11 @@ export const HomeScreen: React.FC = () => {
           status="quote"
           buttonLabel="How are you feeling today?"
         />
+
+        <Spacer size="lg" />
+
+        {/* Elder Wellbeing Score — Figma "Hub" Wellbeing card (3344:324314) */}
+        <EwsHomeCard />
 
         <Spacer size={40} />
 
